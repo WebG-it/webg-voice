@@ -67,9 +67,9 @@ if __name__ == "__main__":
     scatti = [
         ("store-1-lettura.png", None),
         ("store-1-lettura.png", "store-popup.png"),
-        ("consenso.png", None),
+        ("download.png", None),
         ("store-4-scuro.png", None),
-        ("store-5-diagnostica.png", None),
+        ("store-5-opzioni.png", None),
     ]
     for i, (pag, pop) in enumerate(scatti, 1):
         p = os.path.join(src, pag)
