@@ -55,3 +55,13 @@ summary h2 { margin: 0; }
 details[open] summary { margin-bottom: 12px; }
 a { color: var(--accento); }
 kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1px solid var(--bordo); border-radius: 4px; }
+
+.diz { width: 100%; border-collapse: collapse; margin: 8px 0; }
+.diz th { text-align: left; font-weight: 600; color: var(--tenue); font-size: 13px; padding: 4px 6px; }
+.diz td { padding: 4px 6px; border-top: 1px solid var(--bordo); }
+.diz td.az { white-space: nowrap; text-align: right; }
+.diz input, #dizTesto { width: 100%; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 6px; background: var(--sfondo); color: var(--testo); font: inherit; }
+#dizTesto { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+.diz button { padding: 5px 10px; }
+.nota { color: var(--tenue); font-size: 13px; }
+#dizionario details summary { margin: 6px 0; color: var(--accento); }

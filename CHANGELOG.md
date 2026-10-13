@@ -4,6 +4,13 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.1.0] - 2026-10-13
+
+- Pronuncia delle sigle: quelle che in italiano si dicono come parola (RAM, SEO, NATO, ISTAT, IVA, INPS, PIN, LED…) si leggono come parola; quelle che si compitano (USB, CPU, PDF, HTML, API…) restano compitate da espeak; poche si dicono all'inglese (CEO, OK). Per le sigle fuori lista decide un'euristica di pronunciabilità; numeri romani e parole brevi dei titoli in maiuscolo restano come sono.
+- Parole inglesi e nomi tech dentro il testo italiano (download, browser, password, Google, YouTube, WhatsApp, iPhone, Wi-Fi, Cloudflare…) e parole CamelCase (VHelper diventa «vi helper») si fonemizzano con la voce inglese di espeak e si inseriscono nella frase italiana senza marcatori: la frase resta fluida e articoli e preposizioni non cambiano accento.
+- Dizionario di pronuncia nelle opzioni: coppie «scritto → come si legge» salvate in chrome.storage.sync, applicate prima della fonemizzazione, con Ascolta per provarle e import/export a righe.
+- Le frasi solo italiane restano identiche: 35 frasi su 44 del corpus di prova uguali alla versione precedente, le 9 cambiate contengono sigle o parole inglesi; la parità con kokoro-onnx resta 44 su 44.
+
 ## [1.0.5] - 2026-10-13
 
 - Riscontro quando la scorciatoia o il menu non possono leggere: sulle pagine dove Chrome non lascia entrare le estensioni (chrome://, Chrome Web Store, visualizzatore PDF, file locali senza permesso) l'icona mostra "!" per 5 secondi, il titolo dell'icona spiega il motivo e il popup dice di incollare il testo.

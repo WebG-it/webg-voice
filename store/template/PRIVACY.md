@@ -22,7 +22,10 @@ menu contestuale) e solo nella scheda in cui lo chiede.
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
 - i file della voce (circa {{MB}} MB), per funzionare offline;
 - la velocità di lettura scelta, l'ultimo testo incollato nel popup e una misura della velocità
-  di sintesi del computer.
+  di sintesi del computer;
+- il dizionario di pronuncia, se lo usi: le coppie di parole che scrivi nelle opzioni. Si salva
+  nello spazio di sincronizzazione di Chrome, quindi se hai la sincronizzazione attiva Chrome lo
+  copia sui tuoi altri dispositivi tramite il tuo account Google; WebG non lo riceve.
 
 Si cancellano disinstallando l'estensione.
 

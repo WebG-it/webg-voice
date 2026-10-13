@@ -24,6 +24,29 @@
     <p><a href="#" id="tasti">Cambia la scorciatoia</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="https://www.webg.it" target="_blank" rel="noopener">webg.it</a></p>
   </section>
 
+  <section class="scheda" id="dizionario">
+    <h2>Dizionario di pronuncia</h2>
+    <p>Se una parola viene letta male, scrivi come si deve leggere: la sostituzione vale ovunque compaia
+      la parola intera, maiuscole o minuscole. Esempio: <em>VHelper</em> → <em>vi helper</em>.
+      Le sigle e le parole inglesi più comuni sono già gestite.</p>
+    <table class="diz">
+      <thead><tr><th>Scritto</th><th>Si legge</th><th></th></tr></thead>
+      <tbody id="dizRighe"></tbody>
+      <tfoot><tr>
+        <td><input id="dizScritto" placeholder="VHelper" maxlength="100" aria-label="Scritto"></td>
+        <td><input id="dizLettura" placeholder="vi helper" maxlength="100" aria-label="Si legge"></td>
+        <td class="az"><button id="dizAscoltaNuova">Ascolta</button> <button id="dizAggiungi" class="primario">Aggiungi</button></td>
+      </tr></tfoot>
+    </table>
+    <p id="dizStato" class="nota" aria-live="polite"></p>
+    <details>
+      <summary>Importa o esporta</summary>
+      <p class="nota">Una coppia per riga, nella forma <code>scritto = si legge</code>.</p>
+      <textarea id="dizTesto" rows="6" spellcheck="false"></textarea>
+      <div class="azioni"><button id="dizEsporta">Esporta qui</button> <button id="dizImporta">Importa queste righe</button></div>
+    </details>
+  </section>
+
   <details class="scheda" id="problemi">
     <summary><h2>Risoluzione problemi</h2></summary>
     <p>Se senti pause durante la lettura, avvia questa prova e mandaci il risultato

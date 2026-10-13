@@ -34,11 +34,17 @@ export async function avviaEspeak({ creaModulo, wasm, indice, dati, voce = 'it' 
   }
   const setVoce = M.cwrap('espeak_SetVoiceByName', 'number', ['string']);
   if (setVoce(voce) !== 0) throw new Error(`voce espeak "${voce}" non disponibile`);
+  let voceAttuale = voce;
   const ttp = M.cwrap('espeak_TextToPhonemes', 'string', ['number', 'number', 'number']);
 
   // Equivale a EspeakWrapper.text_to_phonemes: chiama finche' il puntatore
   // al testo non diventa NULL, una clausola per volta.
-  return function clausole(testo) {
+  // `v`: voce espeak per questo testo (default quella iniziale), es. "en-us" per le parole inglesi
+  return function clausole(testo, v = voce) {
+    if (v !== voceAttuale) {
+      if (setVoce(v) !== 0) throw new Error(`voce espeak "${v}" non disponibile`);
+      voceAttuale = v;
+    }
     const n = M.lengthBytesUTF8(testo) + 1;
     const pTesto = M._malloc(n);
     M.stringToUTF8(testo, pTesto, n);

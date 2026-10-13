@@ -78,6 +78,10 @@ try {
   const extId = new URL(swT.url()).host;
   const sw = await swT.worker();
   const ext = (await b.extensions()).get(extId);
+  // installazione pulita: si aspetta che il modello sia scaricato (profilo nuovo)
+  const offT = await b.waitForTarget((t) => t.url().endsWith('/offscreen.html'), { timeout: 30000 });
+  const offP = await offT.asPage();
+  await offP.waitForFunction(() => globalThis.__test && __test.stato().motorePronto, { timeout: 600000, polling: 500 });
   const page = await b.newPage();
   await page.setViewport({ width: 1280, height: 900 });
   await page.goto(`http://127.0.0.1:${server.address().port}/`);

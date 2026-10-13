@@ -192,7 +192,7 @@ function consenti() {
   consenso = true;
   const r = richiestaInAttesa;
   richiestaInAttesa = null;
-  if (r) leggi(r.testo, r.velocita, r.tabId, Date.now(), r.rtf);
+  if (r) leggi(r.testo, r.velocita, r.tabId, Date.now(), r.rtf, r.dizionario);
   else {
     stato.errore = null;
     if (stato.download) stato.download = { ...stato.download, interrotto: false, inAttesa: false };
@@ -239,7 +239,7 @@ function attendi(L) {
   });
 }
 
-async function leggi(testo, velocita, tabId, t0, rtfSalvato) {
+async function leggi(testo, velocita, tabId, t0, rtfSalvato, dizionario) {
   ferma(false);
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
   if (await serveConsenso()) {
@@ -257,7 +257,7 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato) {
     finePrevista: 0,
     generazione: 0,
     registrazione: [],
-    richiesta: { testo, velocita, tabId, rtf: rtfSalvato },
+    richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario },
   };
   lettura = ultimaLettura = L;
   if (typeof velocita === 'number') stato.velocita = velocita;
@@ -269,7 +269,7 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato) {
     if (c.state !== 'running') await c.resume();
     await motore();
     if (L !== lettura) return;
-    const r = await chiedi({ tipo: 'prepara', testo, sessione: L.id, opzioni: { rtf: rtfUsato() } });
+    const r = await chiedi({ tipo: 'prepara', testo, sessione: L.id, opzioni: { rtf: rtfUsato(), dizionario } });
     L.parametri = { rtf: rtfUsato(), anticipo: anticipo(), bloccoIniziale: bloccoIniziale() };
     if (L !== lettura) return;
     L.blocchi = r.blocchi;
@@ -431,6 +431,11 @@ function impostaVelocita(v) {
 
 // l'offscreen document non ha chrome.runtime.getURL: l'indirizzo si ricava dal proprio
 const URL_BACKGROUND = new URL('background.js', location.href).href;
+// dizionario personale: solo coppie di stringhe brevi
+const dizionarioValido = (d) =>
+  Array.isArray(d)
+    ? d.filter((v) => Array.isArray(v) && v.length === 2 && v.every((x) => typeof x === 'string' && x.length > 0 && x.length <= 100)).slice(0, 300)
+    : [];
 chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (mittente.id !== chrome.runtime.id) return;
   // all'offscreen parla solo il service worker
@@ -441,7 +446,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.tipo === 'leggi' && msg.rtf !== undefined && !(typeof msg.rtf === 'number' && Number.isFinite(msg.rtf) && msg.rtf > 0.05 && msg.rtf < 20)) msg.rtf = undefined;
   switch (msg.tipo) {
     case 'leggi':
-      leggi(msg.testo, msg.velocita, msg.tabId, msg.t0, msg.rtf);
+      leggi(msg.testo, msg.velocita, msg.tabId, msg.t0, msg.rtf, dizionarioValido(msg.dizionario));
       break;
     case 'consenti':
       consenti();

@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.0.5.
+Ultimo aggiornamento: versione 1.1.0.
 
 WebG Voice è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente.
@@ -22,7 +22,10 @@ menu contestuale) e solo nella scheda in cui lo chiede.
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
 - i file della voce (circa 326 MB), per funzionare offline;
 - la velocità di lettura scelta, l'ultimo testo incollato nel popup e una misura della velocità
-  di sintesi del computer.
+  di sintesi del computer;
+- il dizionario di pronuncia, se lo usi: le coppie di parole che scrivi nelle opzioni. Si salva
+  nello spazio di sincronizzazione di Chrome, quindi se hai la sincronizzazione attiva Chrome lo
+  copia sui tuoi altri dispositivi tramite il tuo account Google; WebG non lo riceve.
 
 Si cancellano disinstallando l'estensione.
 

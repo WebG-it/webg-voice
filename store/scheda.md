@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.0.5
+# Scheda Chrome Web Store, WebG Voice 1.1.0
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -44,6 +44,12 @@ Pensata per l'italiano
 Numeri, percentuali, date, orari, prezzi e abbreviazioni comuni vengono letti come li direbbe una
 persona. I testi lunghi partono in pochi secondi: mentre una parte suona, la successiva si prepara.
 
+Sigle e parole inglesi
+Le sigle che si dicono come parola (RAM, SEO, ISTAT) si leggono come parola, le altre si compitano;
+le parole inglesi più comuni e i nomi come Google, YouTube o iPhone si leggono all'inglese dentro la
+frase. Per le parole che non escono bene, nelle opzioni c'è un dizionario di pronuncia: scrivi come
+si deve leggere una parola e provala con Ascolta.
+
 Si adatta al tuo computer
 La lettura misura da sola la velocità della sintesi e, sui PC più lenti, si regola per evitare
 pause. Nelle opzioni c'è una prova di risoluzione problemi.
@@ -78,6 +84,11 @@ Built for Italian
 Numbers, percentages, dates, times, prices and common abbreviations are read the way a person
 would say them. Long texts start within seconds: while one part plays, the next is prepared.
 
+Acronyms and English words
+Acronyms said as words (RAM, SEO) are read as words, others are spelled out; common English words and
+names such as Google, YouTube or iPhone keep their English pronunciation inside the Italian sentence.
+A pronunciation dictionary in the options lets you fix any word and try it with Listen.
+
 Adapts to your computer
 Reading measures synthesis speed by itself and adjusts on slower PCs to avoid gaps. The options
 page has a troubleshooting test.
@@ -109,7 +120,8 @@ testo selezionato.
 **offscreen**: la sintesi vocale e la riproduzione audio girano in un documento offscreen, così la
 lettura continua anche dopo la chiusura del popup.
 
-**storage**: salva in locale la velocità scelta, il testo incollato nel popup e la misura di
+**storage**: salva il dizionario di pronuncia dell'utente (chrome.storage.sync, solo le coppie
+di parole che scrive lui) e, in locale, la velocità scelta, il testo incollato nel popup e la misura di
 velocità del computer usata per evitare pause. Nulla viene sincronizzato o inviato.
 
 **unlimitedStorage**: la voce (circa 326 MB) resta nella cache dell'estensione per funzionare

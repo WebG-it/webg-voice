@@ -10,6 +10,7 @@ import creaEspeak from './vendor/espeak/espeak-ng.mjs';
 import { avviaEspeak } from './lib/espeak.js';
 import { creaFonemizzatore, tokenizza, dividiFonemi, pausaDopo, MAX_FONEMI } from './lib/fonemi.js';
 import { normalizza } from './lib/normalizza.js';
+import { applicaDizionario, creaFonemizzatoreMisto } from './lib/pronuncia.js';
 import { blocchi } from './lib/testo.js';
 import { ritaglia, conPausa } from './lib/audio.js';
 import { ottieni, byteInCache } from './lib/scarica.js';
@@ -47,7 +48,10 @@ async function carica() {
     indice: indiceE,
     dati: new Uint8Array(datiE),
   });
-  fonemizza = creaFonemizzatore(clausole, { rimuoviMarcatori: true });
+  // italiano con la voce italiana di espeak, parole inglesi con quella americana
+  const fonIt = creaFonemizzatore(clausole, { rimuoviMarcatori: true });
+  const fonEn = creaFonemizzatore((t) => clausole(t, 'en-us'), { rimuoviMarcatori: true });
+  fonemizza = creaFonemizzatoreMisto(fonIt, fonEn);
   fonemizzaFedele = creaFonemizzatore(clausole);
 
   const avanz = (p) => invia({ tipo: 'progresso', fase: 'download', ...p });
@@ -165,7 +169,8 @@ async function gestisci(m) {
   await motore();
   if (m.tipo === 'prepara') {
     const t = performance.now();
-    const b = blocchi(normalizza(m.testo), fonemizza, m.opzioni);
+    const opz = m.opzioni || {};
+    const b = blocchi(normalizza(applicaDizionario(m.testo, opz.dizionario)), fonemizza, opz);
     invia({ tipo: 'blocchi', id: m.id, blocchi: b, ms: Math.round(performance.now() - t) });
   } else if (m.tipo === 'sintetizza') {
     const t = performance.now();
@@ -175,7 +180,7 @@ async function gestisci(m) {
     const sec = audio.length / 24000 - (m.pausa || 0);
     invia({ tipo: 'audio', id: m.id, audio, ms: Math.round(ms), rtf: sec > 0 ? ms / 1000 / sec : null }, [audio.buffer]);
   } else if (m.tipo === 'fonemi') {
-    const f = m.fedele ? fonemizzaFedele(m.testo) : fonemizza(m.normalizza ? normalizza(m.testo) : m.testo);
+    const f = m.fedele ? fonemizzaFedele(m.testo) : fonemizza(m.normalizza ? normalizza(applicaDizionario(m.testo, m.dizionario)) : m.testo);
     invia({ tipo: 'fonemi', id: m.id, fonemi: f });
   }
   // @@test-inizio

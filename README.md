@@ -43,6 +43,14 @@ al primo uso compare un pulsante per scaricarlo.
   in alternativa funziona il tasto destro → Leggi ad alta voce.
 - Le scorciatoie si cambiano da `chrome://extensions/shortcuts`. Chi aveva già installato una
   versione precedente conserva le scorciatoie di prima: Chrome non le cambia da solo.
+- Sigle e parole inglesi: le sigle che si dicono come parola (RAM, SEO, ISTAT, IVA…) si leggono come
+  parola, le altre si compitano (USB, PDF, CPU…); le parole inglesi e i nomi tech più comuni
+  (download, browser, Google, YouTube, WhatsApp, iPhone, Wi-Fi…) e le parole tipo CamelCase
+  (VHelper → «vi helper») si leggono con la pronuncia inglese, dentro la frase italiana. Non è
+  perfetto su tutto: per le parole che restano storte c'è il dizionario.
+- **Dizionario di pronuncia** nelle opzioni: coppie «scritto → come si legge» (es. VHelper → vi
+  helper), con il pulsante Ascolta per provarle e import/export a righe. Si salva nel profilo
+  Chrome dell'utente e si sincronizza con i suoi dispositivi se ha la sincronizzazione attiva.
 - La lettura si regola da sola sulla velocità del computer: misura i tempi durante le letture e,
   sui PC più lenti, usa blocchi più corti e ne prepara di più in anticipo.
 - Nelle opzioni dell'estensione, sezione **Risoluzione problemi**: se senti pause, una prova misura

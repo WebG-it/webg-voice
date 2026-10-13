@@ -184,3 +184,123 @@ modelliInCache().then((c) => {
   info.voce = c ? 'presente, funziona offline' : `da scaricare (circa ${Math.round(BYTE_TOTALI / 1e6)} MB)`;
   scrivi($('info'), info);
 });
+
+// ---- Dizionario di pronuncia (chrome.storage.sync, piccolo) ----
+const MAX_VOCI = 300;
+let voci = [];
+
+async function caricaDizionario() {
+  try {
+    const { dizionario } = await chrome.storage.sync.get('dizionario');
+    voci = Array.isArray(dizionario) ? dizionario : [];
+  } catch {
+    voci = [];
+  }
+  disegnaDizionario();
+}
+
+async function salvaDizionario(msg) {
+  voci = voci.filter((v) => v[0].trim() && v[1].trim()).slice(0, MAX_VOCI);
+  try {
+    await chrome.storage.sync.set({ dizionario: voci });
+    $('dizStato').textContent = msg || 'Salvato.';
+  } catch (e) {
+    $('dizStato').textContent = `Non salvato: ${e.message || e}`;
+  }
+  disegnaDizionario();
+}
+
+function disegnaDizionario() {
+  const tb = $('dizRighe');
+  tb.innerHTML = '';
+  voci.forEach((v, i) => {
+    const tr = document.createElement('tr');
+    const cella = (indice) => {
+      const td = document.createElement('td');
+      const inp = document.createElement('input');
+      inp.value = v[indice];
+      inp.maxLength = 100;
+      inp.setAttribute('aria-label', indice ? 'Si legge' : 'Scritto');
+      inp.addEventListener('change', () => {
+        voci[i][indice] = inp.value;
+        salvaDizionario();
+      });
+      td.append(inp);
+      return td;
+    };
+    const az = document.createElement('td');
+    az.className = 'az';
+    const asc = document.createElement('button');
+    asc.textContent = 'Ascolta';
+    asc.addEventListener('click', () => ascolta(voci[i][0]));
+    const del = document.createElement('button');
+    del.textContent = 'Elimina';
+    del.addEventListener('click', () => {
+      voci.splice(i, 1);
+      salvaDizionario('Eliminato.');
+    });
+    az.append(asc, ' ', del);
+    tr.append(cella(0), cella(1), az);
+    tb.append(tr);
+  });
+}
+
+let audioDiz = null;
+async function ascolta(scritto, extra) {
+  if (!scritto || !scritto.trim()) return;
+  try {
+    if (!(await modelliInCache())) {
+      $('dizStato').textContent = 'La voce non è ancora scaricata: prova di nuovo fra poco.';
+      return;
+    }
+    if (!worker) avviaWorker();
+    $('dizStato').textContent = 'Preparo la voce…';
+    await chiedi({ tipo: 'avvia' });
+    const diz = extra ? [...voci, extra] : voci;
+    const { fonemi } = await chiedi({ tipo: 'fonemi', testo: scritto, normalizza: true, dizionario: diz });
+    const s = await chiedi({ tipo: 'sintetizza', fonemi, velocita: 1, pausa: 0 });
+    if (audioDiz) audioDiz.pause();
+    audioDiz = new Audio(URL.createObjectURL(new Blob([wav(s.audio)], { type: 'audio/wav' })));
+    await audioDiz.play();
+    $('dizStato').textContent = `Fonemi: ${fonemi}`;
+  } catch (e) {
+    $('dizStato').textContent = `Errore: ${e.message || e}`;
+  }
+}
+
+$('dizAggiungi').addEventListener('click', () => {
+  const a = $('dizScritto').value.trim();
+  const b = $('dizLettura').value.trim();
+  if (!a || !b) {
+    $('dizStato').textContent = 'Scrivi la parola e come si legge.';
+    return;
+  }
+  const esistente = voci.findIndex((v) => v[0].toLowerCase() === a.toLowerCase());
+  if (esistente >= 0) voci[esistente] = [a, b];
+  else voci.push([a, b]);
+  $('dizScritto').value = $('dizLettura').value = '';
+  salvaDizionario('Aggiunto.');
+});
+$('dizAscoltaNuova').addEventListener('click', () => {
+  const a = $('dizScritto').value.trim();
+  const b = $('dizLettura').value.trim();
+  ascolta(a, a && b ? [a, b] : null);
+});
+$('dizEsporta').addEventListener('click', () => {
+  $('dizTesto').value = voci.map((v) => `${v[0]} = ${v[1]}`).join('\n');
+  $('dizStato').textContent = `${voci.length} voci esportate qui sopra: copiale dove vuoi.`;
+});
+$('dizImporta').addEventListener('click', () => {
+  const nuove = $('dizTesto')
+    .value.split('\n')
+    .map((r) => r.split('='))
+    .filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
+    .map((p) => [p[0].trim().slice(0, 100), p[1].trim().slice(0, 100)]);
+  for (const n of nuove) {
+    const i = voci.findIndex((v) => v[0].toLowerCase() === n[0].toLowerCase());
+    if (i >= 0) voci[i] = n;
+    else voci.push(n);
+  }
+  salvaDizionario(`${nuove.length} voci importate.`);
+});
+caricaDizionario();

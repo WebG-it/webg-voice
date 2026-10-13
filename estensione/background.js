@@ -78,6 +78,16 @@ async function rtfSalvato() {
   return typeof rtf === 'number' ? rtf : undefined;
 }
 
+/** Dizionario personale di pronuncia, dalle opzioni: [[scritto, lettura], ...] */
+async function dizionario() {
+  try {
+    const { dizionario: d } = await chrome.storage.sync.get('dizionario');
+    return Array.isArray(d) ? d : [];
+  } catch {
+    return [];
+  }
+}
+
 async function velocitaSalvata() {
   const { velocita } = await chrome.storage.local.get('velocita');
   return typeof velocita === 'number' ? velocita : VEL_DEFAULT;
@@ -213,7 +223,7 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
     }
   }
   const conBarra = await iniettaBarra(tab.id);
-  await aOffscreen({ tipo: 'leggi', testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), tabId: conBarra ? tab.id : null, t0 });
+  await aOffscreen({ tipo: 'leggi', testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), dizionario: await dizionario(), tabId: conBarra ? tab.id : null, t0 });
   return true;
 }
 
@@ -271,7 +281,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         return { stato: s, velocita: await velocitaSalvata() };
       }
       case 'leggiTesto':
-        return aOffscreen({ tipo: 'leggi', testo: msg.testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), tabId: null, t0: Date.now() });
+        return aOffscreen({ tipo: 'leggi', testo: msg.testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), dizionario: await dizionario(), tabId: null, t0: Date.now() });
       case 'velocita':
         await chrome.storage.local.set({ velocita: msg.valore });
         if (await chrome.offscreen.hasDocument()) return aOffscreen({ tipo: 'velocita', valore: msg.valore });
