@@ -46,3 +46,12 @@ progress { width: 100%; accent-color: var(--accento); }
 .verdetto.ok { color: var(--ok); }
 .verdetto.attenzione { color: var(--attenzione); }
 .verdetto.male { color: var(--male); }
+
+summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: '▸'; color: var(--tenue); }
+details[open] summary::before { content: '▾'; }
+summary h2 { margin: 0; }
+details[open] summary { margin-bottom: 12px; }
+a { color: var(--accento); }
+kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1px solid var(--bordo); border-radius: 4px; }

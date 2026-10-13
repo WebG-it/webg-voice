@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.0.2.
+Ultimo aggiornamento: versione 1.0.3.
 
 WebG Voice, leggi ad alta voce offline è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente.
@@ -28,8 +28,8 @@ Si cancellano disinstallando l'estensione.
 
 ## Connessioni di rete
 
-Le uniche connessioni servono a scaricare i file della voce, al primo utilizzo e dopo conferma
-dell'utente: dalla release del progetto su GitHub (github.com e
+Le uniche connessioni servono a scaricare i file della voce, una volta sola al primo avvio
+(sulle connessioni a consumo solo dopo un clic dell'utente): dalla release del progetto su GitHub (github.com e
 release-assets.githubusercontent.com) o, in alternativa, da Hugging Face (huggingface.co). Come
 per qualsiasi download, questi servizi ricevono l'indirizzo IP e i dati tecnici della richiesta
 secondo le loro informative; l'estensione non trasmette altro.
@@ -45,5 +45,5 @@ https://github.com/WebG-it/webg-voice/issues
 
 WebG Voice collects no data. Text is turned into speech locally in your browser and never
 leaves your computer. The only network requests download the voice files (about 326 MB) from
-the project's GitHub release or, as a fallback, from Hugging Face, after you confirm. Settings and
+the project's GitHub release or, as a fallback, from Hugging Face, once on first start. Settings and
 the voice files are stored locally and removed when you uninstall the extension.

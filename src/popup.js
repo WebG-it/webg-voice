@@ -57,7 +57,7 @@ function mostra(s) {
 
   if (s && s.fase === 'consenso') {
     const gia = d && d.scaricati ? ` Ne hai già ${MB(d.scaricati)}: riprende da lì.` : '';
-    statoTesto.textContent = `Per leggere serve scaricare la voce, circa ${MB(BYTE_TOTALI)}, una volta sola. Poi funziona anche offline.${gia}`;
+    statoTesto.textContent = `Sei su una connessione a consumo: la voce (circa ${MB(BYTE_TOTALI)}, una volta sola) si scarica solo se lo chiedi.${gia}`;
     scarica.textContent = 'Scarica';
     scarica.hidden = rifiuta.hidden = false;
   } else if (d && d.interrotto) {
@@ -66,13 +66,18 @@ function mostra(s) {
     barra(d);
     scarica.textContent = 'Riprova';
     scarica.hidden = false;
+  } else if (d && d.riprovoTra) {
+    statoTesto.textContent = `Connessione interrotta: riprovo da solo fra ${d.riprovoTra} secondi.`;
+    if (d.totale) barra(d);
   } else if (s && s.errore) {
     statoBox.classList.add('errore');
     statoTesto.textContent = `Errore: ${s.errore}`;
   } else if (d && d.totale && !d.inAttesa && d.scaricati < d.totale) {
-    statoTesto.textContent = d.riprovo
-      ? `Connessione interrotta, riprovo (tentativo ${d.riprovo})…`
-      : `Primo avvio: scarico la voce da ${d.fonte || 'internet'}. Poi resta sul computer e funziona offline.`;
+    statoTesto.textContent = d.riprovoTra
+      ? `Connessione interrotta: riprovo da solo fra ${d.riprovoTra} secondi.`
+      : d.riprovo
+        ? `Connessione instabile, riprovo (tentativo ${d.riprovo})…`
+        : `Primo avvio: scarico il modello vocale, una volta sola. Poi funziona anche offline.`;
     barra(d);
   } else if (d && d.avvio) {
     statoTesto.textContent = 'Avvio il motore di sintesi…';
@@ -85,8 +90,8 @@ function mostra(s) {
   } else if (inCache || (s && s.motorePronto)) {
     statoTesto.textContent = 'Voce pronta, funziona anche offline.';
   } else {
-    statoTesto.textContent = `La voce si scarica una volta sola (circa ${MB(BYTE_TOTALI)}), poi resta sul computer e funziona offline.`;
-    scarica.textContent = 'Scarica la voce adesso';
+    statoTesto.textContent = `Il modello vocale (circa ${MB(BYTE_TOTALI)}) non è ancora sul computer: si scarica una volta sola, poi funziona offline.`;
+    scarica.textContent = 'Scarica adesso';
     scarica.hidden = false;
   }
 }
@@ -139,10 +144,6 @@ $('tasti').addEventListener('click', (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
-$('diagnostica').addEventListener('click', (e) => {
-  e.preventDefault();
-  chrome.runtime.openOptionsPage();
-});
 
 chrome.runtime.onMessage.addListener((msg, mittente) => {
   if (mittente.id !== chrome.runtime.id) return;
@@ -155,8 +156,13 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
 (async () => {
   const [{ bozza }, comandi] = await Promise.all([chrome.storage.local.get('bozza'), chrome.commands.getAll()]);
   if (bozza) testo.value = bozza;
-  const c = comandi.find((x) => x.name === 'leggi-selezione');
-  $('tasto').textContent = c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : 'non assegnata';
+  // scorciatoie lette da Chrome: restano giuste anche se l'utente le cambia
+  const tasto = (nome) => {
+    const c = comandi.find((x) => x.name === nome);
+    return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : 'non assegnata';
+  };
+  $('tasto').textContent = tasto('leggi-selezione');
+  $('tastoStop').textContent = tasto('ferma-lettura');
   try {
     inCache = await modelliInCache();
   } catch {

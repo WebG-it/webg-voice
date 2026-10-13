@@ -117,12 +117,16 @@
     if (s.fase === 'consenso') {
       mostra = true;
       const gia = d && d.scaricati ? ` Ne hai già ${MB(d.scaricati)} MB: riprende da lì.` : '';
-      msgEl.textContent = `Per leggere serve scaricare la voce, circa ${MB(d ? d.totale : 330e6)} MB, una volta sola. Poi funziona anche offline.${gia}`;
+      msgEl.textContent = `Sei su una connessione a consumo: per leggere serve scaricare la voce, circa ${MB(d ? d.totale : 330e6)} MB, una volta sola.${gia}`;
       siEl.textContent = 'Scarica';
       siEl.hidden = noEl.hidden = false;
     } else if (d && d.totale && !d.interrotto && d.scaricati < d.totale && !d.inAttesa) {
       mostra = true;
-      msgEl.textContent = d.riprovo ? `Connessione interrotta, riprovo (${d.riprovo})…` : 'Scarico la voce, una volta sola…';
+      msgEl.textContent = d.riprovoTra
+        ? `Connessione interrotta: riprovo da solo fra ${d.riprovoTra} secondi.`
+        : d.riprovo
+          ? `Connessione instabile, riprovo (${d.riprovo})…`
+          : 'Scarico il modello vocale, una volta sola: la lettura parte appena è pronto.';
       avanz.hidden = mbEl.hidden = false;
       barraAv.style.width = `${(100 * d.scaricati) / d.totale}%`;
       mbEl.textContent = `${Math.floor((100 * d.scaricati) / d.totale)}% · ${MB(d.scaricati)} di ${MB(d.totale)} MB`;

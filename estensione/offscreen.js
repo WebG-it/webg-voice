@@ -3,6 +3,7 @@
 // pubblica a ogni cambio e il service worker lo gira alla barretta della scheda.
 
 import { FREQUENZA, wav } from './lib/audio.js';
+import { impronta } from './lib/impronta.js';
 
 class Annullato extends Error {}
 
@@ -55,7 +56,8 @@ function controllaRiposo() {
   clearTimeout(timerRiposo);
   if (stato.fase === 'inattivo') {
     timerRiposo = setTimeout(() => {
-      if (stato.fase === 'inattivo') chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
+      // non durante il download in sottofondo
+      if (stato.fase === 'inattivo' && !caricamento) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
     }, RIPOSO_MS);
   }
 }
@@ -119,34 +121,71 @@ function contesto() {
   return ctx;
 }
 
+// Caricamento del motore. Se manca il modello lo scarica; se il download si
+// interrompe riprova da solo con attese crescenti (riprende dai pezzi gia' salvati),
+// poi si arrende e mostra "Riprova".
+const ATTESE_AUTO = [5, 15, 45]; // secondi
 let caricamento = null;
 function motore() {
   if (stato.motorePronto) return Promise.resolve();
-  caricamento ??= chiedi({ tipo: 'avvia' })
-    .then((r) => {
-      stato.motorePronto = true;
-      stato.info = r.info;
-      stato.download = null;
-      pubblica();
-    })
-    .finally(() => {
-      caricamento = null;
-    });
+  caricamento ??= (async () => {
+    for (let t = 0; ; t++) {
+      try {
+        const r = await chiedi({ tipo: 'avvia' });
+        stato.motorePronto = true;
+        stato.info = r.info;
+        stato.download = null;
+        pubblica();
+        return;
+      } catch (e) {
+        const msg = String(e && e.message ? e.message : e);
+        if (!/download/i.test(msg) || t >= ATTESE_AUTO.length) throw e;
+        stato.download = { ...(stato.download || {}), riprovoTra: ATTESE_AUTO[t], dettaglio: msg };
+        pubblica();
+        await new Promise((r) => setTimeout(r, ATTESE_AUTO[t] * 1000));
+        if (stato.download) stato.download.riprovoTra = undefined;
+      }
+    }
+  })().finally(() => {
+    caricamento = null;
+  });
   return caricamento;
 }
 
-// Il primo download (circa 330 MB) parte solo dopo una conferma esplicita,
-// dal popup o dalla barretta. La conferma vale finche' il documento e' aperto.
+// Il modello (circa 330 MB) si scarica da solo: all'installazione, all'avvio del
+// browser se manca, o alla prima lettura. Unica eccezione la connessione a
+// consumo: li' serve un clic esplicito (dal popup o dalla barretta).
+const aConsumo = () => {
+  const c = navigator.connection;
+  return !!(c && (c.saveData || c.type === 'cellular'));
+};
 let consenso = false;
 let richiestaInAttesa = null;
 
-async function serveConsenso() {
-  if (stato.motorePronto || consenso) return false;
+async function modelloCompleto() {
+  if (stato.motorePronto) return true;
   const c = await chiedi({ tipo: 'statoCache' });
-  const completo = Object.values(c.completi).every(Boolean);
-  if (completo) return false;
-  stato.download = { scaricati: c.scaricati, totale: c.totale, inAttesa: true };
+  return { completo: Object.values(c.completi).every(Boolean), c };
+}
+
+/** true se serve il clic dell'utente prima di scaricare (solo a consumo). */
+async function serveConsenso() {
+  if (stato.motorePronto || consenso || caricamento || !aConsumo()) return false;
+  const r = await modelloCompleto();
+  if (r === true || r.completo) return false;
+  stato.download = { scaricati: r.c.scaricati, totale: r.c.totale, inAttesa: true };
+  stato.consumo = true;
   return true;
+}
+
+/** Download in sottofondo, senza lettura (installazione, avvio del browser). */
+async function scaricaInSottofondo() {
+  if (stato.motorePronto || caricamento) return;
+  if (await serveConsenso()) {
+    pubblica();
+    return;
+  }
+  motore().catch(errore);
 }
 
 function consenti() {
@@ -155,30 +194,35 @@ function consenti() {
   richiestaInAttesa = null;
   if (r) leggi(r.testo, r.velocita, r.tabId, Date.now(), r.rtf);
   else {
-    stato.fase = 'preparazione';
     stato.errore = null;
+    if (stato.download) stato.download = { ...stato.download, interrotto: false, inAttesa: false };
     pubblica();
-    motore()
-      .then(() => {
-        if (stato.fase === 'preparazione' && !lettura) {
-          stato.fase = 'inattivo';
-          pubblica();
-        }
-      })
-      .catch(errore);
+    motore().catch(errore);
   }
 }
 
-// Stima del rapporto col tempo reale su questo PC (media mobile), per adattare
-// la lettura: piu' blocchi in anticipo e partenza con un piccolo margine.
+// Autoregolazione: rapporto col tempo reale misurato sui blocchi delle letture
+// vere (media mobile, peso 0,3 all'ultimo blocco), salvato in storage ogni pochi
+// blocchi. Decide blocchi piu' corti, quanti blocchi preparare in anticipo e se
+// partire dopo due blocchi. Senza misure si parte prudenti (come un PC lento).
+const RTF_PRUDENTE = 0.9;
 let rtf = null;
-function aggiornaRtf(v) {
-  if (typeof v !== 'number' || !isFinite(v)) return;
+let blocchiDaSalvare = 0;
+let aggiornaRtfOriginale = null;
+// eslint-disable-next-line prefer-const
+let aggiornaRtf = function (v) {
+  if (typeof v !== 'number' || !isFinite(v) || v <= 0 || v > 20) return;
   rtf = rtf === null ? v : rtf * 0.7 + v * 0.3;
   stato.rtf = +rtf.toFixed(2);
+  if (++blocchiDaSalvare >= 3) salvaRtf();
+};
+function salvaRtf() {
+  blocchiDaSalvare = 0;
+  if (rtf !== null) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'rtf', valore: +rtf.toFixed(3) }).catch(() => {});
 }
-const anticipo = () => (rtf === null || rtf < 0.8 ? 3 : rtf < 1 ? 4 : 6);
-const bloccoIniziale = () => (rtf !== null && rtf >= 0.95 ? 2 : 1);
+const rtfUsato = () => (rtf === null ? RTF_PRUDENTE : rtf);
+const anticipo = () => (rtfUsato() < 0.8 ? 3 : rtfUsato() < 1 ? 4 : 6);
+const bloccoIniziale = () => (rtfUsato() >= 0.95 ? 2 : 1);
 
 let lettura = null;
 let ultimaLettura = null;
@@ -217,7 +261,7 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato) {
   };
   lettura = ultimaLettura = L;
   if (typeof velocita === 'number') stato.velocita = velocita;
-  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0 });
+  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0, impronta: impronta(testo) });
   stato.metriche = {};
   pubblica();
   try {
@@ -225,7 +269,8 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato) {
     if (c.state !== 'running') await c.resume();
     await motore();
     if (L !== lettura) return;
-    const r = await chiedi({ tipo: 'prepara', testo, sessione: L.id, opzioni: { rtf } });
+    const r = await chiedi({ tipo: 'prepara', testo, sessione: L.id, opzioni: { rtf: rtfUsato() } });
+    L.parametri = { rtf: rtfUsato(), anticipo: anticipo(), bloccoIniziale: bloccoIniziale() };
     if (L !== lettura) return;
     L.blocchi = r.blocchi;
     stato.totale = r.blocchi.length;
@@ -309,7 +354,7 @@ function programma(L, i, audio) {
     if (i === L.blocchi.length - 1 && L.sorgenti.length === 0) {
       lettura = null;
       stato.fase = 'inattivo';
-      if (rtf !== null) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'rtf', valore: rtf }).catch(() => {});
+      salvaRtf();
       pubblica();
       return;
     }
@@ -322,6 +367,7 @@ function programma(L, i, audio) {
 function ferma(pubblicare = true) {
   const L = lettura;
   if (L) {
+    if (blocchiDaSalvare) salvaRtf();
     worker.postMessage({ tipo: 'annulla', sessione: L.id });
     for (const s of L.sorgenti) {
       s.src.onended = null;
@@ -422,6 +468,9 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       break;
     case 'preparaMotore':
       consenti();
+      break;
+    case 'avvioAutomatico':
+      scaricaInSottofondo();
       break;
     case 'stato':
       break;

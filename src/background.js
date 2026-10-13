@@ -1,10 +1,14 @@
 // Service worker: menu contestuale, scorciatoia, ponte fra popup/barretta e
 // l'offscreen document che fa sintesi e audio.
 
+import { modelliInCache } from './lib/modelli.js';
+import { impronta } from './lib/impronta.js';
+
 const OFFSCREEN = 'offscreen.html';
 const VEL_DEFAULT = 1;
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((info) => {
+  if (info.reason === 'install' || info.reason === 'update') avviaDownloadSeServe();
   chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: 'leggi-selezione',
@@ -12,6 +16,32 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['selection'],
   });
 });
+
+chrome.runtime.onStartup.addListener(() => avviaDownloadSeServe());
+
+/** Se il modello non e' ancora sul computer, il download parte in sottofondo. */
+async function avviaDownloadSeServe() {
+  try {
+    if (await modelliInCache()) return;
+    await aOffscreen({ tipo: 'avvioAutomatico' });
+  } catch (e) {
+    console.warn('download automatico non avviato:', e && e.message);
+  }
+}
+
+// Avanzamento del download nel badge dell'icona; sparisce a fine download.
+let ultimoBadge = '';
+function aggiornaBadge(s) {
+  const d = s && s.download;
+  let testo = '';
+  if (d && d.totale && !d.inAttesa && d.scaricati < d.totale) {
+    testo = d.interrotto ? '!' : `${Math.floor((100 * d.scaricati) / d.totale)}%`;
+  }
+  if (testo === ultimoBadge) return;
+  ultimoBadge = testo;
+  chrome.action.setBadgeBackgroundColor({ color: d && d.interrotto ? '#b3261e' : '#23417b' });
+  chrome.action.setBadgeText({ text: testo });
+}
 
 let creazione = null;
 async function assicuraOffscreen() {
@@ -143,6 +173,14 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
     }
     return false;
   }
+  // Alt+Q sullo stesso testo che si sta leggendo: pausa o ripresa, non si ricomincia
+  if (!daPopup) {
+    const s = await statoAttuale();
+    if (s && ['lettura', 'pausa', 'preparazione'].includes(s.fase) && s.impronta === impronta(testo)) {
+      await aOffscreen({ tipo: 'alterna' });
+      return true;
+    }
+  }
   const conBarra = await iniettaBarra(tab.id);
   await aOffscreen({ tipo: 'leggi', testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), tabId: conBarra ? tab.id : null, t0 });
   return true;
@@ -176,6 +214,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.da === 'offscreen' && !daOffscreen(mittente)) return;
   // Stato dall'offscreen: lo giro alla scheda che ha la barretta
   if (msg.da === 'offscreen' && msg.tipo === 'stato') {
+    aggiornaBadge(msg.stato);
     const tabId = msg.stato && msg.stato.tabId;
     if (tabId !== null && tabId !== undefined) chrome.tabs.sendMessage(tabId, msg).catch(() => {});
     return;
@@ -238,3 +277,11 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     .catch((e) => rispondi({ errore: String(e.message || e) }));
   return true;
 });
+
+// @@test-inizio  (tolto dalla build di produzione)
+// Simula la scorciatoia sulla scheda attiva (l'activeTab va concesso prima, es. aprendo il popup)
+globalThis.__testScorciatoia = async () => {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  return leggiDaScheda(tab);
+};
+// @@test-fine

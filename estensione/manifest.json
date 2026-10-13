@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WebG Voice, leggi ad alta voce offline",
   "short_name": "WebG Voice",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Legge ad alta voce in italiano il testo selezionato, con una voce neurale che gira sul tuo computer. Gratis e offline.",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",
@@ -14,7 +14,7 @@
     "https://*.hf.co/*"
   ],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
-  "background": { "service_worker": "background.js" },
+  "background": { "service_worker": "background.js", "type": "module" },
   "action": {
     "default_popup": "popup.html",
     "default_title": "WebG Voice",
@@ -24,10 +24,11 @@
   "options_ui": { "page": "diagnostica.html", "open_in_tab": true },
   "commands": {
     "leggi-selezione": {
-      "suggested_key": { "default": "Alt+Shift+L" },
+      "suggested_key": { "default": "Alt+Q", "mac": "Alt+Q" },
       "description": "Leggi il testo selezionato (senza selezione: pausa o riprendi)"
     },
     "ferma-lettura": {
+      "suggested_key": { "default": "Alt+W", "mac": "Alt+W" },
       "description": "Ferma la lettura"
     }
   },

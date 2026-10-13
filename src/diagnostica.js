@@ -6,8 +6,21 @@ import { wav, FREQUENZA } from './lib/audio.js';
 const $ = (id) => document.getElementById(id);
 const manifest = chrome.runtime.getManifest();
 const nome = manifest.short_name || manifest.name;
-$('titolo').textContent = `${nome}, diagnostica`;
-document.title = `${nome}, diagnostica`;
+$('titolo').textContent = nome;
+document.title = nome;
+$('versioneTesta').textContent = `Versione ${manifest.version}.`;
+chrome.commands.getAll().then((c) => {
+  const tasto = (nome) => {
+    const x = c.find((k) => k.name === nome);
+    return x && x.shortcut ? x.shortcut.replace(/Shift/g, 'Maiusc') : 'non assegnata';
+  };
+  $('tasto').textContent = tasto('leggi-selezione');
+  $('tastoStop').textContent = tasto('ferma-lettura');
+});
+$('tasti').addEventListener('click', (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+});
 
 const FRASI = [
   ['breve', 'Buongiorno a tutti.'],
@@ -129,7 +142,6 @@ async function prova() {
     risultati.esito = testo;
     scrivi($('risultati'), risultati);
     $('stato').textContent = 'Prova finita.';
-    await chrome.storage.local.set({ rtf });
     const tot = parti.reduce((s, p) => s + p.length, 0);
     audioProva = new Float32Array(tot);
     let o = 0;
@@ -149,7 +161,7 @@ async function prova() {
 }
 
 function testoRisultato() {
-  const righe = [`${manifest.name} ${manifest.version}, diagnostica del ${new Date().toLocaleString('it-IT')}`];
+  const righe = [`${manifest.name} ${manifest.version}, prova del ${new Date().toLocaleString('it-IT')}`];
   for (const [k, v] of Object.entries(info)) righe.push(`${k}: ${v}`);
   for (const [k, v] of Object.entries(risultati)) righe.push(`${k}: ${v}`);
   return righe.join('\n');
@@ -169,6 +181,10 @@ $('ascolta').addEventListener('click', () => {
 globalThis.__testoDiagnostica = testoRisultato;
 // @@test-fine
 
+chrome.storage.local.get('rtf').then(({ rtf }) => {
+  info['adattamento automatico'] = typeof rtf === 'number' ? `rapporto misurato nelle letture: ${rtf.toFixed(2)}` : 'nessuna lettura ancora misurata';
+  scrivi($('info'), info);
+});
 scrivi($('info'), info);
 modelliInCache().then((c) => {
   info.voce = c ? 'presente, funziona offline' : `da scaricare (circa ${Math.round(BYTE_TOTALI / 1e6)} MB)`;

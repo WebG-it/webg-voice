@@ -9,7 +9,7 @@ eSpeak NG. Questi sono i componenti di terze parti, con le loro licenze.
 - Esportazione ONNX: onnx-community, https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
   (revisione `1939ad2a8e416c0acfeecc08a694d14ef25f2231`, file `onnx/model.onnx` e `voices/if_sara.bin`)
 - Licenza: Apache License 2.0, https://www.apache.org/licenses/LICENSE-2.0
-- Il modello non è incluso nell'estensione: si scarica al primo uso dalla release `model-v1`
+- Il modello non è incluso nell'estensione: si scarica al primo avvio dalla release `model-v1`
   di questo repository (copia identica, stessa impronta SHA-256) o, in riserva, da Hugging Face.
 - Il vocabolario dei fonemi in `src/lib/vocab.js` viene dalla configurazione di Kokoro (Apache-2.0).
 

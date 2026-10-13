@@ -1,4 +1,5 @@
-// File del modello scaricati al primo uso e tenuti in IndexedDB (lib/archivio.js).
+// File del modello scaricati al primo avvio e tenuti in IndexedDB (lib/archivio.js).
+import { esiste } from './archivio.js';
 //
 // Sorgente primaria: gli asset della release "model-v1" del repository WebG
 // su GitHub (scripts/pubblica-modello.sh). Riserva automatica: la stessa
@@ -35,7 +36,6 @@ export const chiaveParte = (nome, i) => `v1/parti/${nome}/${i}`;
 
 /** true se modello e voce sono gia' sul computer. */
 export async function modelliInCache() {
-  const { esiste } = await import('./archivio.js');
   for (const k of Object.keys(FILE_REMOTI)) if (!(await esiste(chiave(k)))) return false;
   return true;
 }

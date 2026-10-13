@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.0.2
+# Scheda Chrome Web Store, WebG Voice 1.0.3
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -27,23 +27,22 @@ naturale ed espressiva e funziona interamente sul tuo computer: non serve un acc
 abbonamenti e il testo non viene mai inviato a servizi esterni.
 
 Come si usa
-• Seleziona il testo e premi Alt+Maiusc+L, oppure tasto destro → "Leggi ad alta voce".
+• Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma.
 • Durante la lettura compare una piccola barra con pausa, stop e velocità.
 • Dal pulsante dell'estensione puoi incollare un testo e regolare la velocità, da 0,7 a 1,5.
-• Senza testo selezionato, la stessa scorciatoia mette in pausa e riprende.
 
 Gratis e offline
-Al primo utilizzo l'estensione chiede conferma e scarica la voce, circa 326 MB, una volta sola.
-Il download riparte da dove si era fermato se la connessione cade. Da quel momento la lettura
-funziona anche senza internet.
+Al primo avvio scarica il modello vocale (circa 326 MB) una volta sola, in sottofondo, con
+l'avanzamento sull'icona. Se la connessione cade riprende da solo da dove era arrivato; sulle
+connessioni a consumo aspetta un tuo clic. Da quel momento la lettura funziona anche senza internet.
 
 Pensata per l'italiano
 Numeri, percentuali, date, orari, prezzi e abbreviazioni comuni vengono letti come li direbbe una
 persona. I testi lunghi partono in pochi secondi: mentre una parte suona, la successiva si prepara.
 
-Diagnostica
-Dalle opzioni puoi misurare quanto è veloce la sintesi sul tuo computer; sui PC più lenti
-l'estensione si adatta da sola per evitare pause.
+Si adatta al tuo computer
+La lettura misura da sola la velocità della sintesi e, sui PC più lenti, si regola per evitare
+pause. Nelle opzioni c'è una prova di risoluzione problemi.
 
 Privacy
 Nessun dato raccolto, nessun tracciamento, nessuna pubblicità. Le sole connessioni servono a
@@ -60,22 +59,22 @@ and expressive and runs entirely on your computer: no account, no subscription, 
 never sent to any external service.
 
 How to use it
-• Select text and press Alt+Shift+L, or right-click → "Leggi ad alta voce".
+• Select text and press Alt+Q, or right-click → "Leggi ad alta voce". Alt+Q again pauses, Alt+W stops.
 • While reading, a small bar offers pause, stop and speed controls.
 • From the extension button you can paste text and set the speed, from 0.7 to 1.5.
-• With nothing selected, the same shortcut pauses and resumes.
 
 Free and offline
-On first use the extension asks for confirmation and downloads the voice, about 326 MB, once.
-The download resumes where it stopped if the connection drops. After that, reading works offline.
+On first start it downloads the voice model (about 326 MB) once, in the background.
+If the connection drops it resumes on its own; on metered connections it waits for your click.
+After that, reading works offline.
 
 Built for Italian
 Numbers, percentages, dates, times, prices and common abbreviations are read the way a person
 would say them. Long texts start within seconds: while one part plays, the next is prepared.
 
-Diagnostics
-From the options page you can measure how fast speech synthesis runs on your computer; on slower
-PCs the extension adapts automatically to avoid gaps.
+Adapts to your computer
+Reading measures synthesis speed by itself and adjusts on slower PCs to avoid gaps. The options
+page has a troubleshooting test.
 
 Privacy
 No data collected, no tracking, no ads. The only network connections download the voice files.

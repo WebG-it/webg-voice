@@ -13,13 +13,16 @@ Dal Chrome Web Store (quando sarà pubblicata) oppure, per provarla dal codice:
 2. Attiva **Modalità sviluppatore** (in alto a destra).
 3. **Carica estensione non pacchettizzata** e scegli la cartella `estensione`.
 
-Al primo utilizzo l'estensione chiede conferma e scarica la voce, circa 326 MB, una volta
-sola. Il download va a pezzi e, se si interrompe, riparte da dove era arrivato.
+Al primo avvio l'estensione scarica il modello vocale (circa 326 MB) una volta sola, in
+sottofondo: l'avanzamento si vede nell'icona e nel popup. Se chiedi una lettura prima della fine,
+parte appena il modello è pronto. Il download va a pezzi e, se si interrompe, riprende da solo da
+dove era arrivato. Su una connessione a consumo (risparmio dati o rete cellulare) non parte da solo:
+al primo uso compare un pulsante per scaricarlo.
 
 ## Usare
 
-- Seleziona del testo e premi **Alt+Maiusc+L**, oppure tasto destro → **Leggi ad alta voce**.
-- Senza testo selezionato, la stessa scorciatoia mette in pausa e fa ripartire la lettura.
+- Seleziona del testo e premi **Alt+Q**, oppure tasto destro → **Leggi ad alta voce**.
+  **Alt+Q** di nuovo mette in pausa e riprende, **Alt+W** ferma la lettura.
 - Durante la lettura compare in basso a destra una barretta con pausa, stop e velocità.
 - Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5); con il
   campo vuoto, **Leggi** legge il testo selezionato nella pagina.
@@ -30,10 +33,12 @@ sola. Il download va a pezzi e, se si interrompe, riparte da dove era arrivato.
 - Se il testo sta in un riquadro di un altro sito, la scorciatoia non ci arriva: dal popup compare
   il pulsante per consentire la lettura in quel sito (permesso facoltativo, solo per quel sito);
   in alternativa funziona il tasto destro → Leggi ad alta voce.
-- La scorciatoia si cambia da `chrome://extensions/shortcuts`; c'è anche "Ferma la lettura",
-  senza tasto predefinito.
-- **Diagnostica** (dalle opzioni dell'estensione o dal popup): misura la velocità della sintesi
-  su quel computer e dice se ci sono rischi di pause.
+- Le scorciatoie si cambiano da `chrome://extensions/shortcuts`. Chi aveva già installato una
+  versione precedente conserva le scorciatoie di prima: Chrome non le cambia da solo.
+- La lettura si regola da sola sulla velocità del computer: misura i tempi durante le letture e,
+  sui PC più lenti, usa blocchi più corti e ne prepara di più in anticipo.
+- Nelle opzioni dell'estensione, sezione **Risoluzione problemi**: se senti pause, una prova misura
+  la sintesi su quel computer e dà un risultato da mandarci.
 
 ## Come funziona
 
@@ -83,7 +88,7 @@ hexgrad con licenza Apache-2.0, ONNX Runtime Web con licenza MIT: dettagli in `T
 
 **WebG Voice** is a Chrome extension by [WebG](https://www.webg.it) that reads selected text
 aloud in Italian with a natural neural voice (Kokoro-82M, voice Sara) running entirely on your
-computer. No account, no subscription, no text sent anywhere; after a one-time download of about
-326 MB it works offline. Select text and press **Alt+Shift+L**, or right-click → *Leggi ad alta
+computer. No account, no subscription, no text sent anywhere; on first start it downloads the voice model
+(about 326 MB) once, in the background, then it works offline. Select text and press **Alt+Q** (again to pause or resume, **Alt+W** to stop), or right-click → *Leggi ad alta
 voce*. Licensed under GPL-3.0-or-later (it bundles eSpeak NG); see `THIRD_PARTY.md` for the
 Kokoro (Apache-2.0) and ONNX Runtime (MIT) notices. Contact: info@webg.it or GitHub issues.
