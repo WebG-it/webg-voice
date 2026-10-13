@@ -115,6 +115,11 @@ huggingface.co/onnx-community, *.hf.co)**: servono solo a scaricare i file della
 release del progetto su GitHub e, se GitHub non risponde, dalla copia originale su Hugging Face.
 L'estensione non legge né modifica pagine di questi siti e non invia loro alcun dato dell'utente.
 
+**Autorizzazioni host facoltative (https://\*/\*, http://\*/\*)**: non concesse
+all'installazione. Vengono chieste solo se l'utente vuole far leggere un testo che sta in un
+riquadro (iframe) di un altro sito, e solo per quel sito, con un clic dal popup: servono a leggere
+la selezione dentro quel riquadro, dove activeTab non arriva.
+
 **Codice remoto**: no. Tutto il codice (JavaScript e WebAssembly) è incluso nel pacchetto. I file
 scaricati sono i pesi del modello e lo stile della voce, cioè dati, controllati con un'impronta
 SHA-256 fissa.

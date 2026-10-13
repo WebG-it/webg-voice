@@ -4,6 +4,12 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.0.1] - 2026-10-13
+
+- Correzione: la selezione si legge in tutti i riquadri della pagina (iframe), non solo nel principale. Prima negli editor come TinyMCE di Joomla la scorciatoia non leggeva niente.
+- Gestiti anche aree di testo, campi, contenteditable ed editor di codice (CodeMirror); vince il riquadro col focus, la barretta resta nella pagina principale.
+- Per i riquadri di altri siti il popup chiede, solo al bisogno, il permesso per quel sito (optional_host_permissions).
+
 ## [1.0.0] - 2026-10-13
 
 - Prima versione pubblica col marchio WebG.

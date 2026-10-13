@@ -21,7 +21,15 @@ sola. Il download va a pezzi e, se si interrompe, riparte da dove era arrivato.
 - Seleziona del testo e premi **Alt+Maiusc+L**, oppure tasto destro → **Leggi ad alta voce**.
 - Senza testo selezionato, la stessa scorciatoia mette in pausa e fa ripartire la lettura.
 - Durante la lettura compare in basso a destra una barretta con pausa, stop e velocità.
-- Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5).
+- Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5); con il
+  campo vuoto, **Leggi** legge il testo selezionato nella pagina.
+- Funziona anche dentro gli editor: aree di testo, campi, editor nei riquadri (iframe) della stessa
+  pagina come TinyMCE di Joomla e WordPress, editor di codice come CodeMirror.
+- Nell'editor TinyMCE il tasto destro apre il menu dell'editor: per avere il menu di Chrome con
+  **Leggi ad alta voce** usa **Ctrl+clic destro** (oppure la scorciatoia da tastiera).
+- Se il testo sta in un riquadro di un altro sito, la scorciatoia non ci arriva: dal popup compare
+  il pulsante per consentire la lettura in quel sito (permesso facoltativo, solo per quel sito);
+  in alternativa funziona il tasto destro → Leggi ad alta voce.
 - La scorciatoia si cambia da `chrome://extensions/shortcuts`; c'è anche "Ferma la lettura",
   senza tasto predefinito.
 - **Diagnostica** (dalle opzioni dell'estensione o dal popup): misura la velocità della sintesi

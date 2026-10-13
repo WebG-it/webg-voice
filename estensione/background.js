@@ -63,15 +63,59 @@ async function statoAttuale() {
   }
 }
 
-// Eseguita nella pagina: il testo selezionato, anche dentro campi di testo
-function leggiSelezioneNellaPagina() {
-  const el = document.activeElement;
-  if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && /^(text|search|url|email)$/i.test(el.type)))) {
-    const t = el.value.substring(el.selectionStart || 0, el.selectionEnd || 0);
-    if (t.trim()) return t;
+// Eseguita in ogni frame della scheda: il testo selezionato e se il frame ha il
+// focus. Copre la selezione normale e i contenteditable (getSelection), le
+// textarea e gli input (selectionStart/End), e gli editor di codice come
+// CodeMirror 5 o Ace, che tengono il testo selezionato in una textarea nascosta.
+function leggiSelezioneNelFrame() {
+  let testo = '';
+  let el = document.activeElement;
+  // focus dentro uno shadow DOM (componenti web)
+  while (el && el.shadowRoot && el.shadowRoot.activeElement) el = el.shadowRoot.activeElement;
+  if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && /^(text|search|url|email|)$/i.test(el.type || '')))) {
+    try {
+      testo = el.value.substring(el.selectionStart || 0, el.selectionEnd || 0);
+    } catch {}
   }
-  const s = window.getSelection();
-  return s ? s.toString() : '';
+  if (!testo.trim()) {
+    const sel = window.getSelection();
+    testo = sel ? sel.toString() : '';
+  }
+  return { testo, focus: document.hasFocus(), principale: window === window.top };
+}
+
+// Eseguita nel frame principale: origini dei riquadri (iframe) di altri siti,
+// dove activeTab non arriva.
+function riquadriEsterni() {
+  const mie = location.origin;
+  const out = new Set();
+  for (const f of document.querySelectorAll('iframe[src], frame[src]')) {
+    try {
+      const o = new URL(f.src, location.href).origin;
+      if (o !== mie && /^https?:/.test(o)) out.add(o);
+    } catch {}
+  }
+  return [...out];
+}
+
+/** Selezione da tutti i frame raggiungibili: vince quello col focus, poi il principale. */
+async function selezioneDellaScheda(tabId, frameId) {
+  const target = frameId !== undefined && frameId !== 0 ? { tabId, frameIds: [frameId] } : { tabId, allFrames: true };
+  let risultati = [];
+  try {
+    risultati = await chrome.scripting.executeScript({ target, func: leggiSelezioneNelFrame });
+  } catch {
+    // un frame non accessibile puo' far fallire allFrames: si riprova sul solo frame principale
+    try {
+      risultati = await chrome.scripting.executeScript({ target: { tabId }, func: leggiSelezioneNelFrame });
+    } catch {
+      return '';
+    }
+  }
+  const pieni = risultati.map((r) => r && r.result).filter((r) => r && r.testo && r.testo.trim());
+  if (!pieni.length) return '';
+  pieni.sort((x, y) => Number(y.focus) - Number(x.focus) || Number(y.principale) - Number(x.principale));
+  return pieni[0].testo;
 }
 
 async function iniettaBarra(tabId) {
@@ -84,16 +128,11 @@ async function iniettaBarra(tabId) {
 }
 
 /** Restituisce true se ha avviato una lettura (o un'attesa di conferma). */
-async function leggiDaScheda(tab, testoDiRiserva, daPopup = false) {
+async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = undefined) {
   const t0 = Date.now();
   if (!tab || tab.id === undefined) return false;
-  let testo = '';
-  try {
-    const [r] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: leggiSelezioneNellaPagina });
-    testo = (r && r.result) || '';
-  } catch {
-    // niente accesso alla pagina: resta il testo del menu contestuale
-  }
+  // senza accesso al frame (es. riquadro di un altro sito) resta il testo del menu contestuale
+  let testo = await selezioneDellaScheda(tab.id, frameId);
   if (!testo.trim()) testo = testoDiRiserva || '';
   if (!testo.trim() && daPopup) return false;
   if (!testo.trim()) {
@@ -110,7 +149,7 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false) {
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'leggi-selezione') leggiDaScheda(tab, info.selectionText);
+  if (info.menuItemId === 'leggi-selezione') leggiDaScheda(tab, info.selectionText, false, info.frameId);
 });
 
 chrome.commands.onCommand.addListener(async (comando, tab) => {
@@ -155,7 +194,16 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         return aOffscreen({ tipo: 'preparaMotore' });
       case 'leggiSelezioneAttiva': {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        return { letto: await leggiDaScheda(tab, '', true) };
+        const letto = await leggiDaScheda(tab, '', true);
+        if (letto || !tab) return { letto };
+        // niente selezione raggiungibile: ci sono riquadri di altri siti senza permesso?
+        let riquadri = [];
+        try {
+          const [r] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: riquadriEsterni });
+          const tutte = (r && r.result) || [];
+          for (const o of tutte) if (!(await chrome.permissions.contains({ origins: [`${o}/*`] }))) riquadri.push(o);
+        } catch {}
+        return { letto: false, riquadri };
       }
       case 'consenti':
         return aOffscreen({ tipo: 'consenti' });

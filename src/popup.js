@@ -100,6 +100,20 @@ play.addEventListener('click', async () => {
   // (aprire il popup concede activeTab su quella scheda)
   const r = await comando('leggiSelezioneAttiva');
   if (r && r.letto) return;
+  if (r && r.riquadri && r.riquadri.length) {
+    // testo forse in un riquadro di un altro sito (es. editor incorporati): serve un permesso in piu',
+    // chiesto ora e solo per quei siti
+    const host = r.riquadri.map((o) => new URL(o).host).join(', ');
+    statoTesto.textContent = `Non trovo testo selezionato. Se è dentro un riquadro di ${host}, consenti la lettura lì e premi di nuovo Leggi.`;
+    const b = $('riquadri');
+    b.hidden = false;
+    b.onclick = async () => {
+      const ok = await chrome.permissions.request({ origins: r.riquadri.map((o) => `${o}/*`) });
+      b.hidden = true;
+      if (ok) comando('leggiSelezioneAttiva');
+    };
+    return;
+  }
   statoTesto.textContent = 'Incolla un testo qui sopra, oppure seleziona del testo nella pagina e premi Leggi.';
   testo.focus();
 });
