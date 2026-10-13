@@ -1,4 +1,5 @@
-// Funzioni comuni sulla versione. L'unica fonte e' src/manifest.json.
+// Funzioni comuni sulla versione. L'unica fonte e' src/manifest.json
+// (nome e descrizioni stanno in src/_locales).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

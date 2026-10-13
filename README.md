@@ -1,6 +1,6 @@
 # WebG Voice
 
-**WebG Voice, leggi ad alta voce offline**: estensione per Chrome di [WebG](https://www.webg.it) che legge ad alta voce, in
+**WebG Voice**: estensione per Chrome di [WebG](https://www.webg.it) che legge ad alta voce, in
 italiano, il testo che selezioni in una pagina. La voce (Sara, del modello Kokoro-82M) gira tutta
 sul tuo computer: niente account, niente abbonamenti, niente testo inviato a servizi esterni.
 Dopo il primo download funziona anche senza connessione.
@@ -23,6 +23,8 @@ al primo uso compare un pulsante per scaricarlo.
 
 - Seleziona del testo e premi **Alt+Q**, oppure tasto destro → **Leggi ad alta voce**.
   **Alt+Q** di nuovo mette in pausa e riprende, **Alt+W** ferma la lettura.
+  Su Mac i tasti predefiniti sono **Control+Q** e **Control+W**: Option+Q su Mac scrive il
+  carattere "œ" e non va bene come scorciatoia.
 - Durante la lettura compare in basso a destra una barretta con pausa, stop e velocità.
 - Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5); con il
   campo vuoto, **Leggi** legge il testo selezionato nella pagina.

@@ -1,0 +1,21 @@
+{
+  "nomeEstensione": {
+    "message": "WebG Voice",
+    "description": "Nome dell'estensione: marchio, non tradurre"
+  },
+  "descrizione": {
+    "message": "Legge ad alta voce in italiano il testo selezionato, con una voce naturale sul tuo computer. Gratis, offline dopo il primo download."
+  },
+  "titoloAzione": {
+    "message": "WebG Voice, leggi ad alta voce"
+  },
+  "menuLeggi": {
+    "message": "Leggi ad alta voce"
+  },
+  "comandoLeggi": {
+    "message": "Leggi il testo selezionato (di nuovo: pausa o riprendi)"
+  },
+  "comandoFerma": {
+    "message": "Ferma la lettura"
+  }
+}

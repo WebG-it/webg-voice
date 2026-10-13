@@ -1,37 +1,41 @@
-# Scheda Chrome Web Store, WebG Voice 1.0.3
+# Scheda Chrome Web Store, WebG Voice 1.0.4
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
 
 ## Nome
 
-WebG Voice, leggi ad alta voce offline
+WebG Voice
+
+(Solo il marchio: il sottotitolo descrittivo sta nella descrizione, per non riempire il nome di parole chiave.)
 
 ## Categoria
 
 Rendi tuo Chrome → Accessibilità (in inglese: Make Chrome Yours → Accessibility).
 Lingua principale: italiano.
 
-## Descrizione breve (italiano, 119 caratteri su 132)
+## Descrizione breve (italiano, 132 caratteri su 132)
 
-Legge ad alta voce in italiano il testo selezionato, con una voce naturale che gira sul tuo computer. Gratis e offline.
+Legge ad alta voce in italiano il testo selezionato, con una voce naturale sul tuo computer. Gratis, offline dopo il primo download.
 
-## Descrizione breve (inglese, 112 caratteri su 132)
+## Descrizione breve (inglese, 125 caratteri su 132)
 
-Reads selected text aloud in Italian with a natural voice that runs on your computer. Free, offline, no account.
+Reads selected text aloud in Italian with a natural voice that runs on your computer. Free, offline after the first download.
 
 ## Descrizione lunga (italiano)
+
+Leggi ad alta voce in italiano, offline dopo il primo download.
 
 WebG Voice legge ad alta voce, in italiano, il testo che selezioni in una pagina web. La voce è
 naturale ed espressiva e funziona interamente sul tuo computer: non serve un account, non ci sono
 abbonamenti e il testo non viene mai inviato a servizi esterni.
 
 Come si usa
-• Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma.
+• Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma (su Mac Control+Q e Control+W).
 • Durante la lettura compare una piccola barra con pausa, stop e velocità.
 • Dal pulsante dell'estensione puoi incollare un testo e regolare la velocità, da 0,7 a 1,5.
 
-Gratis e offline
+Gratis, offline dopo il primo download
 Al primo avvio scarica il modello vocale (circa 326 MB) una volta sola, in sottofondo, con
 l'avanzamento sull'icona. Se la connessione cade riprende da solo da dove era arrivato; sulle
 connessioni a consumo aspetta un tuo clic. Da quel momento la lettura funziona anche senza internet.
@@ -54,16 +58,18 @@ Realizzata da WebG, https://www.webg.it
 
 ## Descrizione lunga (inglese)
 
+Read aloud in Italian, offline after the first download.
+
 WebG Voice reads the text you select on a web page aloud, in Italian. The voice is natural
 and expressive and runs entirely on your computer: no account, no subscription, and your text is
 never sent to any external service.
 
 How to use it
-• Select text and press Alt+Q, or right-click → "Leggi ad alta voce". Alt+Q again pauses, Alt+W stops.
+• Select text and press Alt+Q, or right-click → "Leggi ad alta voce". Alt+Q again pauses, Alt+W stops (on Mac: Control+Q and Control+W).
 • While reading, a small bar offers pause, stop and speed controls.
 • From the extension button you can paste text and set the speed, from 0.7 to 1.5.
 
-Free and offline
+Free, offline after the first download
 On first start it downloads the voice model (about 326 MB) once, in the background.
 If the connection drops it resumes on its own; on metered connections it waits for your click.
 After that, reading works offline.

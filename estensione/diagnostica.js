@@ -5,7 +5,7 @@ import { wav, FREQUENZA } from './lib/audio.js';
 
 const $ = (id) => document.getElementById(id);
 const manifest = chrome.runtime.getManifest();
-const nome = manifest.short_name || manifest.name;
+const nome = chrome.i18n.getMessage('nomeEstensione');
 $('titolo').textContent = nome;
 document.title = nome;
 $('versioneTesta').textContent = `Versione ${manifest.version}.`;
@@ -158,7 +158,7 @@ async function prova() {
 }
 
 function testoRisultato() {
-  const righe = [`${manifest.name} ${manifest.version}, prova del ${new Date().toLocaleString('it-IT')}`];
+  const righe = [`${nome} ${manifest.version}, prova del ${new Date().toLocaleString('it-IT')}`];
   for (const [k, v] of Object.entries(info)) righe.push(`${k}: ${v}`);
   for (const [k, v] of Object.entries(risultati)) righe.push(`${k}: ${v}`);
   return righe.join('\n');

@@ -46,7 +46,7 @@ def tile():
     d = ImageDraw.Draw(im)
     # cinque cornici inclinate, come nel marchio
     for i, c in enumerate(COLORI):
-        cx, cy, s = 52 + i * 84, 70, 54
+        cx, cy, s = 52 + i * 84, 62, 54
         cornice = Image.new("RGBA", (s, s), (0, 0, 0, 0))
         dc = ImageDraw.Draw(cornice)
         dc.rectangle([0, 0, s - 1, s - 1], fill=c + (255,))
@@ -54,10 +54,11 @@ def tile():
         cornice = cornice.rotate([-8, 6, -4, 7, -6][i], expand=True, resample=Image.BICUBIC)
         im.paste(cornice, (int(cx - cornice.width / 2), int(cy - cornice.height / 2)), cornice)
     icona = Image.open(os.path.join(QUI, "..", "src", "icone", "icona-128.png")).convert("RGBA").resize((72, 72), Image.LANCZOS)
-    im.paste(icona, (28, 150), icona)
-    d.text((114, 150), "WebG Voice", font=font(38, True), fill=BLU)
+    im.paste(icona, (28, 142), icona)
+    d.text((114, 140), "WebG Voice", font=font(38, True), fill=BLU)
     d.text((116, 198), "Legge ad alta voce in italiano.", font=font(18), fill=(60, 60, 64))
-    d.text((116, 222), "Gratis, sul tuo computer, offline.", font=font(18), fill=(60, 60, 64))
+    d.text((116, 222), "Gratis, sul tuo computer.", font=font(18), fill=(60, 60, 64))
+    d.text((116, 246), "Offline dopo il primo download.", font=font(18), fill=(60, 60, 64))
     return im
 
 

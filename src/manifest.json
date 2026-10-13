@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "WebG Voice, leggi ad alta voce offline",
-  "short_name": "WebG Voice",
-  "version": "1.0.3",
-  "description": "Legge ad alta voce in italiano il testo selezionato, con una voce neurale che gira sul tuo computer. Gratis e offline.",
+  "name": "__MSG_nomeEstensione__",
+  "short_name": "__MSG_nomeEstensione__",
+  "default_locale": "it",
+  "version": "1.0.4",
+  "description": "__MSG_descrizione__",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",
   "permissions": ["activeTab", "scripting", "contextMenus", "offscreen", "storage", "unlimitedStorage"],
@@ -17,19 +18,19 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WebG Voice",
+    "default_title": "__MSG_titoloAzione__",
     "default_icon": { "16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png" }
   },
   "icons": { "16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png", "128": "icone/icona-128.png" },
   "options_ui": { "page": "diagnostica.html", "open_in_tab": true },
   "commands": {
     "leggi-selezione": {
-      "suggested_key": { "default": "Alt+Q", "mac": "Alt+Q" },
-      "description": "Leggi il testo selezionato (senza selezione: pausa o riprendi)"
+      "suggested_key": { "default": "Alt+Q", "mac": "MacCtrl+Q" },
+      "description": "__MSG_comandoLeggi__"
     },
     "ferma-lettura": {
-      "suggested_key": { "default": "Alt+W", "mac": "Alt+W" },
-      "description": "Ferma la lettura"
+      "suggested_key": { "default": "Alt+W", "mac": "MacCtrl+W" },
+      "description": "__MSG_comandoFerma__"
     }
   },
   "cross_origin_embedder_policy": { "value": "require-corp" },

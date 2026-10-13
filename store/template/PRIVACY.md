@@ -30,7 +30,7 @@ Si cancellano disinstallando l'estensione.
 
 Le uniche connessioni servono a scaricare i file della voce, una volta sola al primo avvio
 (sulle connessioni a consumo solo dopo un clic dell'utente): dalla release del progetto su GitHub (github.com e
-release-assets.githubusercontent.com) o, in alternativa, da Hugging Face (huggingface.co). Come
+release-assets.githubusercontent.com) o, in alternativa, da Hugging Face (huggingface.co e il suo CDN *.hf.co). Come
 per qualsiasi download, questi servizi ricevono l'indirizzo IP e i dati tecnici della richiesta
 secondo le loro informative; l'estensione non trasmette altro.
 

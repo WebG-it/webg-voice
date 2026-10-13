@@ -1,23 +1,27 @@
 # Componenti di terze parti
 
-WebG Voice è distribuita con licenza GPL-3.0-or-later (vedi `LICENSE`), perché include
-eSpeak NG. Questi sono i componenti di terze parti, con le loro licenze.
+WebG Voice è distribuita con licenza GPL-3.0-or-later (testo in `LICENSE`), perché include
+eSpeak NG. Codice sorgente completo, script di build e storia delle modifiche:
+https://github.com/WebG-it/webg-voice
+
+I percorsi indicati sotto sono quelli del pacchetto dell'estensione.
 
 ## Kokoro-82M (modello e voce `if_sara`)
 
 - Autore: hexgrad, https://huggingface.co/hexgrad/Kokoro-82M
 - Esportazione ONNX: onnx-community, https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
   (revisione `1939ad2a8e416c0acfeecc08a694d14ef25f2231`, file `onnx/model.onnx` e `voices/if_sara.bin`)
-- Licenza: Apache License 2.0, https://www.apache.org/licenses/LICENSE-2.0
-- Il modello non è incluso nell'estensione: si scarica al primo avvio dalla release `model-v1`
-  di questo repository (copia identica, stessa impronta SHA-256) o, in riserva, da Hugging Face.
-- Il vocabolario dei fonemi in `src/lib/vocab.js` viene dalla configurazione di Kokoro (Apache-2.0).
+- Licenza: Apache License 2.0, testo completo in `LICENSE-APACHE-2.0.txt`.
+- Il modello non è nel pacchetto: si scarica al primo avvio dalla release `model-v1` del
+  repository GitHub (copia identica, stessa impronta SHA-256) o, in riserva, da Hugging Face.
+- `lib/vocab.js` contiene il vocabolario dei fonemi tratto dalla configurazione di Kokoro
+  (Apache-2.0, `LICENSE-APACHE-2.0.txt`).
 
 ## ONNX Runtime Web 1.30.0
 
 - Microsoft, https://github.com/microsoft/onnxruntime
-- Licenza: MIT. File inclusi: `vendor/ort/ort.wasm.min.mjs`, `ort-wasm-simd-threaded.mjs`,
-  `ort-wasm-simd-threaded.wasm` (copiati dal pacchetto npm `onnxruntime-web` da `npm run build`).
+- Licenza: MIT. File: `vendor/ort/ort.wasm.min.mjs`, `vendor/ort/ort-wasm-simd-threaded.mjs`,
+  `vendor/ort/ort-wasm-simd-threaded.wasm` (dal pacchetto npm `onnxruntime-web`).
 
 ```
 MIT License
@@ -38,12 +42,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 ## eSpeak NG 1.52.0
 
-- https://github.com/espeak-ng/espeak-ng (tag `1.52.0`)
+- https://github.com/espeak-ng/espeak-ng, tag `1.52.0` (commit `4870adfa25b1a32b4361592f1be8a40337c58d6c`)
 - Licenza: GNU GPL versione 3 o successiva, testo in `vendor/espeak/COPYING`.
-- `vendor/espeak/espeak-ng.mjs` e `espeak-ng.wasm` sono compilati dal sorgente originale, senza
-  modifiche al codice, con `scripts/compila-espeak.sh` (Emscripten; l'unico accorgimento è un
-  header di compatibilità per `wchar.h`, generato dallo script stesso).
+- `vendor/espeak/espeak-ng.mjs` e `vendor/espeak/espeak-ng.wasm` sono compilati dal sorgente
+  originale, senza modifiche al codice, con lo script `scripts/compila-espeak.sh` del repository
+  GitHub indicato sopra (Emscripten; l'unico accorgimento è un header di compatibilità per
+  `wchar.h`, generato dallo script stesso).
 - `vendor/espeak/espeak-dati.bin` contiene, senza modifiche, i file di `espeak-ng-data` della
   stessa versione necessari all'italiano (tabelle dei fonemi, dizionari `it` ed `en`, definizioni
-  delle voci); l'indice è in `espeak-dati.json`. Si rigenera con `scripts/dati-espeak.mjs`.
-- Il sorgente corrispondente è quello del tag `1.52.0` indicato sopra.
+  delle voci); l'indice è in `vendor/espeak/espeak-dati.json`. Si rigenera con lo script
+  `scripts/dati-espeak.mjs` del repository.
+- Il sorgente corrispondente è quello del tag indicato sopra.

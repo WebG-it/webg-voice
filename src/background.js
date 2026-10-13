@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener((info) => {
   chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: 'leggi-selezione',
-    title: 'Leggi ad alta voce',
+    title: chrome.i18n.getMessage('menuLeggi'),
     contexts: ['selection'],
   });
 });

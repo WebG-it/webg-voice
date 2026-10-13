@@ -14,9 +14,10 @@ const scarica = $('scarica');
 const rifiuta = $('rifiuta');
 
 const manifest = chrome.runtime.getManifest();
-$('nome').textContent = manifest.short_name || manifest.name;
+const NOME = chrome.i18n.getMessage('nomeEstensione');
+$('nome').textContent = NOME;
 $('versione').textContent = `v${manifest.version}`;
-document.title = manifest.short_name || manifest.name;
+document.title = NOME;
 
 const MB = (b) => `${Math.round(b / 1e6)} MB`;
 const fmt = (v) => `${Number(v).toFixed(2).replace('.', ',')}×`;

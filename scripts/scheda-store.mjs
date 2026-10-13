@@ -1,5 +1,6 @@
 // Rigenera i testi che contengono il nome dell'estensione, partendo dai modelli
-// in store/template/ e dal manifest (unica fonte di nome e versione):
+// in store/template/, dal manifest (versione) e da src/_locales (nome e descrizione breve,
+// unica fonte):
 //   store/template/README.md  -> README.md
 //   store/template/scheda.md  -> store/scheda.md
 //   store/template/PRIVACY.md -> docs/PRIVACY.md
@@ -10,14 +11,17 @@ import { RADICE, leggiManifest } from './versione.mjs';
 import { BYTE_TOTALI } from '../src/lib/modelli.js';
 
 const m = leggiManifest();
-const breve = m.short_name || m.name;
-const BREVE_IT = `Legge ad alta voce in italiano il testo selezionato, con una voce naturale che gira sul tuo computer. Gratis e offline.`;
-const BREVE_EN = `Reads selected text aloud in Italian with a natural voice that runs on your computer. Free, offline, no account.`;
+const messaggi = (l) => JSON.parse(readFileSync(join(RADICE, 'src', '_locales', l, 'messages.json'), 'utf8'));
+const it = messaggi('it');
+const en = messaggi('en');
+const breve = it.nomeEstensione.message;
+const BREVE_IT = it.descrizione.message;
+const BREVE_EN = en.descrizione.message;
 for (const [k, t] of [['italiano', BREVE_IT], ['inglese', BREVE_EN]]) {
   if ([...t].length > 132) throw new Error(`descrizione breve in ${k} troppo lunga: ${[...t].length} caratteri`);
 }
 const valori = {
-  NOME: m.name,
+  NOME: breve,
   NOME_BREVE: breve,
   VERSIONE: m.version,
   MB: String(Math.round(BYTE_TOTALI / 1e6)),

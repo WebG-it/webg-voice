@@ -4,6 +4,14 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.0.4] - 2026-10-13
+
+- Nome dell'estensione solo "WebG Voice": il sottotitolo descrittivo passa nella descrizione.
+- Estensione localizzata in italiano (predefinito) e inglese: nome, descrizione, voce del menu e comandi da _locales; la descrizione inglese chiarisce che la voce è italiana.
+- Testi della scheda store, tile e README: "offline" sempre con "dopo il primo download" (circa 326 MB, una volta sola).
+- Privacy: Hugging Face indicato come huggingface.co e il suo CDN *.hf.co. THIRD_PARTY.md del pacchetto cita solo file presenti e rimanda al repository per sorgenti e script; aggiunto il testo della licenza Apache-2.0 (Kokoro, vocab.js).
+- Mac: scorciatoie predefinite Control+Q e Control+W, perché Option+Q scrive "œ". Su Windows e Linux restano Alt+Q e Alt+W; chi ha già l'estensione conserva le scorciatoie che aveva.
+
 ## [1.0.3] - 2026-10-13
 
 - Il modello vocale (circa 330 MB) si scarica da solo, in sottofondo, all'installazione e all'avvio del browser se manca: niente più conferma. Avanzamento in percentuale sull'icona (badge) e nel popup. Eccezione: su connessione a consumo (risparmio dati o rete cellulare) aspetta un clic.

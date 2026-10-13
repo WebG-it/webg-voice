@@ -43,11 +43,14 @@ export function costruisci({ test = false } = {}) {
   for (const f of ['espeak-ng.mjs', 'espeak-ng.wasm', 'espeak-dati.bin', 'espeak-dati.json', 'COPYING']) {
     cpSync(join(RADICE, 'vendor', 'espeak', f), join(out, 'vendor', 'espeak', f));
   }
-  for (const f of ['LICENSE', 'THIRD_PARTY.md']) cpSync(join(RADICE, f), join(out, f));
+  for (const f of ['LICENSE', 'LICENSE-APACHE-2.0.txt', 'THIRD_PARTY.md']) cpSync(join(RADICE, f), join(out, f));
   if (test) {
-    const m = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8'));
-    m.name = `${m.name} (TEST)`;
-    writeFileSync(join(out, 'manifest.json'), JSON.stringify(m, null, 2));
+    for (const lingua of readdirSync(join(out, '_locales'))) {
+      const f = join(out, '_locales', lingua, 'messages.json');
+      const m = JSON.parse(readFileSync(f, 'utf8'));
+      m.nomeEstensione.message += ' (TEST)';
+      writeFileSync(f, JSON.stringify(m, null, 2));
+    }
   } else ripulisci(out);
 
   let totale = 0;
