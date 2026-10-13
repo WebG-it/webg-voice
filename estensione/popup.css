@@ -69,6 +69,8 @@ button.link { padding: 0; border: 0; background: none; color: var(--accento); te
 .stato.errore p { color: var(--errore); }
 progress { width: 100%; height: 6px; margin-top: 6px; accent-color: var(--accento); }
 .aiuto { color: var(--tenue); font-size: 12px; margin: 10px 0 0; }
+.avviso { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--bordo); font-size: 12px; }
+.avviso a { color: var(--accento); }
 .aiuto a { color: var(--accento); }
 kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border: 1px solid var(--bordo); border-radius: 4px; background: var(--superficie); color: var(--testo); }
 

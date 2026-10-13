@@ -30,6 +30,12 @@ al primo uso compare un pulsante per scaricarlo.
   campo vuoto, **Leggi** legge il testo selezionato nella pagina.
 - Funziona anche dentro gli editor: aree di testo, campi, editor nei riquadri (iframe) della stessa
   pagina come TinyMCE di Joomla e WordPress, editor di codice come CodeMirror.
+- Sulle pagine interne di Chrome (chrome://, Chrome Web Store, visualizzatore PDF, file locali senza
+  permesso) Chrome non lascia leggere la selezione alle estensioni: l'icona mostra "!" per qualche
+  secondo e il popup spiega di incollare il testo. Lo stesso "!" compare se premi la scorciatoia
+  senza aver selezionato niente.
+- Se un'altra estensione usa già gli stessi tasti, Chrome lascia la scorciatoia vuota: il popup lo
+  segnala con il link per impostarla.
 - Nell'editor TinyMCE il tasto destro apre il menu dell'editor: per avere il menu di Chrome con
   **Leggi ad alta voce** usa **Ctrl+clic destro** (oppure la scorciatoia da tastiera).
 - Se il testo sta in un riquadro di un altro sito, la scorciatoia non ci arriva: dal popup compare

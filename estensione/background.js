@@ -139,13 +139,41 @@ async function selezioneDellaScheda(tabId, frameId) {
     try {
       risultati = await chrome.scripting.executeScript({ target: { tabId }, func: leggiSelezioneNelFrame });
     } catch {
-      return '';
+      return { testo: '', protetta: true }; // pagina dove Chrome non lascia entrare le estensioni
     }
   }
   const pieni = risultati.map((r) => r && r.result).filter((r) => r && r.testo && r.testo.trim());
-  if (!pieni.length) return '';
+  if (!pieni.length) return { testo: '', protetta: false };
   pieni.sort((x, y) => Number(y.focus) - Number(x.focus) || Number(y.principale) - Number(x.principale));
-  return pieni[0].testo;
+  return { testo: pieni[0].testo, protetta: false };
+}
+
+// ---- Riscontro quando non si puo' leggere: badge "!" sulla scheda, titolo col motivo,
+// e un avviso che il popup mostra se lo si apre subito dopo ----
+async function scorciatoia(nome) {
+  const c = (await chrome.commands.getAll()).find((x) => x.name === nome);
+  return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : '';
+}
+async function avvisa(tabId, motivo) {
+  const tasto = await scorciatoia('leggi-selezione');
+  const testi = {
+    protetta: 'Chrome non permette la lettura su questa pagina: apri il pulsante di WebG Voice e incolla il testo.',
+    vuoto: tasto ? `Seleziona un testo e premi ${tasto}.` : 'Seleziona un testo e usa la scorciatoia o il tasto destro.',
+  };
+  const titolo = testi[motivo];
+  await chrome.storage.session.set({ avviso: { tabId, motivo, titolo, quando: Date.now() } });
+  if (tabId === undefined) return;
+  try {
+    await chrome.action.setBadgeBackgroundColor({ tabId, color: '#d86f22' });
+    await chrome.action.setBadgeText({ tabId, text: '!' });
+    await chrome.action.setTitle({ tabId, title: `WebG Voice: ${titolo}` });
+  } catch {}
+  setTimeout(async () => {
+    try {
+      await chrome.action.setBadgeText({ tabId, text: '' });
+      await chrome.action.setTitle({ tabId, title: chrome.i18n.getMessage('titoloAzione') });
+    } catch {}
+  }, 5000);
 }
 
 async function iniettaBarra(tabId) {
@@ -162,15 +190,18 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
   const t0 = Date.now();
   if (!tab || tab.id === undefined) return false;
   // senza accesso al frame (es. riquadro di un altro sito) resta il testo del menu contestuale
-  let testo = await selezioneDellaScheda(tab.id, frameId);
+  const sel = await selezioneDellaScheda(tab.id, frameId);
+  let testo = sel.testo;
   if (!testo.trim()) testo = testoDiRiserva || '';
-  if (!testo.trim() && daPopup) return false;
+  if (!testo.trim() && daPopup) return sel.protetta ? 'protetta' : false;
   if (!testo.trim()) {
     // scorciatoia senza selezione: pausa/riprendi la lettura in corso
     const s = await statoAttuale();
     if (s && (s.fase === 'lettura' || s.fase === 'pausa' || s.fase === 'preparazione')) {
       await aOffscreen({ tipo: 'alterna' });
+      return false;
     }
+    await avvisa(tab.id, sel.protetta ? 'protetta' : 'vuoto');
     return false;
   }
   // Alt+Q sullo stesso testo che si sta leggendo: pausa o ripresa, non si ricomincia
@@ -249,7 +280,9 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         return aOffscreen({ tipo: 'preparaMotore' });
       case 'leggiSelezioneAttiva': {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        const letto = await leggiDaScheda(tab, '', true);
+        const esito = await leggiDaScheda(tab, '', true);
+        if (esito === 'protetta') return { letto: false, protetta: true };
+        const letto = esito === true;
         if (letto || !tab) return { letto };
         // niente selezione raggiungibile: ci sono riquadri di altri siti senza permesso?
         let riquadri = [];

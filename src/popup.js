@@ -24,6 +24,12 @@ const fmt = (v) => `${Number(v).toFixed(2).replace('.', ',')}×`;
 const comando = (tipo, extra = {}) => chrome.runtime.sendMessage({ a: 'background', tipo, ...extra });
 
 let fase = 'inattivo';
+const AVVISO_PROTETTA = 'Chrome non permette la lettura su questa pagina: incolla qui sopra il testo e premi Leggi.';
+// avviso che resta visibile anche mentre lo stato (es. il download) si aggiorna
+function avvisoPagina(t) {
+  $('avvisoPagina').textContent = t;
+  $('avvisoPagina').hidden = !t;
+}
 let inCache = false;
 
 const ICONE = {
@@ -101,11 +107,19 @@ play.addEventListener('click', async () => {
   if (fase === 'lettura' || fase === 'preparazione') return comando('pausa');
   if (fase === 'pausa') return comando('riprendi');
   const t = testo.value.trim();
-  if (t) return comando('leggiTesto', { testo: t });
+  if (t) {
+    avvisoPagina('');
+    return comando('leggiTesto', { testo: t });
+  }
   // campo vuoto: si legge il testo selezionato nella scheda attiva
   // (aprire il popup concede activeTab su quella scheda)
   const r = await comando('leggiSelezioneAttiva');
   if (r && r.letto) return;
+  if (r && r.protetta) {
+    avvisoPagina(AVVISO_PROTETTA);
+    testo.focus();
+    return;
+  }
   if (r && r.riquadri && r.riquadri.length) {
     // testo forse in un riquadro di un altro sito (es. editor incorporati): serve un permesso in piu',
     // chiesto ora e solo per quei siti
@@ -141,10 +155,12 @@ vel.addEventListener('input', () => {
 // Bozza del testo incollato, cosi' non si perde chiudendo il popup
 testo.addEventListener('input', () => chrome.storage.local.set({ bozza: testo.value }));
 
-$('tasti').addEventListener('click', (e) => {
+const apriScorciatoie = (e) => {
   e.preventDefault();
-  chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
-});
+  chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); // solo su clic dell'utente
+};
+$('tasti').addEventListener('click', apriScorciatoie);
+$('tastiAvviso').addEventListener('click', apriScorciatoie);
 
 chrome.runtime.onMessage.addListener((msg, mittente) => {
   if (mittente.id !== chrome.runtime.id) return;
@@ -164,6 +180,8 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
   };
   $('tasto').textContent = tasto('leggi-selezione');
   $('tastoStop').textContent = tasto('ferma-lettura');
+  // Chrome lascia la scorciatoia vuota se e' gia' usata da un'altra estensione
+  $('avvisoTasto').hidden = tasto('leggi-selezione') !== 'non assegnata';
   try {
     inCache = await modelliInCache();
   } catch {
@@ -175,4 +193,13 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
     velVal.textContent = fmt(r.velocita);
   }
   mostra(r && r.stato);
+  // riscontro di una scorciatoia o di un menu andati a vuoto poco fa su questa scheda
+  try {
+    const { avviso } = await chrome.storage.session.get('avviso');
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (avviso && Date.now() - avviso.quando < 120000 && (!tab || avviso.tabId === tab.id)) {
+      avvisoPagina(avviso.motivo === 'protetta' ? AVVISO_PROTETTA : avviso.titolo);
+      await chrome.storage.session.remove('avviso');
+    }
+  } catch {}
 })();

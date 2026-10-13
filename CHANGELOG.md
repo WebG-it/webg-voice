@@ -4,6 +4,12 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.0.5] - 2026-10-13
+
+- Riscontro quando la scorciatoia o il menu non possono leggere: sulle pagine dove Chrome non lascia entrare le estensioni (chrome://, Chrome Web Store, visualizzatore PDF, file locali senza permesso) l'icona mostra "!" per 5 secondi, il titolo dell'icona spiega il motivo e il popup dice di incollare il testo.
+- Scorciatoia premuta senza testo selezionato e senza lettura in corso: "!" sull'icona e il messaggio "Seleziona un testo e premi" con la scorciatoia reale letta da Chrome.
+- Il popup segnala quando Chrome ha lasciato vuota la scorciatoia (tasti già usati da un'altra estensione), con il link per impostarla.
+
 ## [1.0.4] - 2026-10-13
 
 - Nome dell'estensione solo "WebG Voice": il sottotitolo descrittivo passa nella descrizione.
