@@ -4,6 +4,13 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.1.1] - 2026-10-13
+
+- Scheda store: la giustificazione del permesso storage dice com'è davvero: le impostazioni restano in locale, il dizionario di pronuncia usa chrome.storage.sync e quindi viaggia con la sincronizzazione di Chrome dell'utente se è attiva; lo sviluppatore non riceve nulla.
+- Dizionario di pronuncia salvato in più chiavi di chrome.storage.sync, ognuna sotto gli 8 KB, con un indice: entrano 300 voci anche lunghe e accentate fino al limite reale di 100 KB; oltre, un messaggio dice quanto occupa e nulla si perde. Il formato della 1.1.0 a chiave unica si legge e si converte al primo salvataggio.
+- Le letture del dizionario sono testo letterale: "$&" e "$1" non vengono più interpretati.
+- Import: ogni riga si divide sul primo "=" (la lettura può contenerne altri); il messaggio dice quante voci sono state salvate e quante righe scartate.
+
 ## [1.1.0] - 2026-10-13
 
 - Pronuncia delle sigle: quelle che in italiano si dicono come parola (RAM, SEO, NATO, ISTAT, IVA, INPS, PIN, LED…) si leggono come parola; quelle che si compitano (USB, CPU, PDF, HTML, API…) restano compitate da espeak; poche si dicono all'inglese (CEO, OK). Per le sigle fuori lista decide un'euristica di pronunciabilità; numeri romani e parole brevi dei titoli in maiuscolo restano come sono.

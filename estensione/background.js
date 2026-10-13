@@ -3,6 +3,7 @@
 
 import { modelliInCache } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
+import { leggiDizionario } from './lib/dizionario.js';
 
 const OFFSCREEN = 'offscreen.html';
 const VEL_DEFAULT = 1;
@@ -81,8 +82,7 @@ async function rtfSalvato() {
 /** Dizionario personale di pronuncia, dalle opzioni: [[scritto, lettura], ...] */
 async function dizionario() {
   try {
-    const { dizionario: d } = await chrome.storage.sync.get('dizionario');
-    return Array.isArray(d) ? d : [];
+    return await leggiDizionario();
   } catch {
     return [];
   }

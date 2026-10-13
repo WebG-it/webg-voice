@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.1.0
+# Scheda Chrome Web Store, WebG Voice 1.1.1
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -120,9 +120,11 @@ testo selezionato.
 **offscreen**: la sintesi vocale e la riproduzione audio girano in un documento offscreen, così la
 lettura continua anche dopo la chiusura del popup.
 
-**storage**: salva il dizionario di pronuncia dell'utente (chrome.storage.sync, solo le coppie
-di parole che scrive lui) e, in locale, la velocità scelta, il testo incollato nel popup e la misura di
-velocità del computer usata per evitare pause. Nulla viene sincronizzato o inviato.
+**storage**: le impostazioni (velocità scelta, testo incollato nel popup, misura della velocità
+del computer usata per evitare pause) restano in locale, nel browser dell'utente. Il dizionario di
+pronuncia, cioè le coppie di parole che l'utente scrive nelle opzioni, usa chrome.storage.sync:
+se l'utente ha attiva la sincronizzazione di Chrome, viaggia con essa sui suoi dispositivi tramite
+il suo account Google. Lo sviluppatore non riceve nulla.
 
 **unlimitedStorage**: la voce (circa 326 MB) resta nella cache dell'estensione per funzionare
 offline; senza questo permesso Chrome potrebbe cancellarla e costringere a riscaricarla.

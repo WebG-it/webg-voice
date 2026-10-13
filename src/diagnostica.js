@@ -2,6 +2,7 @@
 // della lettura, e salva la stima, cosi' la lettura si adatta da subito.
 import { modelliInCache, BYTE_TOTALI } from './lib/modelli.js';
 import { wav, FREQUENZA } from './lib/audio.js';
+import { leggiDizionario, salvaDizionario as salvaInSync } from './lib/dizionario.js';
 
 const $ = (id) => document.getElementById(id);
 const manifest = chrome.runtime.getManifest();
@@ -191,29 +192,35 @@ modelliInCache().then((c) => {
   scrivi($('info'), info);
 });
 
-// ---- Dizionario di pronuncia (chrome.storage.sync, piccolo) ----
-const MAX_VOCI = 300;
+// ---- Dizionario di pronuncia (chrome.storage.sync, spezzato in piu' chiavi: lib/dizionario.js) ----
 let voci = [];
 
 async function caricaDizionario() {
   try {
-    const { dizionario } = await chrome.storage.sync.get('dizionario');
-    voci = Array.isArray(dizionario) ? dizionario : [];
+    voci = await leggiDizionario();
   } catch {
     voci = [];
   }
   disegnaDizionario();
 }
 
+/** Salva; se non ci sta torna alla versione salvata e lo dice. Restituisce true se salvato. */
 async function salvaDizionario(msg) {
-  voci = voci.filter((v) => v[0].trim() && v[1].trim()).slice(0, MAX_VOCI);
+  let r;
   try {
-    await chrome.storage.sync.set({ dizionario: voci });
-    $('dizStato').textContent = msg || 'Salvato.';
+    r = await salvaInSync(voci);
   } catch (e) {
-    $('dizStato').textContent = `Non salvato: ${e.message || e}`;
+    r = { errore: `Non salvato: ${e.message || e}` };
   }
+  if (r.errore) {
+    await caricaDizionario();
+    $('dizStato').textContent = r.errore;
+    return false;
+  }
+  voci = await leggiDizionario();
+  $('dizStato').textContent = `${msg || 'Salvato.'} Nel dizionario: ${voci.length} voci, ${r.kb} KB.`;
   disegnaDizionario();
+  return true;
 }
 
 function disegnaDizionario() {
@@ -296,17 +303,23 @@ $('dizEsporta').addEventListener('click', () => {
   $('dizTesto').value = voci.map((v) => `${v[0]} = ${v[1]}`).join('\n');
   $('dizStato').textContent = `${voci.length} voci esportate qui sopra: copiale dove vuoi.`;
 });
-$('dizImporta').addEventListener('click', () => {
-  const nuove = $('dizTesto')
-    .value.split('\n')
-    .map((r) => r.split('='))
-    .filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
-    .map((p) => [p[0].trim().slice(0, 100), p[1].trim().slice(0, 100)]);
+$('dizImporta').addEventListener('click', async () => {
+  const righe = $('dizTesto').value.split('\n').filter((r) => r.trim());
+  const nuove = [];
+  let scartate = 0;
+  for (const r of righe) {
+    const i = r.indexOf('='); // si divide sul primo "=": la lettura puo' contenerne altri
+    const a = i > 0 ? r.slice(0, i).trim() : '';
+    const b = i > 0 ? r.slice(i + 1).trim() : '';
+    if (a && b) nuove.push([a.slice(0, 100), b.slice(0, 100)]);
+    else scartate++;
+  }
   for (const n of nuove) {
     const i = voci.findIndex((v) => v[0].toLowerCase() === n[0].toLowerCase());
     if (i >= 0) voci[i] = n;
     else voci.push(n);
   }
-  salvaDizionario(`${nuove.length} voci importate.`);
+  const ok = await salvaDizionario(`${nuove.length} voci importate, ${scartate} righe scartate.`);
+  if (!ok) $('dizStato').textContent += ` Nessuna voce importata (${scartate} righe scartate).`;
 });
 caricaDizionario();

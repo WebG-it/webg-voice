@@ -3,7 +3,7 @@
   "name": "__MSG_nomeEstensione__",
   "short_name": "__MSG_nomeEstensione__",
   "default_locale": "it",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "__MSG_descrizione__",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",

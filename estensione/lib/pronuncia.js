@@ -18,7 +18,8 @@ export function applicaDizionario(testo, voci) {
   let t = testo;
   for (const [scritto, lettura] of ordinate) {
     const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(scritto.trim())}(?![\\p{L}\\p{N}])`, 'giu');
-    t = t.replace(re, lettura.trim());
+    const sostituto = lettura.trim();
+    t = t.replace(re, () => sostituto); // funzione: "$&" e "$1" restano testo letterale
   }
   return t;
 }
