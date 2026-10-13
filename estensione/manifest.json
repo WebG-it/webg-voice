@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WebG Voice, leggi ad alta voce offline",
   "short_name": "WebG Voice",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Legge ad alta voce in italiano il testo selezionato, con una voce neurale che gira sul tuo computer. Gratis e offline.",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",

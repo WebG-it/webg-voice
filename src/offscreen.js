@@ -383,8 +383,16 @@ function impostaVelocita(v) {
   pubblica();
 }
 
-chrome.runtime.onMessage.addListener((msg, _mittente, rispondi) => {
-  if (!msg || msg.a !== 'offscreen') return;
+// l'offscreen document non ha chrome.runtime.getURL: l'indirizzo si ricava dal proprio
+const URL_BACKGROUND = new URL('background.js', location.href).href;
+chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
+  if (mittente.id !== chrome.runtime.id) return;
+  // all'offscreen parla solo il service worker
+  if (mittente.url !== URL_BACKGROUND) return;
+  if (!msg || typeof msg !== 'object' || msg.a !== 'offscreen') return;
+  if (msg.tipo === 'leggi' && (typeof msg.testo !== 'string' || msg.testo.length > 2_000_000)) return;
+  if (msg.tipo === 'velocita' && !(typeof msg.valore === 'number' && Number.isFinite(msg.valore))) return;
+  if (msg.tipo === 'leggi' && msg.rtf !== undefined && !(typeof msg.rtf === 'number' && Number.isFinite(msg.rtf) && msg.rtf > 0.05 && msg.rtf < 20)) msg.rtf = undefined;
   switch (msg.tipo) {
     case 'leggi':
       leggi(msg.testo, msg.velocita, msg.tabId, msg.t0, msg.rtf);
@@ -423,6 +431,7 @@ chrome.runtime.onMessage.addListener((msg, _mittente, rispondi) => {
   rispondi({ stato });
 });
 
+// @@test-inizio  (tolto dalla build di produzione, vedi scripts/build.mjs)
 // ---- Solo per i test automatici (nessun effetto nell'uso normale) ----
 function base64(byte) {
   let s = '';
@@ -456,3 +465,4 @@ globalThis.__test = {
   provaFonte: (url) => chiedi({ tipo: 'provaFonte', url }),
   statoCache: () => chiedi({ tipo: 'statoCache' }),
 };
+// @@test-fine

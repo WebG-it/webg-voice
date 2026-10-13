@@ -1,3 +1,21 @@
 #!/bin/sh
-# Controllo di versione e privacy prima di ogni commit (vedi scripts/controlla-versione.mjs)
-exec node scripts/controlla-versione.mjs
+# Controlli prima di ogni commit:
+# 1. versione, CHANGELOG, build allineata e percorsi personali (scripts/controlla-versione.mjs)
+# 2. scansione dei segreti con gitleaks sulle modifiche in commit.
+#    gitleaks si cerca nel PATH o nella cartella indicata da GITLEAKS_DIR
+#    (es. export GITLEAKS_DIR=/percorso/gitleaks). Se manca: avviso, non blocco.
+node scripts/controlla-versione.mjs || exit 1
+
+GL=""
+if [ -n "$GITLEAKS_DIR" ] && [ -x "$GITLEAKS_DIR/gitleaks" ]; then GL="$GITLEAKS_DIR/gitleaks"
+elif [ -n "$GITLEAKS_DIR" ] && [ -x "$GITLEAKS_DIR/gitleaks.exe" ]; then GL="$GITLEAKS_DIR/gitleaks.exe"
+elif command -v gitleaks >/dev/null 2>&1; then GL="gitleaks"
+fi
+if [ -z "$GL" ]; then
+  echo "Avviso: gitleaks non trovato (PATH o GITLEAKS_DIR), scansione dei segreti saltata." >&2
+  exit 0
+fi
+"$GL" git --pre-commit --staged --redact --no-banner -v || {
+  echo "Commit bloccato: gitleaks ha trovato possibili segreti nelle modifiche." >&2
+  exit 1
+}

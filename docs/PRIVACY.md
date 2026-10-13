@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.0.1.
+Ultimo aggiornamento: versione 1.0.2.
 
 WebG Voice, leggi ad alta voce offline è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente.

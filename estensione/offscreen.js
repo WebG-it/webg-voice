@@ -383,8 +383,16 @@ function impostaVelocita(v) {
   pubblica();
 }
 
-chrome.runtime.onMessage.addListener((msg, _mittente, rispondi) => {
-  if (!msg || msg.a !== 'offscreen') return;
+// l'offscreen document non ha chrome.runtime.getURL: l'indirizzo si ricava dal proprio
+const URL_BACKGROUND = new URL('background.js', location.href).href;
+chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
+  if (mittente.id !== chrome.runtime.id) return;
+  // all'offscreen parla solo il service worker
+  if (mittente.url !== URL_BACKGROUND) return;
+  if (!msg || typeof msg !== 'object' || msg.a !== 'offscreen') return;
+  if (msg.tipo === 'leggi' && (typeof msg.testo !== 'string' || msg.testo.length > 2_000_000)) return;
+  if (msg.tipo === 'velocita' && !(typeof msg.valore === 'number' && Number.isFinite(msg.valore))) return;
+  if (msg.tipo === 'leggi' && msg.rtf !== undefined && !(typeof msg.rtf === 'number' && Number.isFinite(msg.rtf) && msg.rtf > 0.05 && msg.rtf < 20)) msg.rtf = undefined;
   switch (msg.tipo) {
     case 'leggi':
       leggi(msg.testo, msg.velocita, msg.tabId, msg.t0, msg.rtf);
@@ -423,36 +431,3 @@ chrome.runtime.onMessage.addListener((msg, _mittente, rispondi) => {
   rispondi({ stato });
 });
 
-// ---- Solo per i test automatici (nessun effetto nell'uso normale) ----
-function base64(byte) {
-  let s = '';
-  for (let i = 0; i < byte.length; i += 0x8000) s += String.fromCharCode(...byte.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-function unisci(parti) {
-  const pieni = parti.filter(Boolean);
-  const out = new Float32Array(pieni.reduce((s, p) => s + p.length, 0));
-  let o = 0;
-  for (const p of pieni) {
-    out.set(p, o);
-    o += p.length;
-  }
-  return out;
-}
-globalThis.__test = {
-  stato: () => JSON.parse(JSON.stringify(stato)),
-  blocchi: () => (ultimaLettura ? ultimaLettura.blocchi : []),
-  registrazioneWav: () => {
-    const a = unisci(ultimaLettura ? ultimaLettura.registrazione : []);
-    return { secondi: a.length / FREQUENZA, wav: base64(wav(a)) };
-  },
-  fonemi: async (testo, opz = {}) => (await chiedi({ tipo: 'fonemi', testo, ...opz })).fonemi,
-  sintesiFedele: async (testo, velocita = 1) => {
-    await motore();
-    const r = await chiedi({ tipo: 'sintesiFedele', testo, velocita });
-    return { fonemi: r.fonemi, lotti: r.lotti, ms: r.ms, secondi: r.audio.length / FREQUENZA, wav: base64(wav(r.audio)) };
-  },
-  contesto: () => ({ stato: ctx && ctx.state, tempo: ctx && ctx.currentTime }),
-  provaFonte: (url) => chiedi({ tipo: 'provaFonte', url }),
-  statoCache: () => chiedi({ tipo: 'statoCache' }),
-};

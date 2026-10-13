@@ -161,8 +161,19 @@ chrome.commands.onCommand.addListener(async (comando, tab) => {
   }
 });
 
+// ---- Validazione dei messaggi ----
+const BASE_ESTENSIONE = chrome.runtime.getURL('');
+const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
+const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
+// la barretta (content script) puo' solo comandare la lettura in corso
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta']);
+const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+const MAX_TESTO = 2_000_000;
+
 chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
-  if (!msg) return;
+  if (mittente.id !== chrome.runtime.id) return;
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.da === 'offscreen' && !daOffscreen(mittente)) return;
   // Stato dall'offscreen: lo giro alla scheda che ha la barretta
   if (msg.da === 'offscreen' && msg.tipo === 'stato') {
     const tabId = msg.stato && msg.stato.tabId;
@@ -170,7 +181,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     return;
   }
   if (msg.da === 'offscreen' && msg.tipo === 'rtf') {
-    chrome.storage.local.set({ rtf: msg.valore });
+    if (numeroIn(msg.valore, 0.05, 20)) chrome.storage.local.set({ rtf: msg.valore });
     return;
   }
   if (msg.da === 'offscreen' && msg.tipo === 'riposo') {
@@ -178,6 +189,11 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     return;
   }
   if (msg.a !== 'background') return;
+  const daPagina = daPaginaEstensione(mittente);
+  const daBarretta = !daPagina && !!mittente.tab;
+  if (!daPagina && !(daBarretta && COMANDI_BARRETTA.has(msg.tipo))) return;
+  if (msg.tipo === 'velocita' && !numeroIn(msg.valore, 0.7, 1.5)) return;
+  if (msg.tipo === 'leggiTesto' && (typeof msg.testo !== 'string' || !msg.testo.trim() || msg.testo.length > MAX_TESTO)) return;
   (async () => {
     switch (msg.tipo) {
       case 'stato': {

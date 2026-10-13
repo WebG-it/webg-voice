@@ -138,7 +138,6 @@ async function prova() {
       o += p.length;
     }
     $('ascolta').disabled = $('copia').disabled = false;
-    globalThis.__risultatoDiagnostica = { info: { ...info }, risultati: { ...risultati }, rtf };
   } catch (e) {
     $('stato').textContent = `Errore: ${e.message || e}`;
   } finally {
@@ -163,7 +162,6 @@ $('ascolta').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([wav(audioProva)], { type: 'audio/wav' }));
   new Audio(url).play();
 });
-globalThis.__testoDiagnostica = testoRisultato;
 
 scrivi($('info'), info);
 modelliInCache().then((c) => {

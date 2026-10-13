@@ -143,19 +143,6 @@ async function gestisci(m) {
     invia({ tipo: 'pronto', id: m.id, info: await motore() });
     return;
   }
-  if (m.tipo === 'provaFonte') {
-    // solo test: una richiesta Range verso una sorgente, dal worker (COEP attivo)
-    const r = await fetch(m.url, { headers: { Range: 'bytes=0-1048575' }, cache: 'no-store' });
-    const b = await r.arrayBuffer();
-    invia({ tipo: 'provaFonte', id: m.id, stato: r.status, byte: b.byteLength, urlFinale: new URL(r.url).host, redirect: r.redirected });
-    return;
-  }
-  if (m.tipo === 'svuotaCache') {
-    // solo test: dimentica modello e parti scaricate
-    await (await import('./lib/archivio.js')).svuota();
-    invia({ tipo: 'svuotaCache', id: m.id });
-    return;
-  }
   if (m.tipo === 'statoCache') {
     invia({ tipo: 'statoCache', id: m.id, ...(await byteInCache()) });
     return;
@@ -175,23 +162,5 @@ async function gestisci(m) {
   } else if (m.tipo === 'fonemi') {
     const f = m.fedele ? fonemizzaFedele(m.testo) : fonemizza(m.normalizza ? normalizza(m.testo) : m.testo);
     invia({ tipo: 'fonemi', id: m.id, fonemi: f });
-  } else if (m.tipo === 'sintesiFedele') {
-    // Kokoro.create(testo, "if_sara", speed, lang="it") di kokoro-onnx 0.6.1, passo per passo
-    const t = performance.now();
-    const f = fonemizzaFedele(m.testo);
-    const lotti = dividiFonemi(f, MAX_FONEMI);
-    const parti = [];
-    for (let i = 0; i < lotti.length; i++) {
-      const p = i < lotti.length - 1 ? pausaDopo(lotti[i]) : 0;
-      parti.push(await lotto(lotti[i], m.velocita ?? 1, p));
-    }
-    const tot = parti.reduce((s, p) => s + p.length, 0);
-    const audio = new Float32Array(tot);
-    let o = 0;
-    for (const p of parti) {
-      audio.set(p, o);
-      o += p.length;
-    }
-    invia({ tipo: 'audio', id: m.id, audio, fonemi: f, lotti: lotti.length, ms: Math.round(performance.now() - t) }, [audio.buffer]);
   }
 }

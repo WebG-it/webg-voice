@@ -143,6 +143,7 @@ async function gestisci(m) {
     invia({ tipo: 'pronto', id: m.id, info: await motore() });
     return;
   }
+  // @@test-inizio
   if (m.tipo === 'provaFonte') {
     // solo test: una richiesta Range verso una sorgente, dal worker (COEP attivo)
     const r = await fetch(m.url, { headers: { Range: 'bytes=0-1048575' }, cache: 'no-store' });
@@ -156,6 +157,7 @@ async function gestisci(m) {
     invia({ tipo: 'svuotaCache', id: m.id });
     return;
   }
+  // @@test-fine
   if (m.tipo === 'statoCache') {
     invia({ tipo: 'statoCache', id: m.id, ...(await byteInCache()) });
     return;
@@ -175,7 +177,9 @@ async function gestisci(m) {
   } else if (m.tipo === 'fonemi') {
     const f = m.fedele ? fonemizzaFedele(m.testo) : fonemizza(m.normalizza ? normalizza(m.testo) : m.testo);
     invia({ tipo: 'fonemi', id: m.id, fonemi: f });
-  } else if (m.tipo === 'sintesiFedele') {
+  }
+  // @@test-inizio
+  else if (m.tipo === 'sintesiFedele') {
     // Kokoro.create(testo, "if_sara", speed, lang="it") di kokoro-onnx 0.6.1, passo per passo
     const t = performance.now();
     const f = fonemizzaFedele(m.testo);
@@ -194,4 +198,5 @@ async function gestisci(m) {
     }
     invia({ tipo: 'audio', id: m.id, audio, fonemi: f, lotti: lotti.length, ms: Math.round(performance.now() - t) }, [audio.buffer]);
   }
+  // @@test-fine
 }

@@ -65,7 +65,7 @@ Ogni modifica, anche minima, fa avanzare la versione (patch per le correzioni, m
 funzioni). La versione vive solo in `src/manifest.json`; l'hook `.githooks/pre-commit` blocca i
 commit che toccano il codice senza versione nuova e senza voce in `CHANGELOG.md`.
 Il nome dell'estensione vive solo in `src/manifest.json` (`name` e `short_name`): i testi in
-`store/`, `docs/PRIVACY.md` e questo README si rigenerano da `store/modelli/` con `npm run store`.
+`store/`, `docs/PRIVACY.md` e questo README si rigenerano da `store/template/` con `npm run store`.
 
 ## Contatti
 

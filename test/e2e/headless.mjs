@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const QUI = dirname(fileURLToPath(import.meta.url));
-const EXT = process.env.EXT || join(QUI, '..', '..', 'estensione');
+const EXT = process.env.EXT || join(QUI, '..', '..', 'estensione-test'); // build con gli hook di test: npm run build:test
 const CHROME = process.env.CHROME;
 const OUT = process.env.USCITE || join(QUI, 'uscite');
 mkdirSync(OUT, { recursive: true });

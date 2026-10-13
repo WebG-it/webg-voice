@@ -1,8 +1,8 @@
 // Rigenera i testi che contengono il nome dell'estensione, partendo dai modelli
-// in store/modelli/ e dal manifest (unica fonte di nome e versione):
-//   store/modelli/README.md  -> README.md
-//   store/modelli/scheda.md  -> store/scheda.md
-//   store/modelli/PRIVACY.md -> docs/PRIVACY.md
+// in store/template/ e dal manifest (unica fonte di nome e versione):
+//   store/template/README.md  -> README.md
+//   store/template/scheda.md  -> store/scheda.md
+//   store/template/PRIVACY.md -> docs/PRIVACY.md
 // Uso: npm run store
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -31,9 +31,9 @@ const riempi = (t) => t.replace(/\{\{(\w+)\}\}/g, (x, k) => {
   return valori[k];
 });
 for (const [da, a] of [
-  ['store/modelli/README.md', 'README.md'],
-  ['store/modelli/scheda.md', 'store/scheda.md'],
-  ['store/modelli/PRIVACY.md', 'docs/PRIVACY.md'],
+  ['store/template/README.md', 'README.md'],
+  ['store/template/scheda.md', 'store/scheda.md'],
+  ['store/template/PRIVACY.md', 'docs/PRIVACY.md'],
 ]) {
   writeFileSync(join(RADICE, a), riempi(readFileSync(join(RADICE, da), 'utf8')));
   console.log(`${a} aggiornato`);

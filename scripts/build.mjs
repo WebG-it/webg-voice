@@ -1,14 +1,34 @@
 // Prepara la cartella estensione/, quella da caricare in Chrome.
 // Copia i sorgenti di src/ e le librerie (ONNX Runtime Web da node_modules,
 // eSpeak NG compilato da vendor/). Niente bundler: sono moduli ES nativi.
-// Uso: npm run build
-import { cpSync, rmSync, mkdirSync, existsSync, readdirSync, statSync } from 'node:fs';
+// Uso: npm run build         -> estensione/ (produzione, senza hook di test)
+//      npm run build:test    -> estensione-test/ (con gli hook per test/e2e, non si committa)
+import { cpSync, rmSync, mkdirSync, existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RADICE } from './versione.mjs';
 
-export function costruisci() {
-  const out = join(RADICE, 'estensione');
+// I blocchi fra "@@test-inizio" e "@@test-fine" servono solo ai test automatici
+// (globalThis.__test, richieste a URL arbitrari, svuotamento dell'archivio):
+// nella build di produzione si tolgono.
+const BLOCCO_TEST = /[ \t]*\/\/ @@test-inizio[\s\S]*?\/\/ @@test-fine[^\n]*\n?/g;
+
+function ripulisci(dir) {
+  for (const n of readdirSync(dir)) {
+    const p = join(dir, n);
+    if (n === 'vendor') continue;
+    if (statSync(p).isDirectory()) ripulisci(p);
+    else if (n.endsWith('.js')) {
+      const t = readFileSync(p, 'utf8');
+      const r = t.replace(BLOCCO_TEST, '');
+      if (/@@test|__test|provaFonte|svuotaCache/.test(r)) throw new Error(`hook di test rimasti in ${n}`);
+      if (r !== t) writeFileSync(p, r);
+    }
+  }
+}
+
+export function costruisci({ test = false } = {}) {
+  const out = join(RADICE, test ? 'estensione-test' : 'estensione');
   const ort = join(RADICE, 'node_modules', 'onnxruntime-web');
   if (!existsSync(ort)) throw new Error('Manca onnxruntime-web: lancia prima "npm install".');
 
@@ -24,6 +44,11 @@ export function costruisci() {
     cpSync(join(RADICE, 'vendor', 'espeak', f), join(out, 'vendor', 'espeak', f));
   }
   for (const f of ['LICENSE', 'THIRD_PARTY.md']) cpSync(join(RADICE, f), join(out, f));
+  if (test) {
+    const m = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8'));
+    m.name = `${m.name} (TEST)`;
+    writeFileSync(join(out, 'manifest.json'), JSON.stringify(m, null, 2));
+  } else ripulisci(out);
 
   let totale = 0;
   const giro = (d) => {
@@ -39,6 +64,7 @@ export function costruisci() {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const t = costruisci();
-  console.log(`estensione/ pronta: ${(t / 1048576).toFixed(1)} MB`);
+  const test = process.argv.includes('--test');
+  const t = costruisci({ test });
+  console.log(`${test ? 'estensione-test' : 'estensione'}/ pronta: ${(t / 1048576).toFixed(1)} MB`);
 }

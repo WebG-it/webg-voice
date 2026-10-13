@@ -1,3 +1,25 @@
 node_modules/
 dist/
+estensione-test/
 test/e2e/uscite/
+
+# segreti e chiavi
+.env
+.env.*
+*.pem
+*.key
+*.crx
+*.pfx
+
+# profili di Chrome di prova
+profilo*/
+profili/
+chrome-profile*/
+
+# varie
+*.log
+*.tgz
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

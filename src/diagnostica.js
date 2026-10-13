@@ -138,7 +138,9 @@ async function prova() {
       o += p.length;
     }
     $('ascolta').disabled = $('copia').disabled = false;
+    // @@test-inizio
     globalThis.__risultatoDiagnostica = { info: { ...info }, risultati: { ...risultati }, rtf };
+    // @@test-fine
   } catch (e) {
     $('stato').textContent = `Errore: ${e.message || e}`;
   } finally {
@@ -163,7 +165,9 @@ $('ascolta').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([wav(audioProva)], { type: 'audio/wav' }));
   new Audio(url).play();
 });
+// @@test-inizio
 globalThis.__testoDiagnostica = testoRisultato;
+// @@test-fine
 
 scrivi($('info'), info);
 modelliInCache().then((c) => {

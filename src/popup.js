@@ -144,7 +144,8 @@ $('diagnostica').addEventListener('click', (e) => {
   chrome.runtime.openOptionsPage();
 });
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, mittente) => {
+  if (mittente.id !== chrome.runtime.id) return;
   if (msg && msg.da === 'offscreen' && msg.tipo === 'stato') {
     if (msg.stato.motorePronto) inCache = true;
     mostra(msg.stato);

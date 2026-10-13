@@ -10,7 +10,14 @@ set -euo pipefail
 EMSDK="$(cygpath -m "$1" 2>/dev/null || echo "$1")"; LAVORO="$2"
 QUI="$(cd "$(dirname "$0")/.." && pwd -W 2>/dev/null || pwd)"
 mkdir -p "$LAVORO" && cd "$LAVORO"
+# commit del tag 1.52.0: se il tag venisse spostato, la build si ferma
+SHA_ATTESO="4870adfa25b1a32b4361592f1be8a40337c58d6c"
 [ -d espeak-ng ] || git clone --depth 1 --branch 1.52.0 https://github.com/espeak-ng/espeak-ng.git
+SHA_REALE="$(git -C espeak-ng rev-parse HEAD)"
+if [ "$SHA_REALE" != "$SHA_ATTESO" ]; then
+  echo "espeak-ng: commit $SHA_REALE diverso da quello atteso $SHA_ATTESO" >&2
+  exit 1
+fi
 mkdir -p cfg
 cat > cfg/config.h <<'EOF'
 #define HAVE_MKSTEMP 1

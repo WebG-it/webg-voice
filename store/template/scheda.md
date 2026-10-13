@@ -1,6 +1,6 @@
 # Scheda Chrome Web Store, {{NOME_BREVE}} {{VERSIONE}}
 
-Testi pronti da incollare nel modulo della scheda. Generato da `store/modelli/scheda.md`
+Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
 
 ## Nome

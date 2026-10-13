@@ -204,7 +204,8 @@
     }, 200);
   }
 
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, mittente) => {
+    if (mittente.id !== chrome.runtime.id) return;
     if (msg && msg.da === 'offscreen' && msg.tipo === 'stato') {
       const s = msg.stato;
       if ((s.fase !== 'inattivo' || s.errore) && !host.isConnected) mostra();
