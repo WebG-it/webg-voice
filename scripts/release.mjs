@@ -36,6 +36,8 @@ if (!haVoce(changelog, v)) {
   writeFileSync(CHANGELOG, changelog);
 }
 if (!senzaBump) scriviVersione(v);
+// testi con nome e versione (README, scheda store, privacy)
+execFileSync(process.execPath, [join(RADICE, 'scripts', 'scheda-store.mjs')], { stdio: 'inherit' });
 
 costruisci();
 mkdirSync(join(RADICE, 'dist'), { recursive: true });
@@ -43,7 +45,7 @@ const zip = join(RADICE, 'dist', `webg-voice-${v}.zip`);
 const n = zippa(join(RADICE, 'estensione'), zip);
 console.log(`dist/webg-voice-${v}.zip: ${n} file`);
 
-git('add', '-A', 'src', 'estensione', 'vendor', 'CHANGELOG.md');
+git('add', '-A', 'src', 'estensione', 'vendor', 'CHANGELOG.md', 'README.md', 'store', 'docs');
 git('commit', '-m', `Versione ${v}`);
 git('tag', '-a', `v${v}`, '-m', `Versione ${v}`);
 console.log(`Fatto: commit e tag v${v}. Lo zip da caricare sul Chrome Web Store e' in dist/.`);
