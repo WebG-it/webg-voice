@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "WebG Voice, leggi ad alta voce offline",
+  "short_name": "WebG Voice",
+  "version": "1.0.0",
+  "description": "Legge ad alta voce in italiano il testo selezionato, con una voce neurale che gira sul tuo computer. Gratis e offline.",
+  "homepage_url": "https://github.com/WebG-it/webg-voice",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "scripting", "contextMenus", "offscreen", "storage", "unlimitedStorage"],
+  "host_permissions": [
+    "https://github.com/WebG-it/webg-voice/*",
+    "https://release-assets.githubusercontent.com/*",
+    "https://huggingface.co/onnx-community/*",
+    "https://*.hf.co/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WebG Voice",
+    "default_icon": { "16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png" }
+  },
+  "icons": { "16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png", "128": "icone/icona-128.png" },
+  "options_ui": { "page": "diagnostica.html", "open_in_tab": true },
+  "commands": {
+    "leggi-selezione": {
+      "suggested_key": { "default": "Alt+Shift+L" },
+      "description": "Leggi il testo selezionato (senza selezione: pausa o riprendi)"
+    },
+    "ferma-lettura": {
+      "description": "Ferma la lettura"
+    }
+  },
+  "cross_origin_embedder_policy": { "value": "require-corp" },
+  "cross_origin_opener_policy": { "value": "same-origin" },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

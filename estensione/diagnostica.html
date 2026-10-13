@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Diagnostica</title>
+<link rel="stylesheet" href="diagnostica.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="icone/icona-48.png" alt="" width="40" height="40">
+    <div>
+      <h1 id="titolo">Diagnostica</h1>
+      <p class="sotto">Misura quanto è veloce la sintesi vocale su questo computer.</p>
+    </div>
+  </header>
+
+  <section class="scheda">
+    <h2>Questo computer</h2>
+    <dl id="info"></dl>
+  </section>
+
+  <section class="scheda">
+    <h2>Prova di sintesi</h2>
+    <p id="spiega">La prova legge tre frasi di lunghezza diversa, senza riprodurle, e misura i tempi. Dura da 10 a 40 secondi. Tieni questa finestra in primo piano: se Chrome è ridotto a icona o coperto, Windows lo rallenta e la misura esce peggiore.</p>
+    <div class="azioni">
+      <button id="avvia" class="primario">Avvia la prova</button>
+      <button id="ascolta" disabled>Ascolta la prova</button>
+      <button id="copia" disabled>Copia risultato</button>
+    </div>
+    <progress id="avanz" max="1" value="0" hidden></progress>
+    <p id="stato" aria-live="polite"></p>
+    <dl id="risultati"></dl>
+    <p id="verdetto" class="verdetto" hidden></p>
+  </section>
+</main>
+<script type="module" src="diagnostica.js"></script>
+</body>
+</html>

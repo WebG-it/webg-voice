@@ -1,0 +1,48 @@
+:root {
+  --sfondo: #f5f5f7;
+  --superficie: #ffffff;
+  --testo: #1d1d1f;
+  --tenue: #6e6e73;
+  --bordo: rgba(0, 0, 0, 0.12);
+  --accento: #23417b;
+  --accento-testo: #ffffff;
+  --ok: #2e6b3a;
+  --attenzione: #9a5b00;
+  --male: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sfondo: #161618;
+    --superficie: #222225;
+    --testo: #f2f2f4;
+    --tenue: #a1a1a6;
+    --bordo: rgba(255, 255, 255, 0.14);
+    --accento: #8fb0ea;
+    --accento-testo: #0f1d38;
+    --ok: #8ed39b;
+    --attenzione: #f2c46d;
+    --male: #f2b8b5;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--sfondo); color: var(--testo); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+header { display: flex; gap: 14px; align-items: center; margin-bottom: 20px; }
+h1 { font-size: 22px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 12px; }
+.sotto { margin: 2px 0 0; color: var(--tenue); }
+.scheda { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+dt { color: var(--tenue); }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+#risultati:not(:empty) { margin-top: 14px; }
+.azioni { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+button { padding: 8px 14px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--sfondo); color: var(--testo); font: inherit; cursor: pointer; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
+button:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
+progress { width: 100%; accent-color: var(--accento); }
+.verdetto { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--bordo); font-weight: 600; }
+.verdetto.ok { color: var(--ok); }
+.verdetto.attenzione { color: var(--attenzione); }
+.verdetto.male { color: var(--male); }

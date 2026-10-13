@@ -1,0 +1,3 @@
+#!/bin/sh
+# Controllo di versione e privacy prima di ogni commit (vedi scripts/controlla-versione.mjs)
+exec node scripts/controlla-versione.mjs
