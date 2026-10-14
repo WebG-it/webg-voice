@@ -12,22 +12,40 @@ const ABBR = new Set(['sig', 'sigg', 'dott', 'dr', 'prof', 'ing', 'avv', 'arch',
 // Fine di riga che chiude davvero un periodo
 const FINE_PERIODO = /[.!?…:;]["'»”’)\]]*$/u;
 
-// Parole che a fine riga tengono il trattino quando continuano sulla riga dopo
-// (nord-est, ex-marito, anti-age, euro-atlantico): non e' una sillabazione.
+// Parole che a fine riga tengono il trattino quando continuano sulla riga dopo (nord-est,
+// ex-marito, euro-atlantico). Solo prefissi che non sono anche l'inizio di parole comuni: con
+// pro, co, pre, eco, tele "pro-getto", "co-munita'", "pre-sidente" restavano spezzati.
 const PREFISSI_TRATTINO = new Set([
-  'nord', 'sud', 'est', 'ovest', 'centro', 'ex', 'anti', 'post', 'pre', 'socio', 'euro', 'extra',
-  'super', 'ultra', 'iper', 'mini', 'maxi', 'multi', 'semi', 'neo', 'vice', 'pro', 'filo', 'para',
-  'pseudo', 'sotto', 'sovra', 'inter', 'intra', 'infra', 'micro', 'macro', 'auto', 'tele', 'ecco',
-  'italo', 'franco', 'anglo', 'ispano', 'russo', 'cino', 'afro', 'greco', 'tedesco', 'arabo',
-  'mezzo', 'non', 'co', 'bio', 'eco', 'e', 'self', 'top', 'web', 'smart', 'full', 'open',
+  'nord', 'sud', 'est', 'ovest', 'centro', 'ex', 'anti', 'post', 'socio', 'euro', 'italo', 'anglo', 'afro', 'ispano',
 ]);
 const ELENCO = /^([-•*–·▪◦]|\d+[.)]|[a-z][.)])\s/u;
 
+// Parole che non possono chiudere una frase ne' un titolo: una riga che finisce cosi' e' spezzata
+const NON_FINALI = new Set([
+  'il', 'lo', 'la', 'i', 'gli', 'le', 'l', 'un', 'uno', 'una', 'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
+  'e', 'ed', 'o', 'od', 'che', 'del', 'dello', 'della', 'dei', 'degli', 'delle', 'al', 'allo', 'alla', 'ai', 'agli',
+  'alle', 'dal', 'dallo', 'dalla', 'dai', 'dagli', 'dalle', 'nel', 'nello', 'nella', 'nei', 'negli', 'nelle', 'sul',
+  'sullo', 'sulla', 'sui', 'sugli', 'sulle', 'col', 'coi', 'ma', 'se', 'come', 'non', 'piu', 'più', 'cui', 'quale',
+]);
+// parola finale che non chiude: solo in minuscolo (una sigla come TO o IL resta una sigla)
+const nonFinale = (riga) => {
+  const p = (riga.match(/([\p{L}]+)$/u) || [])[1];
+  return !!p && p === p.toLowerCase() && NON_FINALI.has(p);
+};
+
+/** true se fra la riga `a` e la riga `b` c'e' un segno di frase spezzata a capo. */
+function spezzata(a, b) {
+  if (/^[\p{Ll}\d]/u.test(b)) return true; // la riga dopo continua in minuscolo o con una cifra
+  if (/[,\-]$/.test(a)) return true; // virgola o trattino a fine riga
+  return nonFinale(a);
+}
+
 /**
  * Larghezza delle righe di un testo "a righe fisse" (PDF, mail, testo copiato da un riquadro
- * stretto), oppure 0 se non lo e'. A righe fisse vuol dire: almeno tre righe lunghe, la meta'
- * almeno vicina alla larghezza massima, e righe non piu' larghe di 200 caratteri. In un testo
- * normale (paragrafi di lunghezza qualsiasi, titoli, voci di elenco) ogni a capo resta un confine.
+ * stretto), oppure 0 se non lo e'. Servono due cose: almeno tre righe lunghe con meta' almeno
+ * vicine alla larghezza massima, entro i 200 caratteri; e almeno meta' dei passaggi fra righe
+ * lunghe con un segno di frase spezzata (spezzata()). Senza il secondo controllo titoli di
+ * giornale, voci lunghe o citazioni di larghezza simile, uno per riga, finivano in un paragrafo.
  */
 function larghezzaRighe(righe) {
   const lunghe = righe.map((r) => r.length).filter((n) => n >= 20).sort((a, b) => a - b);
@@ -35,7 +53,17 @@ function larghezzaRighe(righe) {
   const larga = lunghe[Math.floor((lunghe.length - 1) * 0.9)];
   if (larga > 200) return 0;
   const vicine = lunghe.filter((n) => n >= larga * 0.7).length;
-  return vicine >= lunghe.length * 0.5 ? larga : 0;
+  if (vicine < lunghe.length * 0.5) return 0;
+  let passaggi = 0;
+  let segni = 0;
+  for (let k = 0; k < righe.length - 1; k++) {
+    const a = righe[k];
+    const b = righe[k + 1];
+    if (!a || !b || a.length < larga * 0.6 || FINE_PERIODO.test(a)) continue;
+    passaggi++;
+    if (spezzata(a, b)) segni++;
+  }
+  return passaggi && segni >= passaggi * 0.5 ? larga : 0;
 }
 
 /** Unisce `cur` (fine di riga) e `r` (riga dopo) quando la riga di prima e' spezzata. */
@@ -66,7 +94,7 @@ export function paragrafi(testo) {
     .replace(/­[ \t]*\n[ \t]*/g, '')
     .replace(/­/g, '')
     .split('\n')
-    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim());
+    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim().replace(/^(?:>\s?)+/, '')); // via i ">" delle mail citate
   const larga = larghezzaRighe(righe);
   const out = [];
   let cur = '';
@@ -84,7 +112,10 @@ export function paragrafi(testo) {
     const trattino = /[\p{L}\d]-$/u.test(ultima) && /^[\p{Ll}\d]/u.test(r);
     const aRighe = larga && ultima.length >= larga * 0.6 && !FINE_PERIODO.test(ultima);
     const confine = ELENCO.test(r) || (/\d$/.test(ultima) && /^\d/.test(r) && !/-$/.test(ultima));
-    if (!confine && (trattino || aRighe)) cur = unisci(cur, r);
+    // in ogni testo: riga che finisce con una virgola o con una parola che non chiude una frase
+    // ("fissata per il / 12 ottobre", "Torino, / Milano, / Roma"); la minuscola da sola non basta
+    const forte = /,$/.test(ultima) || nonFinale(ultima);
+    if (!confine && (trattino || aRighe || forte)) cur = unisci(cur, r);
     else {
       out.push(cur);
       cur = r;

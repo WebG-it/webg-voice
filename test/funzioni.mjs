@@ -198,6 +198,34 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   prova('a capo: un elenco di parole resta un elenco', paragrafi('Frutta\nmele\npere').length === 3);
 }
 
+// ---- regressioni della 1.2.1: false unioni di righe simili e prefissi troppo larghi ----
+{
+  const { paragrafi } = await import('../src/lib/testo.js');
+  const titoli = [
+    'Governo, approvata la manovra: nuove misure per le famiglie italiane',
+    'Maltempo al Nord, allerta rossa in tre regioni per le piogge intense',
+    'Calcio, la Juventus vince in trasferta e si porta al secondo posto',
+    "Referendum, il quorum non raggiunto: l'affluenza si ferma al 38 per cento",
+    "Economia, l'inflazione scende ancora ma i prezzi alimentari restano alti",
+  ];
+  prova('a capo: cinque titoli di giornale restano separati', paragrafi(titoli.join('\n')).length === 5);
+  const voci = ['Prima', 'Seconda', 'Terza', 'Quarta'].map((x) => `${x} voce dell'elenco che e' piuttosto lunga e non finisce con punto`);
+  prova('a capo: voci lunghe senza punto restano separate', paragrafi(voci.join('\n')).length === 4);
+  const citazioni = [
+    '«Una citazione lunga che chiude con le virgolette senza punto finale nel testo» disse',
+    "«Un'altra citazione lunga che chiude con le virgolette senza punto finale» aggiunse",
+    '«Una terza citazione lunga che chiude con le virgolette senza punto finale» concluse',
+  ];
+  prova('a capo: citazioni una per riga restano separate', paragrafi(citazioni.join('\n')).length === 3);
+  const sill = paragrafi('Il pro-\ngetto della co-\nmunità e l\'au-\ntorità del pre-\nsidente sono eco-\nnomia e tele-\nvisione.')[0];
+  prova('trattino: pro-, co-, pre-, eco-, tele- sono sillabazioni', sill === 'Il progetto della comunità e l\'autorità del presidente sono economia e televisione.', sill);
+  prova('trattino: nord-est, centro-sud, ex-marito restano', paragrafi('La zona nord-\nest e il centro-\nsud, e il suo ex-\nmarito.')[0] === 'La zona nord-est e il centro-sud, e il suo ex-marito.');
+  prova('a capo: riga che finisce con "di" o "il" continua', paragrafi('Il prezzo è di\n20 euro al mese.').length === 1 && paragrafi('La riunione è fissata per il\n12 ottobre alle 15.').length === 1);
+  prova('a capo: una sigla come TO a fine riga non unisce', paragrafi('10100 Torino TO\nTel. 011 123456').length === 2);
+  const mail = paragrafi('> Il presidente ha incontrato oggi il collega Mario Rossi per parlare di\n> economia, di Stati Uniti e dei nuovi accordi commerciali che riguardano\n> anche l\'Italia e la Germania. Nel frattempo il Governo ha annunciato\n> nuove misure per sostenere le famiglie.');
+  prova('a capo: mail citata senza ">" dentro la frase', mail.length === 1 && !mail[0].includes('>'), mail[0].slice(0, 80));
+}
+
 // ---- nome del file ----
 prova('nome: dal titolo', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x') === 'Sito vetrina nel 2026 a cosa serve e quando basta.mp3', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x'));
 prova('nome: dall\'inizio del testo', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.') === 'Per cominciare conviene puntare su piante facili basilico.mp3', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.'));

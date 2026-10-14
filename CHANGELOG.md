@@ -4,6 +4,14 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.2.2] - 2026-10-15
+
+- A capo, correzione di una regressione della 1.2.1: righe di larghezza simile che non sono un testo a righe fisse venivano unite in un paragrafo solo (cinque titoli di giornale incollati uno per riga, voci lunghe senza punto, citazioni che chiudono con «»). Ora un testo è "a righe fisse" solo se, oltre alla larghezza simile, almeno metà dei passaggi fra righe lunghe mostra una frase spezzata: la riga dopo comincia in minuscolo o con una cifra, oppure la riga prima finisce con una virgola, un trattino o una parola che non chiude una frase (di, il, negli, e, che…). Restano unite le righe dei PDF e "il collega / Mario Rossi … negli / Stati Uniti".
+- In ogni testo una riga che finisce con una virgola o con una di quelle parole continua nella riga dopo ("Il prezzo è di / 20 euro", "fissata per il / 12 ottobre", "Torino, / Milano, / Roma"); la sola minuscola a inizio riga non basta, così "Come si prepara / farina" resta separato. Le sigle in maiuscolo (TO, IL) non contano come parole.
+- Trattini a fine riga: tolti dai prefissi quelli che sono anche l'inizio di parole comuni (pro, co, pre, eco, auto, bio, tele, non, e e simili), così "pro-getto", "co-munità", "pre-sidente", "eco-nomia", "tele-visione" si ricompongono. Restano col trattino nord, sud, est, ovest, centro, ex, anti, post, socio, euro, italo, anglo, afro, ispano.
+- Nelle mail citate i segni ">" a inizio riga si tolgono e non finiscono più dentro la frase.
+- Verifiche: test:funzioni 61 su 61 con i casi di regressione, fonemi 44 su 44, script di controllo del revisore tutti a posto.
+
 ## [1.2.1] - 2026-10-15
 
 - Articolo intero: i paragrafi dell'articolo si separano con una riga vuota, così titoli, voci di elenco e citazioni restano a sé anche senza punto finale. Prima la regola degli a capo della 1.2.0 li ricuciva ("Come si prepara farina uova fresche latte intero").
