@@ -31,7 +31,13 @@ body {
 }
 header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 h1 { font-size: 15px; font-weight: 600; margin: 0; }
-.voce { color: var(--tenue); font-size: 12px; }
+.versione { color: var(--tenue); font-size: 12px; }
+.voci { display: flex; align-items: center; gap: 0; margin: 0 0 10px; }
+.voci .etichetta { color: var(--tenue); font-size: 12px; margin-right: 10px; }
+.voci button { border-radius: 0; padding: 5px 14px; min-width: 76px; justify-content: center; }
+.voci button:first-of-type { border-radius: 8px 0 0 8px; }
+.voci button:last-of-type { border-radius: 0 8px 8px 0; border-left: 0; }
+.voci button[aria-checked="true"] { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
 textarea {
   width: 100%;
   resize: vertical;
@@ -45,6 +51,8 @@ textarea {
 }
 textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
 .comandi { display: flex; gap: 8px; margin: 10px 0; }
+.comandi + .comandi { margin-top: -2px; }
+.comandi #articolo, .comandi #mp3 { flex: 1; justify-content: center; }
 button {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
@@ -61,6 +69,13 @@ button:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
 button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; flex: 1; justify-content: center; font-weight: 600; }
 button svg { width: 14px; height: 14px; fill: currentColor; }
 button.link { padding: 0; border: 0; background: none; color: var(--accento); text-decoration: underline; }
+a.bottone {
+  display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 8px;
+  border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); text-decoration: none;
+}
+a.bottone.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
+a.bottone:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
+a[hidden], button[hidden], progress[hidden], p[hidden] { display: none !important; }
 .velocita { display: flex; align-items: center; gap: 10px; }
 .velocita input { flex: 1; accent-color: var(--accento); }
 .velocita output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
@@ -76,5 +91,5 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border: 
 
 .mb { margin: 4px 0 0; color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
 .azioniStato { display: flex; gap: 8px; margin-top: 8px; }
-.azioniStato:empty, .azioniStato:not(:has(button:not([hidden]))) { display: none; }
+.azioniStato:empty, .azioniStato:not(:has(button:not([hidden]), a:not([hidden]))) { display: none; }
 #scarica { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }

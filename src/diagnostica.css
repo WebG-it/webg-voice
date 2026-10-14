@@ -64,4 +64,9 @@ kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1p
 #dizTesto { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
 .diz button { padding: 5px 10px; }
 .nota { color: var(--tenue); font-size: 13px; }
+.scelteVoce { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 6px 0 4px; }
+.sceltaVoce { display: flex; align-items: center; gap: 10px; }
+.sceltaVoce label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+.sceltaVoce input { accent-color: var(--accento); width: 16px; height: 16px; }
+.sceltaVoce button { padding: 5px 10px; }
 #dizionario details summary { margin: 6px 0; color: var(--accento); }

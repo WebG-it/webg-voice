@@ -78,7 +78,18 @@ try {
   const extId = new URL(swT.url()).host;
   const sw = await swT.worker();
   const ext = (await b.extensions()).get(extId);
-  // installazione pulita: si aspetta che il modello sia scaricato (profilo nuovo)
+  // profilo nuovo: l'offscreen nasce col download automatico; profilo con la voce gia' scaricata:
+  // lo si crea e si avvia il motore (all'avvio del browser, col modello presente, non nasce da solo)
+  await sw.evaluate(async () => {
+    if (!(await chrome.offscreen.hasDocument()))
+      await chrome.offscreen.createDocument({ url: 'offscreen.html', reasons: ['AUDIO_PLAYBACK', 'WORKERS'], justification: 'test' });
+    for (let i = 0; i < 50; i++) {
+      try {
+        if (await chrome.runtime.sendMessage({ a: 'offscreen', tipo: 'preparaMotore' })) break;
+      } catch {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  });
   const offT = await b.waitForTarget((t) => t.url().endsWith('/offscreen.html'), { timeout: 30000 });
   const offP = await offT.asPage();
   await offP.waitForFunction(() => globalThis.__test && __test.stato().motorePronto, { timeout: 600000, polling: 500 });

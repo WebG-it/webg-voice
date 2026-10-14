@@ -9,10 +9,16 @@
 <body>
 <header>
   <h1 id="nome">WebG Voice</h1>
-  <span class="voce">Voce Sara · <span id="versione"></span></span>
+  <span class="versione" id="versione"></span>
 </header>
 
-<textarea id="testo" rows="6" placeholder="Incolla qui un testo da leggere, oppure lascia vuoto per leggere la selezione della pagina…" spellcheck="false"></textarea>
+<div class="voci" role="radiogroup" aria-label="Voce">
+  <span class="etichetta" id="etichettaVoce">Voce</span>
+  <button type="button" role="radio" data-voce="sara" aria-checked="true">Sara</button>
+  <button type="button" role="radio" data-voce="nicola" aria-checked="false">Nicola</button>
+</div>
+
+<textarea id="testo" rows="5" placeholder="Incolla qui un testo da leggere, oppure lascia vuoto per leggere la selezione o l'articolo della pagina…" spellcheck="false"></textarea>
 
 <div class="comandi">
   <button id="play" class="primario" title="Leggi">
@@ -24,12 +30,33 @@
     <span>Ferma</span>
   </button>
 </div>
+<div class="comandi">
+  <button id="articolo" title="Legge titolo e testo dell'articolo, senza menu e pubblicità">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1zm1.5 4v1h7v-1zm0 2.5v1h7V9zm0 2.5v1h5v-1z"/></svg>
+    <span>Leggi l'articolo</span>
+  </button>
+  <button id="mp3" title="Crea un file MP3 del testo incollato, della selezione o dell'articolo">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 2h1.5v6.7l2.2-2.2 1.06 1.06L8 11.56 3.99 7.56 5.05 6.5l2.2 2.2zM3 12.5h10V14H3z"/></svg>
+    <span>Scarica MP3</span>
+  </button>
+</div>
 
 <label class="velocita">
   <span>Velocità</span>
   <input id="vel" type="range" min="0.7" max="1.5" step="0.05" value="1">
   <output id="velVal">1,00×</output>
 </label>
+
+<section id="mp3Box" class="stato" aria-live="polite" hidden>
+  <p id="mp3Testo"></p>
+  <progress id="mp3Barra" max="1" value="0"></progress>
+  <p id="mp3Dettaglio" class="mb"></p>
+  <div class="azioniStato">
+    <button id="mp3Annulla">Annulla</button>
+    <a id="mp3Salva" class="bottone primario" href="#" download hidden>Salva di nuovo</a>
+    <button id="mp3Chiudi" hidden>Chiudi</button>
+  </div>
+</section>
 
 <section id="statoBox" class="stato" aria-live="polite">
   <p id="statoTesto">…</p>
@@ -45,7 +72,7 @@
 <p id="avvisoPagina" class="avviso" role="status" hidden></p>
 <p id="avvisoTasto" class="avviso" hidden>La scorciatoia per leggere non è assegnata, forse perché un'altra estensione usa gli stessi tasti. <a href="#" id="tastiAvviso">Imposta la scorciatoia</a></p>
 
-<p class="aiuto">Seleziona del testo in una pagina e premi <kbd id="tasto">Alt+Q</kbd> (di nuovo per pausa e ripresa, <kbd id="tastoStop">Alt+W</kbd> per fermare), oppure tasto destro → <em>Leggi ad alta voce</em>. <a href="#" id="tasti">Cambia scorciatoie</a></p>
+<p class="aiuto">Seleziona del testo e premi <kbd id="tasto">Alt+Q</kbd>: senza selezione legge tutto l'articolo. Di nuovo per pausa e ripresa, <kbd id="tastoStop">Alt+W</kbd> per fermare. Anche dal tasto destro. <a href="#" id="tasti">Cambia scorciatoie</a></p>
 
 <script type="module" src="popup.js"></script>
 </body>

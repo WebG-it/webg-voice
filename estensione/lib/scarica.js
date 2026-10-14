@@ -7,7 +7,7 @@
 // riuniscono e si controlla l'impronta SHA-256: se non torna, si buttano e si
 // prova la sorgente successiva.
 
-import { FILE_REMOTI, BYTE_TOTALI, chiave, chiaveParte } from './modelli.js';
+import { FILE_REMOTI, BYTE_TOTALI, chiave, chiaveParte, fileRemoto } from './modelli.js';
 import * as archivio from './archivio.js';
 
 const PARTE = 16 * 1024 * 1024;
@@ -89,7 +89,10 @@ export function ottieni(nome, avanzamento, base = 0) {
 }
 
 async function ottieniDavvero(nome, avanzamento, base) {
-  const f = FILE_REMOTI[nome];
+  const f = fileRemoto(nome);
+  if (!f) throw new Error(`file sconosciuto: ${nome}`);
+  // il modello e la voce di base contano sul totale del primo download; una voce in piu' su se stessa
+  const TOT = FILE_REMOTI[nome] ? BYTE_TOTALI : f.byte;
   const pronto = await archivio.leggi(chiave(nome));
   if (pronto) {
     const b = new Uint8Array(await pronto.arrayBuffer());
@@ -121,18 +124,18 @@ async function ottieniDavvero(nome, avanzamento, base) {
               const ora = Date.now();
               if (ora - ultimoAvviso > 200) {
                 ultimoAvviso = ora;
-                avanzamento({ scaricati: base + fatti + pos, totale: BYTE_TOTALI, file: nome, fonte });
+                avanzamento({ scaricati: base + fatti + pos, totale: TOT, file: nome, fonte });
               }
             });
           } catch (e) {
             if (t === TENTATIVI || e.definitivo) throw e;
-            avanzamento({ scaricati: base + fatti, totale: BYTE_TOTALI, file: nome, fonte, riprovo: t, errore: String(e.message || e) });
+            avanzamento({ scaricati: base + fatti, totale: TOT, file: nome, fonte, riprovo: t, errore: String(e.message || e) });
             await dorme(1000 * 2 ** (t - 1));
           }
         }
         await archivio.scrivi(chiaveParte(nome, i), byte);
         fatti += b - a;
-        avanzamento({ scaricati: base + fatti, totale: BYTE_TOTALI, file: nome, fonte });
+        avanzamento({ scaricati: base + fatti, totale: TOT, file: nome, fonte });
       }
       // riunisco e controllo
       const tutto = new Uint8Array(f.byte);

@@ -1,9 +1,14 @@
 // Offscreen document: tiene il motore (Web Worker) e l'audio, cosi' la lettura
 // continua anche a popup chiuso. E' la sola fonte di verita' sullo stato: lo
 // pubblica a ogni cambio e il service worker lo gira alla barretta della scheda.
+// Qui gira anche la creazione degli MP3, che usa lo stesso motore ma cede il
+// passo alla lettura: il modello resta caricato una volta sola.
 
 import { FREQUENZA, wav } from './lib/audio.js';
 import { impronta } from './lib/impronta.js';
+import { dividiSezioni, componiBlocco, pianoIniziale, regolaBlocco } from './lib/testo.js';
+import { VOCI, voceValida } from './lib/modelli.js';
+import { KBPS, nomeFile, tagId3 } from './lib/mp3.js';
 
 class Annullato extends Error {}
 
@@ -35,31 +40,39 @@ function chiedi(msg, trasf) {
 }
 
 const stato = {
-  fase: 'inattivo', // inattivo | preparazione | lettura | pausa
+  fase: 'inattivo', // inattivo | preparazione | lettura | pausa | consenso
   velocita: 1,
+  voce: 'sara',
   blocco: 0,
   totale: 0,
   tabId: null,
+  titolo: null, // titolo dell'articolo in lettura, se e' un articolo
   download: null,
+  downloadVoce: null, // download di una voce in piu' (Nicola): { voce, scaricati, totale }
   motorePronto: false,
   info: null,
   errore: null,
   metriche: {},
+  mp3: null, // creazione dell'MP3: vedi creaMp3()
   versione: null, // l'offscreen document non ha chrome.runtime.getManifest: si legge sotto
 };
 
 // Dopo 10 minuti senza letture il documento si fa chiudere, cosi' il modello
-// (circa 330 MB in memoria) non resta caricato per niente.
+// (circa 330 MB in memoria) non resta caricato per niente. Non mentre si crea un
+// MP3, ne' finche' un MP3 pronto non e' stato salvato (al massimo 30 minuti).
 const RIPOSO_MS = 10 * 60 * 1000;
+const MP3_TENUTO_MS = 30 * 60 * 1000;
 let timerRiposo = null;
 function controllaRiposo() {
   clearTimeout(timerRiposo);
-  if (stato.fase === 'inattivo') {
-    timerRiposo = setTimeout(() => {
-      // non durante il download in sottofondo
-      if (stato.fase === 'inattivo' && !caricamento) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
-    }, RIPOSO_MS);
-  }
+  if (stato.fase !== 'inattivo') return;
+  timerRiposo = setTimeout(() => {
+    const m = stato.mp3;
+    if (lavoroMp3) return controllaRiposo();
+    if (m && m.fase === 'pronto' && !m.salvato && Date.now() - m.quando < MP3_TENUTO_MS) return controllaRiposo();
+    // non durante il download in sottofondo
+    if (stato.fase === 'inattivo' && !caricamento) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
+  }, RIPOSO_MS);
 }
 
 fetch('manifest.json')
@@ -90,6 +103,12 @@ function pubblica(subito = true) {
 }
 
 function progresso(m) {
+  if (m.voce && m.file && m.file !== 'voce' && m.file !== 'modello') {
+    // voce in piu': mezzo MB, non e' il "primo download" del modello
+    stato.downloadVoce = m.fase === 'download' ? { voce: m.voce, scaricati: m.scaricati, totale: m.totale } : null;
+    pubblica(false);
+    return;
+  }
   stato.download =
     m.fase === 'download'
       ? { file: m.file, scaricati: m.scaricati, totale: m.totale, fonte: m.fonte, riprovo: m.riprovo }
@@ -103,6 +122,7 @@ function errore(e) {
   const L = lettura;
   if (L) ferma(false);
   stato.fase = 'inattivo';
+  stato.downloadVoce = null;
   if (/download/i.test(msg) && stato.download && stato.download.totale) {
     // download interrotto: i pezzi gia' scaricati restano, "Riprova" riparte da li'
     stato.download = { ...stato.download, interrotto: true, riprovo: undefined, dettaglio: msg };
@@ -192,13 +212,39 @@ function consenti() {
   consenso = true;
   const r = richiestaInAttesa;
   richiestaInAttesa = null;
-  if (r) leggi(r.testo, r.velocita, r.tabId, Date.now(), r.rtf, r.dizionario);
+  if (r) leggi(r);
   else {
     stato.errore = null;
     if (stato.download) stato.download = { ...stato.download, interrotto: false, inAttesa: false };
     pubblica();
     motore().catch(errore);
   }
+}
+
+/**
+ * Pannello aperto: se il modello e' gia' sul computer il motore si carica subito, cosi'
+ * la lettura che probabilmente segue non paga i 2-3 secondi del caricamento.
+ * Non scarica niente: se il modello manca non fa nulla.
+ */
+async function preriscalda() {
+  if (stato.motorePronto || caricamento) return;
+  try {
+    const r = await modelloCompleto();
+    if (r === true || r.completo) motore().catch(() => {});
+  } catch {}
+}
+
+/** Scarica in anticipo lo stile di una voce scelta (Nicola), cosi' la lettura parte subito. */
+async function preparaVoce(v) {
+  try {
+    await chiedi({ tipo: 'preparaVoce', voce: v });
+    stato.downloadVoce = null;
+    if (stato.errore && /voce/i.test(stato.errore)) stato.errore = null;
+  } catch (e) {
+    stato.downloadVoce = null;
+    if (stato.fase === 'inattivo') stato.errore = String(e && e.message ? e.message : e);
+  }
+  pubblica();
 }
 
 // Autoregolazione: rapporto col tempo reale misurato sui blocchi delle letture
@@ -221,8 +267,48 @@ function salvaRtf() {
   if (rtf !== null) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'rtf', valore: +rtf.toFixed(3) }).catch(() => {});
 }
 const rtfUsato = () => (rtf === null ? RTF_PRUDENTE : rtf);
-const anticipo = () => (rtfUsato() < 0.8 ? 3 : rtfUsato() < 1 ? 4 : 6);
-const bloccoIniziale = () => (rtfUsato() >= 0.95 ? 2 : 1);
+
+// Costo della sintesi misurato sul posto: millisecondi = fisso + perFonema x fonemi.
+// Serve a decidere quanto testo mettere nel prossimo blocco perche' sia pronto prima
+// che finisca l'audio gia' in coda. Si aggiorna a ogni blocco e vale fra una lettura e
+// l'altra finche' il motore resta caricato.
+const costo = { punti: [], audioPerFonema: null };
+function stimaCosto() {
+  const P = costo.punti;
+  let fisso = 500;
+  let perFonema = null;
+  if (P.length >= 4) {
+    const mx = P.reduce((s, p) => s + p[0], 0) / P.length;
+    const my = P.reduce((s, p) => s + p[1], 0) / P.length;
+    const sxx = P.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
+    if (sxx > 40 * 40 * P.length * 0.25) {
+      const pend = P.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / sxx;
+      const inter = my - pend * mx;
+      if (pend > 2 && inter >= 0 && inter < 3000) {
+        perFonema = pend;
+        fisso = inter;
+      }
+    }
+  }
+  if (perFonema === null && P.length) perFonema = Math.max(2, P.reduce((s, p) => s + Math.max(0, p[1] - fisso) / p[0], 0) / P.length);
+  // senza misure: dal rapporto col tempo reale salvato (o prudente)
+  // stima di partenza dal rapporto salvato, limitata: un valore gonfiato da un momento di carico
+  // del PC non deve condizionare le letture dopo (dal primo blocco valgono le misure vere)
+  if (perFonema === null) perFonema = Math.min(1.1, Math.max(0.5, rtfUsato())) * 46;
+  const audio = costo.audioPerFonema || 46 / (stato.velocita || 1);
+  return { fisso, perFonema: perFonema * 1.1, audio };
+}
+function misuraCosto(n, ms, secAudio, pausa) {
+  if (!(n > 0 && ms > 0)) return;
+  costo.punti.push([n, ms]);
+  if (costo.punti.length > 8) costo.punti.shift(); // ultimi 8 blocchi: segue i cambi di carico del PC
+  const a = ((secAudio - (pausa || 0)) * 1000) / n;
+  if (a > 10 && a < 200) costo.audioPerFonema = costo.audioPerFonema ? costo.audioPerFonema * 0.7 + a * 0.3 : a;
+}
+// Primo blocco: lo sceglie pianoIniziale (lib/testo.js) simulando l'inizio con il costo
+// misurato; i successivi stanno nell'85% dell'audio gia' pronto davanti (limiteDaMargine).
+// oltre questo anticipo (secondi di audio pronto) la sintesi si ferma e aspetta
+const ANTICIPO_S = 45;
 
 let lettura = null;
 let ultimaLettura = null;
@@ -233,17 +319,28 @@ function sveglia(L) {
   L.sveglia = null;
   if (s) s();
 }
-function attendi(L) {
+function attendi(L, motivo) {
+  L.inAttesa = motivo;
   return new Promise((r) => {
-    L.sveglia = r;
+    L.sveglia = () => {
+      L.inAttesa = null;
+      r();
+    };
   });
 }
 
-async function leggi(testo, velocita, tabId, t0, rtfSalvato, dizionario) {
+/**
+ * Lettura. Il testo si prepara in pezzi (frasi e incisi): la prima sezione subito, le
+ * altre mentre la lettura e' partita. I blocchi si compongono mentre si legge: il primo
+ * corto per partire presto, poi frasi intere quante ne permette l'audio gia' pronto.
+ * L'audio gia' suonato non resta in memoria.
+ */
+async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo }) {
   ferma(false);
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
+  if (voce) stato.voce = voceValida(voce);
   if (await serveConsenso()) {
-    richiestaInAttesa = { testo, velocita, tabId, rtf: rtfSalvato };
+    richiestaInAttesa = { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo };
     Object.assign(stato, { fase: 'consenso', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0 });
     pubblica();
     return;
@@ -251,31 +348,39 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato, dizionario) {
   const L = {
     id: ++seq,
     t0: t0 || Date.now(),
-    blocchi: [],
-    prossimo: 0,
+    pezzi: [],
+    cursore: 0, // primo pezzo non ancora sintetizzato
+    blocchi: [], // blocchi gia' sintetizzati: { da, a } in pezzi
     sorgenti: [],
     finePrevista: 0,
     generazione: 0,
+    voce: stato.voce,
+    dizionario,
+    daPreparare: null,
+    preparato: false,
     registrazione: [],
-    richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario },
+    richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo },
   };
   lettura = ultimaLettura = L;
   if (typeof velocita === 'number') stato.velocita = velocita;
-  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0, impronta: impronta(testo) });
-  stato.metriche = {};
+  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0, impronta: impronta(testo), titolo: titolo || null });
+  stato.metriche = { secondiAudio: 0, fonemi: [] };
   pubblica();
   try {
     const c = contesto();
     if (c.state !== 'running') await c.resume();
     await motore();
     if (L !== lettura) return;
-    const r = await chiedi({ tipo: 'prepara', testo, sessione: L.id, opzioni: { rtf: rtfUsato(), dizionario } });
-    L.parametri = { rtf: rtfUsato(), anticipo: anticipo(), bloccoIniziale: bloccoIniziale() };
+    const sezioni = dividiSezioni(testo);
+    L.parametri = { costo: stimaCosto(), sezioni: sezioni.length };
+    const r = await chiedi({ tipo: 'prepara', testo: sezioni[0] || '', sessione: L.id, opzioni: { pezzi: true, dizionario } });
     if (L !== lettura) return;
-    L.blocchi = r.blocchi;
-    stato.totale = r.blocchi.length;
+    L.pezzi = r.pezzi;
+    L.daPreparare = sezioni.slice(1);
+    L.preparato = !L.daPreparare.length;
+    stato.totale = L.pezzi.length;
     stato.metriche.preparazioneMs = r.ms;
-    if (!L.blocchi.length) {
+    if (!L.pezzi.length && L.preparato) {
       lettura = null;
       Object.assign(stato, { fase: 'inattivo', errore: 'Nel testo non c\'e\' niente da leggere.' });
       pubblica();
@@ -287,36 +392,88 @@ async function leggi(testo, velocita, tabId, t0, rtfSalvato, dizionario) {
   }
 }
 
-// Sintetizza in anticipo: al massimo il blocco che suona piu' due in coda
+/** Prepara le sezioni dopo la prima, una alla volta, mentre la lettura e' gia' partita. */
+function avviaResto(L) {
+  if (L.restoAvviato || L.preparato) return;
+  L.restoAvviato = true;
+  (async () => {
+    const sezioni = L.daPreparare;
+    for (let k = 0; k < sezioni.length; k++) {
+      const r = await chiedi({ tipo: 'prepara', testo: sezioni[k], sessione: L.id, opzioni: { pezzi: true, dizionario: L.dizionario } });
+      if (L !== lettura) return;
+      L.pezzi.push(...r.pezzi);
+      stato.totale = L.pezzi.length;
+      stato.metriche.preparazioneMs += r.ms;
+      sveglia(L);
+      pubblica(false);
+    }
+    L.daPreparare = null;
+    L.preparato = true;
+    sveglia(L);
+    forseFinita(L);
+  })().catch((e) => {
+    if (L === lettura && !(e instanceof Annullato)) errore(e);
+  });
+}
+
+function forseFinita(L) {
+  if (L !== lettura || !L.preparato || L.cursore < L.pezzi.length || L.sorgenti.length) return false;
+  lettura = null;
+  stato.fase = 'inattivo';
+  if (!L.partito) stato.errore = 'Nel testo non c\'e\' niente da leggere.';
+  salvaRtf();
+  pubblica();
+  return true;
+}
+
+// Sintetizza un blocco dopo l'altro finche' davanti c'e' meno di ANTICIPO_S di audio pronto
 async function pompa(L) {
   if (L.pompaAttiva) return;
   L.pompaAttiva = true;
   try {
-    while (L === lettura && L.prossimo < L.blocchi.length) {
+    while (L === lettura) {
+      if (L.cursore >= L.pezzi.length) {
+        if (L.preparato) break;
+        avviaResto(L);
+        await attendi(L, 'resto');
+        continue;
+      }
       const c = contesto();
-      const davanti = L.sorgenti.filter((s) => s.fine > c.currentTime).length;
-      if (davanti + (L.trattenuti ? L.trattenuti.length : 0) >= anticipo()) {
-        await attendi(L);
+      const margine = L.partito ? Math.max(0, L.finePrevista - c.currentTime) : 0;
+      if (L.partito && margine >= ANTICIPO_S) {
+        await attendi(L, 'anticipo');
         continue;
       }
-      const i = L.prossimo;
+      const primo = !L.partito;
+      const k = stimaCosto();
+      let limite;
+      let virgole = false;
+      if (primo) {
+        const piano = pianoIniziale(L.pezzi, k);
+        L.parametri.piano = piano;
+        limite = piano.limite;
+      } else ({ limite, virgole } = regolaBlocco(margine, k));
+      const b = componiBlocco(L.pezzi, L.cursore, limite, { primo, fineTesto: L.preparato, virgole });
+      if (b.dividi) {
+        L.pezzi.splice(L.cursore, 1, ...b.dividi);
+        stato.totale = L.pezzi.length;
+      }
       const gen = L.generazione;
-      const b = L.blocchi[i];
-      const r = await chiedi({ tipo: 'sintetizza', fonemi: b.fonemi, velocita: stato.velocita, pausa: b.pausa, sessione: L.id });
+      const da = L.cursore;
+      const r = await chiedi({ tipo: 'sintetizza', fonemi: b.fonemi, velocita: stato.velocita, voce: L.voce, pausa: b.pausa, sessione: L.id });
       if (L !== lettura) return;
+      const n = [...b.fonemi].length;
       (stato.metriche.sintesiMs ||= []).push(r.ms);
+      stato.metriche.fonemi.push(n);
+      misuraCosto(n, r.ms, r.audio.length / FREQUENZA, b.pausa);
       aggiornaRtf(r.rtf);
-      if (gen !== L.generazione) continue; // la velocita' e' cambiata nel frattempo
-      L.prossimo = i + 1;
-      // su un PC lento si parte quando i primi due blocchi sono pronti
-      if (i < bloccoIniziale() - 1 && L.blocchi.length > 1 && !L.partito) {
-        (L.trattenuti ||= []).push([i, r.audio]);
-        continue;
-      }
-      for (const [j, a] of L.trattenuti || []) programma(L, j, a);
-      L.trattenuti = null;
+      if (gen !== L.generazione) continue; // velocita' o voce cambiate nel frattempo
+      L.blocchi.push({ da, a: b.a });
+      L.cursore = b.a;
+      programma(L, L.blocchi.length - 1, r.audio);
       L.partito = true;
-      programma(L, i, r.audio);
+      // le sezioni successive si preparano solo dopo il primo suono, per non ritardarlo
+      avviaResto(L);
     }
   } catch (e) {
     if (L === lettura && !(e instanceof Annullato)) errore(e);
@@ -342,22 +499,18 @@ function programma(L, i, audio) {
   const v = { src, inizio, fine: inizio + buf.duration, indice: i };
   L.sorgenti.push(v);
   L.finePrevista = v.fine;
-  L.registrazione[i] = audio;
+  stato.metriche.secondiAudio = +(stato.metriche.secondiAudio + buf.duration).toFixed(2);
   if (i === 0 && stato.metriche.primoSuonoMs === undefined) {
     stato.metriche.primoSuonoMs = Math.round(Date.now() - L.t0 + (inizio - c.currentTime) * 1000);
   }
   if (stato.fase === 'preparazione') stato.fase = 'lettura';
   src.onended = () => {
+    src.disconnect();
     if (L !== lettura) return;
     L.sorgenti = L.sorgenti.filter((s) => s !== v);
-    stato.blocco = Math.min(i + 1, L.blocchi.length);
-    if (i === L.blocchi.length - 1 && L.sorgenti.length === 0) {
-      lettura = null;
-      stato.fase = 'inattivo';
-      salvaRtf();
-      pubblica();
-      return;
-    }
+    const b = L.blocchi[i];
+    if (b) stato.blocco = Math.max(stato.blocco, Math.min(b.a, L.pezzi.length));
+    if (forseFinita(L)) return;
     sveglia(L);
     pubblica();
   };
@@ -373,6 +526,7 @@ function ferma(pubblicare = true) {
       s.src.onended = null;
       try {
         s.src.stop();
+        s.src.disconnect();
       } catch {}
     }
     L.sorgenti = [];
@@ -400,33 +554,196 @@ async function riprendi() {
   pubblica();
 }
 
+/** I blocchi gia' pronti ma non ancora partiti si rifanno (nuova velocita' o nuova voce). */
+function rifaiNonPartiti(L) {
+  L.generazione++;
+  const c = contesto();
+  const tenute = [];
+  let primoScartato = Infinity;
+  for (const s of L.sorgenti) {
+    if (s.inizio > c.currentTime + 0.05) {
+      s.src.onended = null;
+      try {
+        s.src.stop();
+        s.src.disconnect();
+      } catch {}
+      primoScartato = Math.min(primoScartato, s.indice);
+    } else tenute.push(s);
+  }
+  L.sorgenti = tenute;
+  if (primoScartato < L.blocchi.length) {
+    L.cursore = L.blocchi[primoScartato].da;
+    L.blocchi.length = primoScartato;
+  }
+  L.finePrevista = tenute.length ? Math.max(...tenute.map((s) => s.fine)) : 0;
+  sveglia(L);
+  pompa(L);
+}
+
 function impostaVelocita(v) {
   const vel = Math.min(1.5, Math.max(0.7, Number(v) || 1));
   if (vel === stato.velocita) return;
   stato.velocita = vel;
-  const L = lettura;
-  if (L) {
-    // i blocchi gia' pronti ma non ancora partiti si rifanno alla nuova velocita'
-    L.generazione++;
-    const c = contesto();
-    const tenute = [];
-    let primoScartato = Infinity;
-    for (const s of L.sorgenti) {
-      if (s.inizio > c.currentTime + 0.05) {
-        s.src.onended = null;
-        try {
-          s.src.stop();
-        } catch {}
-        primoScartato = Math.min(primoScartato, s.indice);
-      } else tenute.push(s);
-    }
-    L.sorgenti = tenute;
-    if (primoScartato < L.prossimo) L.prossimo = primoScartato;
-    L.finePrevista = tenute.length ? Math.max(...tenute.map((s) => s.fine)) : 0;
-    sveglia(L);
-    pompa(L);
-  }
+  if (lettura) rifaiNonPartiti(lettura);
   pubblica();
+}
+
+function impostaVoce(v) {
+  const id = voceValida(v);
+  if (id !== stato.voce) {
+    stato.voce = id;
+    const L = lettura;
+    if (L) {
+      L.voce = id;
+      rifaiNonPartiti(L);
+    }
+  }
+  if (id !== 'sara') preparaVoce(id);
+  else pubblica();
+}
+
+// ---- MP3: sintesi di tutto il testo e codifica, in locale ----
+// Un blocco alla volta: prima di chiedere il successivo al motore si aspetta che
+// una lettura in corso abbia almeno 20 secondi di audio pronto, cosi' l'MP3 non la
+// fa mai fermare. Blocchi da al massimo 90 fonemi (circa 4 secondi di voce): un blocco gia'
+// in sintesi non si puo' interrompere, e una lettura chiesta intanto aspetta al massimo quello.
+const MP3_BLOCCO_MAX = 90;
+let lavoroMp3 = null;
+let codificatore = null;
+let urlMp3 = null;
+
+function avviaCodificatore() {
+  if (codificatore) return codificatore;
+  const w = new Worker(new URL('./mp3-worker.js', import.meta.url));
+  const att = new Map();
+  w.onmessage = (ev) => {
+    const m = ev.data;
+    const a = att.get(m.id);
+    if (!a) return;
+    att.delete(m.id);
+    if (m.tipo === 'errore') a.rifiuta(new Error(`codifica MP3: ${m.messaggio}`));
+    else a.risolvi(m);
+  };
+  w.onerror = (e) => {
+    for (const a of att.values()) a.rifiuta(new Error(`codifica MP3: ${e.message || 'errore'}`));
+    att.clear();
+  };
+  let n = 0;
+  codificatore = {
+    chiedi: (msg) =>
+      new Promise((risolvi, rifiuta) => {
+        const id = ++n;
+        att.set(id, { risolvi, rifiuta });
+        w.postMessage({ ...msg, id });
+      }),
+    manda: (msg, trasf) => w.postMessage(msg, trasf || []),
+    chiudi: () => {
+      w.terminate();
+      for (const a of att.values()) a.rifiuta(new Annullato());
+      att.clear();
+      codificatore = null;
+    },
+  };
+  return codificatore;
+}
+
+const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Attende finche' una lettura in corso ha bisogno del motore. */
+async function cediAllaLettura(J) {
+  for (;;) {
+    if (J !== lavoroMp3) throw new Annullato();
+    const L = lettura;
+    // la lettura ha la precedenza finche' ha meno di 20 secondi di audio pronto davanti
+    const margine = L && ctx ? L.finePrevista - ctx.currentTime : 0;
+    const serve = L && L.pompaAttiva && L.inAttesa !== 'anticipo' && stato.fase !== 'pausa' && !(L.partito && margine >= 20);
+    if (!serve) return;
+    await dorme(150);
+  }
+}
+
+function liberaMp3() {
+  if (urlMp3) URL.revokeObjectURL(urlMp3);
+  urlMp3 = null;
+}
+
+async function creaMp3({ testo, titolo, velocita, voce, dizionario }) {
+  annullaMp3(false);
+  liberaMp3();
+  const J = { id: ++seq, t0: Date.now() };
+  lavoroMp3 = J;
+  const v = voceValida(voce || stato.voce);
+  const vel = Math.min(1.5, Math.max(0.7, Number(velocita) || 1));
+  const nome = nomeFile(titolo, testo);
+  stato.mp3 = { fase: 'preparazione', fatti: 0, totale: 0, secondi: 0, nomeFile: nome, titolo: titolo || null, voce: v };
+  stato.errore = null;
+  pubblica();
+  try {
+    if (!stato.motorePronto && aConsumo() && !consenso) {
+      const r = await modelloCompleto();
+      if (r !== true && !r.completo) throw new Error('Prima serve la voce sul computer: premi Scarica nel pannello, poi riprova.');
+    }
+    await motore();
+    const enc = avviaCodificatore();
+    await enc.chiedi({ tipo: 'inizia', frequenza: FREQUENZA, kbps: KBPS });
+    // preparazione di tutte le sezioni (pochi millisecondi l'una), cosi' il totale e' noto
+    const sezioni = dividiSezioni(testo);
+    const blocchi = [];
+    for (let k = 0; k < sezioni.length; k++) {
+      await cediAllaLettura(J);
+      const r = await chiedi({
+        tipo: 'prepara',
+        testo: sezioni[k],
+        sessione: J.id,
+        opzioni: { dizionario, limiteIniziale: MP3_BLOCCO_MAX, bloccoMax: MP3_BLOCCO_MAX, ultimaSezione: k === sezioni.length - 1 },
+      });
+      blocchi.push(...r.blocchi);
+    }
+    if (!blocchi.length) throw new Error('Nel testo non c\'e\' niente da leggere.');
+    Object.assign(stato.mp3, { fase: 'sintesi', totale: blocchi.length });
+    pubblica();
+    for (let i = 0; i < blocchi.length; i++) {
+      await cediAllaLettura(J);
+      const b = blocchi[i];
+      const r = await chiedi({ tipo: 'sintetizza', fonemi: b.fonemi, velocita: vel, voce: v, pausa: b.pausa, sessione: J.id });
+      if (J !== lavoroMp3) throw new Annullato();
+      stato.mp3.secondi = +(stato.mp3.secondi + r.audio.length / FREQUENZA).toFixed(2);
+      enc.manda({ tipo: 'aggiungi', audio: r.audio }, [r.audio.buffer]);
+      blocchi[i] = null; // i fonemi gia' usati non servono piu'
+      stato.mp3.fatti = i + 1;
+      pubblica(false);
+    }
+    stato.mp3.fase = 'codifica';
+    pubblica();
+    const fatto = await enc.chiedi({ tipo: 'fine' });
+    if (J !== lavoroMp3) throw new Annullato();
+    const tag = tagId3({ titolo: titolo || nome.replace(/\.mp3$/, ''), artista: `WebG Voice, voce ${VOCI[v].nome}`, album: 'WebG Voice' });
+    const blob = new Blob([tag, fatto.blob], { type: 'audio/mpeg' });
+    urlMp3 = URL.createObjectURL(blob);
+    Object.assign(stato.mp3, { fase: 'pronto', url: urlMp3, byte: blob.size, secondi: +fatto.secondi.toFixed(1), ms: Date.now() - J.t0, quando: Date.now(), salvato: false });
+    lavoroMp3 = null;
+    pubblica();
+  } catch (e) {
+    if (J !== lavoroMp3) return; // annullato o sostituito
+    lavoroMp3 = null;
+    if (codificatore) codificatore.chiudi();
+    if (e instanceof Annullato) stato.mp3 = null;
+    else stato.mp3 = { ...stato.mp3, fase: 'errore', errore: String(e && e.message ? e.message : e) };
+    pubblica();
+  }
+}
+
+function annullaMp3(pubblicare = true) {
+  const J = lavoroMp3;
+  if (J) {
+    lavoroMp3 = null;
+    worker.postMessage({ tipo: 'annulla', sessione: J.id });
+    if (codificatore) codificatore.chiudi();
+  }
+  if (pubblicare) {
+    if (stato.mp3 && stato.mp3.fase !== 'pronto') stato.mp3 = null;
+    pubblica();
+  }
 }
 
 // l'offscreen document non ha chrome.runtime.getURL: l'indirizzo si ricava dal proprio
@@ -436,17 +753,27 @@ const dizionarioValido = (d) =>
   Array.isArray(d)
     ? d.filter((v) => Array.isArray(v) && v.length === 2 && v.every((x) => typeof x === 'string' && x.length > 0 && x.length <= 100)).slice(0, 300)
     : [];
+const titoloValido = (t) => (typeof t === 'string' && t.trim() ? t.trim().slice(0, 300) : null);
 chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (mittente.id !== chrome.runtime.id) return;
   // all'offscreen parla solo il service worker
   if (mittente.url !== URL_BACKGROUND) return;
   if (!msg || typeof msg !== 'object' || msg.a !== 'offscreen') return;
-  if (msg.tipo === 'leggi' && (typeof msg.testo !== 'string' || msg.testo.length > 2_000_000)) return;
+  if ((msg.tipo === 'leggi' || msg.tipo === 'mp3') && (typeof msg.testo !== 'string' || msg.testo.length > 2_000_000)) return;
   if (msg.tipo === 'velocita' && !(typeof msg.valore === 'number' && Number.isFinite(msg.valore))) return;
   if (msg.tipo === 'leggi' && msg.rtf !== undefined && !(typeof msg.rtf === 'number' && Number.isFinite(msg.rtf) && msg.rtf > 0.05 && msg.rtf < 20)) msg.rtf = undefined;
   switch (msg.tipo) {
     case 'leggi':
-      leggi(msg.testo, msg.velocita, msg.tabId, msg.t0, msg.rtf, dizionarioValido(msg.dizionario));
+      leggi({
+        testo: msg.testo,
+        velocita: msg.velocita,
+        tabId: msg.tabId,
+        t0: msg.t0,
+        rtf: msg.rtf,
+        dizionario: dizionarioValido(msg.dizionario),
+        voce: voceValida(msg.voce),
+        titolo: titoloValido(msg.titolo),
+      });
       break;
     case 'consenti':
       consenti();
@@ -471,11 +798,40 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     case 'velocita':
       impostaVelocita(msg.valore);
       break;
+    case 'voce':
+      impostaVoce(msg.valore);
+      break;
+    case 'mp3':
+      creaMp3({
+        testo: msg.testo,
+        titolo: titoloValido(msg.titolo),
+        velocita: msg.velocita,
+        voce: voceValida(msg.voce),
+        dizionario: dizionarioValido(msg.dizionario),
+      });
+      break;
+    case 'annullaMp3':
+      annullaMp3();
+      break;
+    case 'mp3Salvato':
+      if (stato.mp3 && stato.mp3.fase === 'pronto') stato.mp3.salvato = true;
+      pubblica();
+      break;
+    case 'chiudiMp3':
+      if (stato.mp3 && stato.mp3.fase !== 'sintesi' && stato.mp3.fase !== 'preparazione' && stato.mp3.fase !== 'codifica') {
+        stato.mp3 = null;
+        liberaMp3();
+      }
+      pubblica();
+      break;
     case 'preparaMotore':
       consenti();
       break;
     case 'avvioAutomatico':
       scaricaInSottofondo();
+      break;
+    case 'prerisc':
+      preriscalda();
       break;
     case 'stato':
       break;

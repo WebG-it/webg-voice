@@ -1,7 +1,7 @@
 // Service worker: menu contestuale, scorciatoia, ponte fra popup/barretta e
 // l'offscreen document che fa sintesi e audio.
 
-import { modelliInCache } from './lib/modelli.js';
+import { modelliInCache, VOCI, voceValida } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
 import { leggiDizionario } from './lib/dizionario.js';
 
@@ -15,6 +15,12 @@ chrome.runtime.onInstalled.addListener((info) => {
     id: 'leggi-selezione',
     title: chrome.i18n.getMessage('menuLeggi'),
     contexts: ['selection'],
+  });
+  // tasto destro sulla pagina, senza selezione: tutto l'articolo
+  chrome.contextMenus.create({
+    id: 'leggi-articolo',
+    title: chrome.i18n.getMessage('menuArticolo'),
+    contexts: ['page'],
   });
 });
 
@@ -30,17 +36,35 @@ async function avviaDownloadSeServe() {
   }
 }
 
-// Avanzamento del download nel badge dell'icona; sparisce a fine download.
+// Badge dell'icona: avanzamento del download del modello (blu) oppure della
+// creazione dell'MP3 (verde), e "MP3" quando il file e' pronto da salvare.
 let ultimoBadge = '';
+let ultimoTitolo = '';
 function aggiornaBadge(s) {
   const d = s && s.download;
+  const m = s && s.mp3;
   let testo = '';
+  let colore = '#23417b';
+  let titolo = chrome.i18n.getMessage('titoloAzione');
   if (d && d.totale && !d.inAttesa && d.scaricati < d.totale) {
     testo = d.interrotto ? '!' : `${Math.floor((100 * d.scaricati) / d.totale)}%`;
+    if (d.interrotto) colore = '#b3261e';
+  } else if (m && ['preparazione', 'sintesi', 'codifica'].includes(m.fase)) {
+    testo = m.totale ? `${Math.floor((100 * m.fatti) / m.totale)}%` : '…';
+    colore = '#1e7d32';
+    titolo = `WebG Voice: creo l'MP3 (${testo})`;
+  } else if (m && m.fase === 'pronto' && !m.salvato) {
+    testo = 'MP3';
+    colore = '#1e7d32';
+    titolo = 'WebG Voice: MP3 pronto, apri il pannello per salvarlo';
   }
-  if (testo === ultimoBadge) return;
-  ultimoBadge = testo;
-  chrome.action.setBadgeBackgroundColor({ color: d && d.interrotto ? '#b3261e' : '#23417b' });
+  if (titolo !== ultimoTitolo) {
+    ultimoTitolo = titolo;
+    chrome.action.setTitle({ title: titolo });
+  }
+  if (testo + colore === ultimoBadge) return;
+  ultimoBadge = testo + colore;
+  chrome.action.setBadgeBackgroundColor({ color: colore });
   chrome.action.setBadgeText({ text: testo });
 }
 
@@ -91,6 +115,17 @@ async function dizionario() {
 async function velocitaSalvata() {
   const { velocita } = await chrome.storage.local.get('velocita');
   return typeof velocita === 'number' ? velocita : VEL_DEFAULT;
+}
+
+async function voceSalvata() {
+  const { voce } = await chrome.storage.local.get('voce');
+  return voceValida(voce);
+}
+
+/** Tutto quello che serve all'offscreen per leggere o creare un MP3 con le impostazioni dell'utente. */
+async function impostazioni() {
+  const [velocita, rtf, diz, voce] = await Promise.all([velocitaSalvata(), rtfSalvato(), dizionario(), voceSalvata()]);
+  return { velocita, rtf, dizionario: diz, voce };
 }
 
 async function statoAttuale() {
@@ -169,6 +204,9 @@ async function avvisa(tabId, motivo) {
   const testi = {
     protetta: 'Chrome non permette la lettura su questa pagina: apri il pulsante di WebG Voice e incolla il testo.',
     vuoto: tasto ? `Seleziona un testo e premi ${tasto}.` : 'Seleziona un testo e usa la scorciatoia o il tasto destro.',
+    articolo: tasto
+      ? `Non trovo un articolo da leggere in questa pagina: seleziona il testo e premi ${tasto}.`
+      : 'Non trovo un articolo da leggere in questa pagina: seleziona il testo e usa la scorciatoia o il tasto destro.',
   };
   const titolo = testi[motivo];
   await chrome.storage.session.set({ avviso: { tabId, motivo, titolo, quando: Date.now() } });
@@ -186,6 +224,41 @@ async function avvisa(tabId, motivo) {
   }, 5000);
 }
 
+/**
+ * Articolo della pagina (titolo e testo, senza menu e pubblicita') con Mozilla
+ * Readability, iniettato solo ora nel frame principale.
+ * Restituisce { testo, titolo, parole } oppure { nessuno: true } o { protetta: true }.
+ */
+async function articoloDellaScheda(tabId) {
+  try {
+    const r = await chrome.scripting.executeScript({ target: { tabId }, files: ['vendor/readability/Readability.js', 'articolo.js'] });
+    const a = r && r[0] && r[0].result;
+    if (a && typeof a.testo === 'string' && a.testo.trim()) return { testo: a.testo.slice(0, MAX_TESTO), titolo: a.titolo || null, parole: a.parole, ms: a.ms };
+    return { nessuno: true, motivo: a && a.motivo };
+  } catch {
+    return { protetta: true }; // pagina dove Chrome non lascia entrare le estensioni
+  }
+}
+
+/**
+ * Cosa leggere nella scheda. modo: 'selezione' (solo la selezione), 'articolo'
+ * (sempre l'articolo), 'auto' (la selezione e, se non c'e', l'articolo).
+ * Restituisce { testo, titolo } oppure { motivo: 'protetta' | 'vuoto' | 'articolo' }.
+ */
+async function testoDellaScheda(tab, { modo = 'auto', riserva = '', frameId } = {}) {
+  if (modo !== 'articolo') {
+    const sel = await selezioneDellaScheda(tab.id, frameId);
+    const testo = sel.testo.trim() ? sel.testo : riserva || '';
+    if (testo.trim()) return { testo, titolo: null };
+    if (sel.protetta) return { motivo: 'protetta' };
+    if (modo === 'selezione') return { motivo: 'vuoto' };
+  }
+  const a = await articoloDellaScheda(tab.id);
+  if (a.protetta) return { motivo: 'protetta' };
+  if (a.nessuno) return { motivo: 'articolo' };
+  return { testo: a.testo, titolo: a.titolo };
+}
+
 async function iniettaBarra(tabId) {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ['barra.js'] });
@@ -195,40 +268,56 @@ async function iniettaBarra(tabId) {
   }
 }
 
-/** Restituisce true se ha avviato una lettura (o un'attesa di conferma). */
-async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = undefined) {
+const IN_CORSO = ['lettura', 'pausa', 'preparazione'];
+
+/**
+ * Legge nella scheda. Con la scorciatoia (daPopup false): la selezione; senza
+ * selezione mette in pausa o riprende la lettura in corso, e se non c'e' niente
+ * in corso legge l'articolo della pagina.
+ * Restituisce true se ha avviato una lettura, altrimenti false o, quando la
+ * chiamata viene dal popup, il motivo ('protetta', 'vuoto', 'articolo').
+ */
+async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = undefined, modo = 'auto') {
   const t0 = Date.now();
   if (!tab || tab.id === undefined) return false;
-  // senza accesso al frame (es. riquadro di un altro sito) resta il testo del menu contestuale
-  const sel = await selezioneDellaScheda(tab.id, frameId);
-  let testo = sel.testo;
-  if (!testo.trim()) testo = testoDiRiserva || '';
-  if (!testo.trim() && daPopup) return sel.protetta ? 'protetta' : false;
-  if (!testo.trim()) {
-    // scorciatoia senza selezione: pausa/riprendi la lettura in corso
-    const s = await statoAttuale();
-    if (s && (s.fase === 'lettura' || s.fase === 'pausa' || s.fase === 'preparazione')) {
-      await aOffscreen({ tipo: 'alterna' });
-      return false;
+  let scelto;
+  if (!daPopup && modo === 'auto') {
+    // senza accesso al frame (es. riquadro di un altro sito) resta il testo del menu contestuale
+    scelto = await testoDellaScheda(tab, { modo: 'selezione', riserva: testoDiRiserva, frameId });
+    if (scelto.motivo === 'vuoto') {
+      // scorciatoia senza selezione: pausa/riprendi la lettura in corso, altrimenti l'articolo
+      const s = await statoAttuale();
+      if (s && IN_CORSO.includes(s.fase)) {
+        await aOffscreen({ tipo: 'alterna' });
+        return false;
+      }
+      scelto = await testoDellaScheda(tab, { modo: 'articolo' });
     }
-    await avvisa(tab.id, sel.protetta ? 'protetta' : 'vuoto');
+  } else {
+    scelto = await testoDellaScheda(tab, { modo, riserva: testoDiRiserva, frameId });
+  }
+  if (!scelto.testo) {
+    if (daPopup) return scelto.motivo;
+    await avvisa(tab.id, scelto.motivo);
     return false;
   }
+  const testo = scelto.testo;
   // Alt+Q sullo stesso testo che si sta leggendo: pausa o ripresa, non si ricomincia
   if (!daPopup) {
     const s = await statoAttuale();
-    if (s && ['lettura', 'pausa', 'preparazione'].includes(s.fase) && s.impronta === impronta(testo)) {
+    if (s && IN_CORSO.includes(s.fase) && s.impronta === impronta(testo)) {
       await aOffscreen({ tipo: 'alterna' });
       return true;
     }
   }
   const conBarra = await iniettaBarra(tab.id);
-  await aOffscreen({ tipo: 'leggi', testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), dizionario: await dizionario(), tabId: conBarra ? tab.id : null, t0 });
+  await aOffscreen({ tipo: 'leggi', testo, titolo: scelto.titolo, ...(await impostazioni()), tabId: conBarra ? tab.id : null, t0 });
   return true;
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'leggi-selezione') leggiDaScheda(tab, info.selectionText, false, info.frameId);
+  else if (info.menuItemId === 'leggi-articolo') leggiDaScheda(tab, '', false, undefined, 'articolo');
 });
 
 chrome.commands.onCommand.addListener(async (comando, tab) => {
@@ -257,7 +346,8 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.da === 'offscreen' && msg.tipo === 'stato') {
     aggiornaBadge(msg.stato);
     const tabId = msg.stato && msg.stato.tabId;
-    if (tabId !== null && tabId !== undefined) chrome.tabs.sendMessage(tabId, msg).catch(() => {});
+    // alla barretta nella pagina va lo stato della lettura, non quello dell'MP3
+    if (tabId !== null && tabId !== undefined) chrome.tabs.sendMessage(tabId, { ...msg, stato: { ...msg.stato, mp3: null } }).catch(() => {});
     return;
   }
   if (msg.da === 'offscreen' && msg.tipo === 'rtf') {
@@ -274,14 +364,50 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (!daPagina && !(daBarretta && COMANDI_BARRETTA.has(msg.tipo))) return;
   if (msg.tipo === 'velocita' && !numeroIn(msg.valore, 0.7, 1.5)) return;
   if (msg.tipo === 'leggiTesto' && (typeof msg.testo !== 'string' || !msg.testo.trim() || msg.testo.length > MAX_TESTO)) return;
+  if (msg.tipo === 'voce' && !Object.hasOwn(VOCI, msg.valore)) return;
+  if (msg.tipo === 'mp3' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
   (async () => {
     switch (msg.tipo) {
       case 'stato': {
         const s = await statoAttuale();
         return { stato: s, velocita: await velocitaSalvata() };
       }
+      case 'prerisc':
+        // pannello aperto: il motore si carica se il modello e' gia' sul computer
+        if (!(await modelliInCache())) return { ok: false };
+        return aOffscreen({ tipo: 'prerisc' });
       case 'leggiTesto':
-        return aOffscreen({ tipo: 'leggi', testo: msg.testo, velocita: await velocitaSalvata(), rtf: await rtfSalvato(), dizionario: await dizionario(), tabId: null, t0: Date.now() });
+        return aOffscreen({ tipo: 'leggi', testo: msg.testo, ...(await impostazioni()), tabId: null, t0: Date.now() });
+      case 'voce':
+        // scelta dal popup o dalle opzioni: si ricorda e, se serve, la voce si scarica subito
+        await chrome.storage.local.set({ voce: msg.valore });
+        return aOffscreen({ tipo: 'voce', valore: msg.valore });
+      case 'leggiArticolo': {
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        const esito = await leggiDaScheda(tab, '', true, undefined, 'articolo');
+        return esito === true ? { letto: true } : { letto: false, motivo: esito || 'articolo' };
+      }
+      case 'mp3': {
+        // testo incollato nel popup, altrimenti la selezione, altrimenti l'articolo della scheda
+        let testo = typeof msg.testo === 'string' ? msg.testo : '';
+        let titolo = null;
+        if (!testo.trim()) {
+          const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+          if (!tab) return { avviato: false, motivo: 'vuoto' };
+          const scelto = await testoDellaScheda(tab, { modo: 'auto' });
+          if (!scelto.testo) return { avviato: false, motivo: scelto.motivo };
+          testo = scelto.testo;
+          titolo = scelto.titolo;
+        }
+        const imp = await impostazioni();
+        await aOffscreen({ tipo: 'mp3', testo, titolo, velocita: imp.velocita, voce: imp.voce, dizionario: imp.dizionario });
+        return { avviato: true };
+      }
+      case 'annullaMp3':
+      case 'mp3Salvato':
+      case 'chiudiMp3':
+        if (await chrome.offscreen.hasDocument()) return aOffscreen({ tipo: msg.tipo });
+        return { ok: true };
       case 'velocita':
         await chrome.storage.local.set({ velocita: msg.valore });
         if (await chrome.offscreen.hasDocument()) return aOffscreen({ tipo: 'velocita', valore: msg.valore });
@@ -294,14 +420,14 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         if (esito === 'protetta') return { letto: false, protetta: true };
         const letto = esito === true;
         if (letto || !tab) return { letto };
-        // niente selezione raggiungibile: ci sono riquadri di altri siti senza permesso?
+        // niente selezione e niente articolo: forse il testo e' in un riquadro di un altro sito senza permesso
         let riquadri = [];
         try {
           const [r] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: riquadriEsterni });
           const tutte = (r && r.result) || [];
           for (const o of tutte) if (!(await chrome.permissions.contains({ origins: [`${o}/*`] }))) riquadri.push(o);
         } catch {}
-        return { letto: false, riquadri };
+        return { letto: false, riquadri, nessunArticolo: esito === 'articolo' };
       }
       case 'consenti':
         return aOffscreen({ tipo: 'consenti' });

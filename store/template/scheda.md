@@ -26,14 +26,25 @@ Lingua principale: italiano.
 
 Leggi ad alta voce in italiano, offline dopo il primo download.
 
-{{NOME_BREVE}} legge ad alta voce, in italiano, il testo che selezioni in una pagina web. La voce è
-naturale ed espressiva e funziona interamente sul tuo computer: non serve un account, non ci sono
-abbonamenti e il testo non viene mai inviato a servizi esterni.
+{{NOME_BREVE}} legge ad alta voce, in italiano, il testo che selezioni in una pagina web o un
+articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
+serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
+
+Novità della versione 1.2
+• Più fluida: parte in un paio di secondi e non si ferma più a ogni riga dei testi copiati da PDF
+  o mail.
+• Legge tutto l'articolo: premi Alt+Q senza selezionare niente e ascolti titolo e testo, senza
+  menu, pubblicità e commenti.
+• Salva in MP3: un clic e il testo diventa un file audio da ascoltare dove vuoi, creato sul tuo
+  computer.
+• Due voci: Sara o Nicola, scegli tu chi legge.
 
 Come si usa
 • Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma (su Mac Control+Q e Control+W).
+• Senza selezione, Alt+Q legge tutto l'articolo della pagina. Lo stesso fa il tasto destro sulla pagina → "Leggi tutto l'articolo", o il pulsante "Leggi l'articolo" nel pannello.
 • Durante la lettura compare una piccola barra con pausa, stop e velocità.
-• Dal pulsante dell'estensione puoi incollare un testo e regolare la velocità, da 0,7 a 1,5.
+• Dal pulsante dell'estensione puoi incollare un testo, scegliere la voce e regolare la velocità, da 0,7 a 1,5.
+• "Scarica MP3" nel pannello crea un file audio del testo incollato, della selezione o dell'articolo. Puoi chiudere il pannello mentre lavora: il file si salva nella cartella dei download.
 
 Gratis, offline dopo il primo download
 Al primo avvio scarica il modello vocale (circa {{MB}} MB) una volta sola, in sottofondo, con
@@ -42,7 +53,12 @@ connessioni a consumo aspetta un tuo clic. Da quel momento la lettura funziona a
 
 Pensata per l'italiano
 Numeri, percentuali, date, orari, prezzi e abbreviazioni comuni vengono letti come li direbbe una
-persona. I testi lunghi partono in pochi secondi: mentre una parte suona, la successiva si prepara.
+persona. I testi lunghi partono in pochi secondi: mentre una parte suona, la successiva si prepara,
+anche per articoli di migliaia di parole.
+
+Due voci
+Sara, voce femminile, arriva con il primo download. Nicola, voce maschile, si scarica la prima
+volta che la scegli: mezzo MB, una volta sola. La scelta resta ricordata.
 
 Sigle e parole inglesi
 Le sigle che si dicono come parola (RAM, SEO, ISTAT) si leggono come parola, le altre si compitano;
@@ -66,14 +82,24 @@ Realizzata da WebG, https://www.webg.it
 
 Read aloud in Italian, offline after the first download.
 
-{{NOME_BREVE}} reads the text you select on a web page aloud, in Italian. The voice is natural
-and expressive and runs entirely on your computer: no account, no subscription, and your text is
-never sent to any external service.
+{{NOME_BREVE}} reads the text you select on a web page, or a whole article, aloud in Italian. The
+voice is natural and expressive and runs entirely on your computer: no account, no subscription,
+and your text is never sent to any external service.
+
+New in version 1.2
+• Smoother: starts within a couple of seconds and no longer stops at every line of text copied
+  from PDFs or emails.
+• Reads the whole article: press Alt+Q with nothing selected to hear the title and text, without
+  menus, ads or comments.
+• Saves MP3: one click turns the text into an audio file, created on your computer.
+• Two voices: Sara or Nicola.
 
 How to use it
 • Select text and press Alt+Q, or right-click → "Leggi ad alta voce". Alt+Q again pauses, Alt+W stops (on Mac: Control+Q and Control+W).
+• With nothing selected, Alt+Q reads the whole article; so does right-click on the page → "Leggi tutto l'articolo".
 • While reading, a small bar offers pause, stop and speed controls.
-• From the extension button you can paste text and set the speed, from 0.7 to 1.5.
+• From the extension button you can paste text, choose the voice and set the speed, from 0.7 to 1.5.
+• "Scarica MP3" in the panel creates an audio file of the pasted text, the selection or the article, saved to your downloads folder.
 
 Free, offline after the first download
 On first start it downloads the voice model (about {{MB}} MB) once, in the background.
@@ -82,7 +108,12 @@ After that, reading works offline.
 
 Built for Italian
 Numbers, percentages, dates, times, prices and common abbreviations are read the way a person
-would say them. Long texts start within seconds: while one part plays, the next is prepared.
+would say them. Long texts start within seconds: while one part plays, the next is prepared,
+even for articles thousands of words long.
+
+Two voices
+Sara (female) comes with the first download. Nicola (male) is downloaded the first time you pick
+it: half a MB, once.
 
 Acronyms and English words
 Acronyms said as words (RAM, SEO) are read as words, others are spelled out; common English words and
@@ -103,31 +134,38 @@ Made by WebG, https://www.webg.it
 ## Scopo unico (single purpose)
 
 Leggere ad alta voce, con una voce sintetica che funziona sul computer dell'utente, il testo che
-l'utente seleziona in una pagina o incolla nel popup.
+l'utente seleziona in una pagina, incolla nel popup o l'articolo della pagina che chiede di
+ascoltare, anche salvando la lettura in un file MP3 creato sul computer.
 
 ## Giustificazione dei permessi
 
-**activeTab**: serve a leggere il testo selezionato nella scheda in cui l'utente ha appena premuto
-la scorciatoia o scelto "Leggi ad alta voce" dal menu, e solo in quel momento. L'estensione non
-ha accesso alle pagine in nessun altro caso.
+**activeTab**: serve a leggere il testo selezionato, o l'articolo della pagina se non c'è
+selezione, nella scheda in cui l'utente ha appena premuto la scorciatoia, scelto una voce del
+menu o premuto un pulsante del pannello, e solo in quel momento. L'estensione non ha accesso
+alle pagine in nessun altro caso.
 
 **scripting**: serve, sempre e solo nella scheda autorizzata da activeTab, a ricavare il testo
-selezionato e a mostrare la barretta con pausa, stop e velocità durante la lettura.
+selezionato o il testo dell'articolo (titolo e corpo, senza menu e pubblicità) e a mostrare la
+barretta con pausa, stop e velocità durante la lettura.
 
-**contextMenus**: aggiunge la voce "Leggi ad alta voce" al menu del tasto destro quando c'è del
-testo selezionato.
+**contextMenus**: aggiunge al menu del tasto destro "Leggi ad alta voce" quando c'è del testo
+selezionato e "Leggi tutto l'articolo" sulla pagina.
 
-**offscreen**: la sintesi vocale e la riproduzione audio girano in un documento offscreen, così la
-lettura continua anche dopo la chiusura del popup.
+**offscreen**: la sintesi vocale, la riproduzione audio e la creazione degli MP3 girano in un
+documento offscreen, così continuano anche dopo la chiusura del popup.
 
-**storage**: le impostazioni (velocità scelta, testo incollato nel popup, misura della velocità
-del computer usata per evitare pause) restano in locale, nel browser dell'utente. Il dizionario di
+(Nessun permesso "downloads": l'MP3 si salva con un normale link di download dal pannello
+dell'estensione.)
+
+**storage**: le impostazioni (velocità e voce scelte, testo incollato nel popup, misura della
+velocità del computer usata per evitare pause) restano in locale, nel browser dell'utente. Il dizionario di
 pronuncia, cioè le coppie di parole che l'utente scrive nelle opzioni, usa chrome.storage.sync:
 se l'utente ha attiva la sincronizzazione di Chrome, viaggia con essa sui suoi dispositivi tramite
 il suo account Google. Lo sviluppatore non riceve nulla.
 
-**unlimitedStorage**: la voce (circa {{MB}} MB) resta nella cache dell'estensione per funzionare
-offline; senza questo permesso Chrome potrebbe cancellarla e costringere a riscaricarla.
+**unlimitedStorage**: la voce (circa {{MB}} MB, più mezzo MB per la voce Nicola se l'utente la
+sceglie) resta nella cache dell'estensione per funzionare offline; senza questo permesso Chrome
+potrebbe cancellarla e costringere a riscaricarla.
 
 **Autorizzazioni host (github.com/WebG-it/webg-voice, release-assets.githubusercontent.com,
 huggingface.co/onnx-community, *.hf.co)**: servono solo a scaricare i file della voce dalla
@@ -139,9 +177,9 @@ all'installazione. Vengono chieste solo se l'utente vuole far leggere un testo c
 riquadro (iframe) di un altro sito, e solo per quel sito, con un clic dal popup: servono a leggere
 la selezione dentro quel riquadro, dove activeTab non arriva.
 
-**Codice remoto**: no. Tutto il codice (JavaScript e WebAssembly) è incluso nel pacchetto. I file
-scaricati sono i pesi del modello e lo stile della voce, cioè dati, controllati con un'impronta
-SHA-256 fissa.
+**Codice remoto**: no. Tutto il codice (JavaScript e WebAssembly, compresi Mozilla Readability
+per l'articolo e lamejs per l'MP3) è incluso nel pacchetto. I file scaricati sono i pesi del
+modello e gli stili delle voci, cioè dati, controllati con un'impronta SHA-256 fissa.
 
 ## Pratiche sulla privacy (questionario)
 
@@ -150,7 +188,9 @@ l'identificazione personale, informazioni sanitarie, informazioni finanziarie e 
 informazioni di autenticazione, comunicazioni personali, posizione, cronologia web, attività
 dell'utente, contenuti dei siti web) la risposta è "non raccolti".
 
-Il testo da leggere viene elaborato solo sul computer dell'utente e non lascia mai il browser.
+Il testo da leggere, compreso l'articolo della pagina quando l'utente chiede di ascoltarlo, viene
+elaborato solo sul computer dell'utente e non lascia mai il browser; anche gli MP3 si creano sul
+computer e si salvano nella sua cartella dei download.
 
 Dichiarazioni da spuntare:
 - Non vendo né trasferisco i dati degli utenti a terze parti, al di fuori dei casi d'uso approvati.

@@ -1,9 +1,10 @@
 # {{NOME_BREVE}}
 
 **{{NOME}}**: estensione per Chrome di [WebG](https://www.webg.it) che legge ad alta voce, in
-italiano, il testo che selezioni in una pagina. La voce (Sara, del modello Kokoro-82M) gira tutta
-sul tuo computer: niente account, niente abbonamenti, niente testo inviato a servizi esterni.
-Dopo il primo download funziona anche senza connessione.
+italiano, il testo che selezioni in una pagina o un articolo intero, e lo salva anche in MP3. Le
+voci (Sara e Nicola, del modello Kokoro-82M) girano tutte sul tuo computer: niente account, niente
+abbonamenti, niente testo inviato a servizi esterni. Dopo il primo download funziona anche senza
+connessione.
 
 ## Installare
 
@@ -25,9 +26,22 @@ al primo uso compare un pulsante per scaricarlo.
   **Alt+Q** di nuovo mette in pausa e riprende, **Alt+W** ferma la lettura.
   Su Mac i tasti predefiniti sono **Control+Q** e **Control+W**: Option+Q su Mac scrive il
   carattere "œ" e non va bene come scorciatoia.
+- **Articolo intero**: senza selezione, **Alt+Q** legge tutto l'articolo della pagina (titolo e
+  testo, senza menu, pubblicità, commenti e banner dei cookie, con Mozilla Readability). Lo stesso
+  fanno il tasto destro sulla pagina → **Leggi tutto l'articolo** e il pulsante **Leggi l'articolo**
+  del popup. Se la pagina non ha un articolo riconoscibile, l'icona mostra "!" e il popup lo spiega.
+  Gli articoli lunghi (migliaia di parole) partono in pochi secondi: il testo si prepara a sezioni
+  mentre la prima suona, e l'audio già ascoltato non resta in memoria.
 - Durante la lettura compare in basso a destra una barretta con pausa, stop e velocità.
 - Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5); con il
-  campo vuoto, **Leggi** legge il testo selezionato nella pagina.
+  campo vuoto, **Leggi** legge il testo selezionato nella pagina o, se non c'è, l'articolo.
+- **Voce**: Sara o Nicola, dal popup o dalle opzioni; la scelta resta ricordata. Nicola si scarica
+  la prima volta che la scegli (mezzo MB, una volta sola).
+- **Scarica MP3** nel popup crea un file MP3 (mono, 24 kHz, 64 kbps, circa mezzo MB al minuto)
+  del testo incollato, della selezione o dell'articolo, con il titolo dell'articolo come nome del
+  file. Tutto in locale; barra di avanzamento e Annulla nel popup, avanzamento anche sull'icona.
+  Si può chiudere il popup: quando è pronto l'icona mostra "MP3" e riaprendo il popup il file si
+  salva nella cartella dei download. Se intanto parte una lettura, ha la precedenza.
 - Funziona anche dentro gli editor: aree di testo, campi, editor nei riquadri (iframe) della stessa
   pagina come TinyMCE di Joomla e WordPress, editor di codice come CodeMirror.
 - Sulle pagine interne di Chrome (chrome://, Chrome Web Store, visualizzatore PDF, file locali senza
@@ -51,8 +65,11 @@ al primo uso compare un pulsante per scaricarlo.
 - **Dizionario di pronuncia** nelle opzioni: coppie «scritto → come si legge» (es. VHelper → vi
   helper), con il pulsante Ascolta per provarle e import/export a righe. Si salva nel profilo
   Chrome dell'utente e si sincronizza con i suoi dispositivi se ha la sincronizzazione attiva.
-- La lettura si regola da sola sulla velocità del computer: misura i tempi durante le letture e,
-  sui PC più lenti, usa blocchi più corti e ne prepara di più in anticipo.
+- La lettura si regola da sola sulla velocità del computer: misura quanto costa la sintesi
+  (una parte fissa per ogni blocco e una per ogni suono) e decide durante la lettura quanto testo
+  preparare per volta. Il primo blocco è corto per partire presto; dal secondo in poi i passaggi
+  fra un blocco e l'altro cadono solo a fine frase, mai su una virgola. Se il computer è lento,
+  meglio una pausa fra due frasi che una a metà.
 - Nelle opzioni dell'estensione, sezione **Risoluzione problemi**: se senti pause, una prova misura
   la sintesi su quel computer e dà un risultato da mandarci.
 
@@ -61,16 +78,21 @@ al primo uso compare un pulsante per scaricarlo.
 Testo → piccola normalizzazione (date, orari, migliaia, unità, abbreviazioni) → eSpeak NG 1.52.0
 in WebAssembly → fonemi IPA (identici a quelli di kokoro-onnx in Python, verificato su un corpus di
 prova) → modello Kokoro-82M con ONNX Runtime Web (WebAssembly multithread) e lo stile della voce
-`if_sara` → audio a 24 kHz in un documento offscreen, così la lettura continua anche a popup chiuso.
-I testi lunghi si leggono a blocchi: mentre uno suona, i successivi si preparano in anticipo.
+(`if_sara` o `im_nicola`) → audio a 24 kHz in un documento offscreen, così la lettura continua
+anche a popup chiuso. I testi lunghi si leggono a blocchi: mentre uno suona, i successivi si
+preparano in anticipo. Per l'MP3 lo stesso motore sintetizza un blocco alla volta, cedendo il passo
+alle letture, e un Web Worker con lamejs codifica man mano.
 
 Il modello si scarica dalla release `model-v1` di questo repository; se GitHub non risponde, dalla
 stessa revisione su Hugging Face. In entrambi i casi l'estensione controlla l'impronta SHA-256.
+Nessun permesso in più rispetto alla 1.1: l'articolo usa activeTab e scripting come la selezione,
+l'MP3 si salva con un link di download dal popup (niente permesso `downloads`).
 
 ## Privacy
 
-L'estensione non raccoglie e non invia dati: il testo resta sul computer. Le sole connessioni
-servono a scaricare i file del modello. Dettagli in [docs/PRIVACY.md](docs/PRIVACY.md).
+L'estensione non raccoglie e non invia dati: il testo resta sul computer, anche gli MP3 si creano
+lì. Le sole connessioni servono a scaricare i file del modello e delle voci. Dettagli in
+[docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## Sviluppo
 
@@ -78,6 +100,7 @@ servono a scaricare i file del modello. Dettagli in [docs/PRIVACY.md](docs/PRIVA
 npm install            # dipendenze e hook di controllo dei commit
 npm run build          # ricostruisce estensione/ da src/
 npm run test:fonemi    # confronta i fonemi con il riferimento di kokoro-onnx
+npm run test:funzioni  # sezioni, blocchi, nome e tag dell'MP3 (senza browser)
 npm run release -- patch "cosa è cambiato"   # nuova versione: changelog, build, zip, tag
 npm run store          # rigenera testi della scheda store, privacy e questo README
 ```
@@ -96,15 +119,19 @@ WebG, https://www.webg.it, info@webg.it. Per segnalazioni e richieste usa le
 ## Licenza
 
 GPL-3.0-or-later (vedi `LICENSE`), perché l'estensione include eSpeak NG. Modello Kokoro-82M di
-hexgrad con licenza Apache-2.0, ONNX Runtime Web con licenza MIT: dettagli in `THIRD_PARTY.md`.
+hexgrad e Mozilla Readability con licenza Apache-2.0, ONNX Runtime Web con licenza MIT, lamejs con
+licenza LGPL-3.0: dettagli in `THIRD_PARTY.md`.
 
 ---
 
 ## English
 
-**{{NOME_BREVE}}** is a Chrome extension by [WebG](https://www.webg.it) that reads selected text
-aloud in Italian with a natural neural voice (Kokoro-82M, voice Sara) running entirely on your
-computer. No account, no subscription, no text sent anywhere; on first start it downloads the voice model
-(about {{MB}} MB) once, in the background, then it works offline. Select text and press **Alt+Q** (again to pause or resume, **Alt+W** to stop), or right-click → *Leggi ad alta
+**{{NOME_BREVE}}** is a Chrome extension by [WebG](https://www.webg.it) that reads selected text,
+or a whole article, aloud in Italian with natural neural voices (Kokoro-82M, voices Sara and
+Nicola) running entirely on your computer, and can save it as MP3. No account, no subscription,
+no text sent anywhere; on first start it downloads the voice model (about {{MB}} MB) once, in the
+background, then it works offline. Select text and press **Alt+Q** (with nothing selected it reads
+the whole article; again to pause or resume, **Alt+W** to stop), or right-click → *Leggi ad alta
 voce*. Licensed under GPL-3.0-or-later (it bundles eSpeak NG); see `THIRD_PARTY.md` for the
-Kokoro (Apache-2.0) and ONNX Runtime (MIT) notices. Contact: info@webg.it or GitHub issues.
+Kokoro and Readability (Apache-2.0), ONNX Runtime (MIT) and lamejs (LGPL-3.0) notices. Contact:
+info@webg.it or GitHub issues.
