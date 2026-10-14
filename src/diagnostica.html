@@ -20,8 +20,20 @@
   <section class="scheda">
     <h2>Come si usa</h2>
     <p>Seleziona del testo e premi <kbd id="tasto">Alt+Q</kbd> (di nuovo per pausa e ripresa, <kbd id="tastoStop">Alt+W</kbd> per fermare), oppure tasto destro → <em>Leggi ad alta voce</em>.
-      Dal pulsante dell'estensione puoi incollare un testo e regolare la velocità. La lettura si adatta da sola alla velocità di questo computer.</p>
+      Senza selezione, la stessa scorciatoia legge tutto l'articolo della pagina, senza menu e pubblicità; dal tasto destro sulla pagina c'è <em>Leggi tutto l'articolo</em>.</p>
+    <p>Dal pulsante dell'estensione puoi incollare un testo, scegliere la voce, regolare la velocità e salvare la lettura in un file MP3, creato sul tuo computer.
+      La lettura si adatta da sola alla velocità di questo computer.</p>
     <p><a href="#" id="tasti">Cambia la scorciatoia</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="https://www.webg.it" target="_blank" rel="noopener">webg.it</a></p>
+  </section>
+
+  <section class="scheda" id="voce">
+    <h2>Voce</h2>
+    <p>Scegli chi legge, nelle letture e negli MP3. Sara arriva con il primo download; Nicola si scarica la prima volta che la scegli (mezzo MB, una volta sola).</p>
+    <div class="scelteVoce" role="radiogroup" aria-label="Voce">
+      <div class="sceltaVoce"><label><input type="radio" name="voce" value="sara"> Sara</label> <button data-ascolta="sara">Ascolta</button></div>
+      <div class="sceltaVoce"><label><input type="radio" name="voce" value="nicola"> Nicola</label> <button data-ascolta="nicola">Ascolta</button></div>
+    </div>
+    <p id="voceStato" class="nota" aria-live="polite"></p>
   </section>
 
   <section class="scheda" id="dizionario">

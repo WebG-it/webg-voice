@@ -11,14 +11,16 @@ import { avviaEspeak } from './lib/espeak.js';
 import { creaFonemizzatore, tokenizza, dividiFonemi, pausaDopo, MAX_FONEMI } from './lib/fonemi.js';
 import { normalizza } from './lib/normalizza.js';
 import { applicaDizionario, creaFonemizzatoreMisto } from './lib/pronuncia.js';
-import { blocchi } from './lib/testo.js';
+import { blocchi, pezzi } from './lib/testo.js';
 import { ritaglia, conPausa } from './lib/audio.js';
 import { ottieni, byteInCache } from './lib/scarica.js';
-import { FILE_REMOTI } from './lib/modelli.js';
+import { FILE_REMOTI, VOCI, voceValida } from './lib/modelli.js';
 
 const DIM_STILE = 256;
 
 let pronto = null; // Promise del caricamento
+let filiChiesti = null; // solo banco di prova: numero di thread imposto
+let opzioniProva = {}; // solo banco di prova: opzioni di sessione in piu'
 // Se il caricamento fallisce (es. download interrotto) la volta dopo si riprova
 const motore = () =>
   (pronto ??= carica().catch((e) => {
@@ -27,7 +29,7 @@ const motore = () =>
   }));
 let sessione = null;
 let nomeIds = 'input_ids';
-let voce = null; // Float32Array 510 x 256
+const voci = {}; // id della voce -> Float32Array 510 x 256 (stile)
 let fonemizza = null; // default dell'estensione
 let fonemizzaFedele = null; // identico a kokoro-onnx (marcatori di lingua inclusi)
 let infoMotore = {};
@@ -37,6 +39,12 @@ const invia = (m, trasf) => self.postMessage(m, trasf || []);
 async function carica() {
   const t0 = performance.now();
   const qui = (p) => new URL(p, import.meta.url).href;
+  // eSpeak e modello si caricano insieme: la partenza a freddo non li paga uno dopo l'altro
+  const [, info] = await Promise.all([caricaEspeak(qui), caricaModello(qui, t0)]);
+  return info;
+}
+
+async function caricaEspeak(qui) {
   const [wasmE, indiceE, datiE] = await Promise.all([
     fetch(qui('./vendor/espeak/espeak-ng.wasm')).then((r) => r.arrayBuffer()),
     fetch(qui('./vendor/espeak/espeak-dati.json')).then((r) => r.json()),
@@ -53,20 +61,24 @@ async function carica() {
   const fonEn = creaFonemizzatore((t) => clausole(t, 'en-us'), { rimuoviMarcatori: true });
   fonemizza = creaFonemizzatoreMisto(fonIt, fonEn);
   fonemizzaFedele = creaFonemizzatore(clausole);
+}
 
+async function caricaModello(qui, t0) {
   const avanz = (p) => invia({ tipo: 'progresso', fase: 'download', ...p });
   const byteVoce = await ottieni('voce', avanz, 0);
-  voce = new Float32Array(byteVoce.buffer, byteVoce.byteOffset, byteVoce.byteLength / 4);
+  voci.sara = comeStile(byteVoce);
   const byteModello = await ottieni('modello', avanz, FILE_REMOTI.voce.byte);
 
   invia({ tipo: 'progresso', fase: 'avvio' });
-  ort.env.wasm.wasmPaths = qui('./vendor/ort/');
   // misurato su 16 fili logici: 8 e' il punto migliore, oltre peggiora
-  const fili = self.crossOriginIsolated ? Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 2) - 1)) : 1;
+  let fili = self.crossOriginIsolated ? Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 2) - 1)) : 1;
+  if (filiChiesti) fili = filiChiesti;
+  ort.env.wasm.wasmPaths = qui('./vendor/ort/');
   ort.env.wasm.numThreads = fili;
   sessione = await ort.InferenceSession.create(byteModello, {
     executionProviders: ['wasm'],
     graphOptimizationLevel: 'all',
+    ...opzioniProva,
   });
   nomeIds = sessione.inputNames.includes('input_ids') ? 'input_ids' : 'tokens';
   infoMotore = {
@@ -78,8 +90,32 @@ async function carica() {
   return infoMotore;
 }
 
+const comeStile = (b) => new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
+
+// Le voci in piu' (Nicola) si scaricano la prima volta che servono: mezzo MB,
+// stessa verifica SHA-256 del modello. L'avanzamento ha il nome del file.
+const caricandoVoce = new Map();
+async function stileVoce(id) {
+  const v = voceValida(id);
+  if (voci[v]) return voci[v];
+  if (!caricandoVoce.has(v)) {
+    const avanz = (p) => invia({ tipo: 'progresso', fase: 'download', voce: v, ...p });
+    caricandoVoce.set(
+      v,
+      ottieni(VOCI[v].file, avanz, 0)
+        .then((b) => (voci[v] = comeStile(b)))
+        .catch((e) => {
+          console.warn(e);
+          throw new Error(`Non riesco a scaricare la voce ${VOCI[v].nome} (mezzo MB): controlla la connessione e riprova, oppure scegli un'altra voce.`);
+        })
+        .finally(() => caricandoVoce.delete(v))
+    );
+  }
+  return caricandoVoce.get(v);
+}
+
 /** Una passata del modello su un lotto di fonemi (al massimo 510). */
-async function inferenza(fonemi, velocita) {
+async function inferenza(fonemi, velocita, voce) {
   const ids = tokenizza(fonemi);
   if (!ids.length) return new Float32Array(0);
   if (ids.length > MAX_FONEMI) throw new Error('lotto troppo lungo');
@@ -117,9 +153,9 @@ export function fattoreRitmo(n) {
 }
 
 /** Come Kokoro._create_batch con trim=True: ritaglia e aggiunge la pausa. */
-async function lotto(fonemi, velocita, pausa, compensa = false) {
+async function lotto(fonemi, velocita, pausa, compensa = false, idVoce) {
   const v = compensa ? velocita * fattoreRitmo(tokenizza(fonemi).length) : velocita;
-  const a = await inferenza(fonemi, v);
+  const a = await inferenza(fonemi, v, await stileVoce(idVoce));
   return conPausa(new Float32Array(ritaglia(a)), pausa);
 }
 
@@ -143,6 +179,10 @@ async function gestisci(m) {
     invia({ tipo: 'annullato', id: m.id });
     return;
   }
+  // @@test-inizio
+  if (m.tipo === 'avvia' && Number.isInteger(m.fili) && m.fili > 0 && m.fili <= 32) filiChiesti = m.fili;
+  if (m.tipo === 'avvia' && m.opzioni && typeof m.opzioni === 'object') opzioniProva = m.opzioni;
+  // @@test-fine
   if (m.tipo === 'avvia') {
     invia({ tipo: 'pronto', id: m.id, info: await motore() });
     return;
@@ -166,15 +206,23 @@ async function gestisci(m) {
     invia({ tipo: 'statoCache', id: m.id, ...(await byteInCache()) });
     return;
   }
+  if (m.tipo === 'preparaVoce') {
+    // scarica (se manca) lo stile della voce scelta, senza bisogno del modello
+    await stileVoce(m.voce);
+    invia({ tipo: 'voce', id: m.id, voce: voceValida(m.voce) });
+    return;
+  }
   await motore();
   if (m.tipo === 'prepara') {
     const t = performance.now();
     const opz = m.opzioni || {};
-    const b = blocchi(normalizza(applicaDizionario(m.testo, opz.dizionario)), fonemizza, opz);
-    invia({ tipo: 'blocchi', id: m.id, blocchi: b, ms: Math.round(performance.now() - t) });
+    const testo = normalizza(applicaDizionario(m.testo, opz.dizionario));
+    // lettura: pezzi da comporre durante la lettura; MP3: blocchi gia' composti
+    if (opz.pezzi) invia({ tipo: 'pezzi', id: m.id, pezzi: pezzi(testo, fonemizza), ms: Math.round(performance.now() - t) });
+    else invia({ tipo: 'blocchi', id: m.id, blocchi: blocchi(testo, fonemizza, opz), ms: Math.round(performance.now() - t) });
   } else if (m.tipo === 'sintetizza') {
     const t = performance.now();
-    const audio = await lotto(m.fonemi, m.velocita, m.pausa, true);
+    const audio = await lotto(m.fonemi, m.velocita, m.pausa, true, m.voce);
     const ms = performance.now() - t;
     // rapporto col tempo reale, sul parlato senza la pausa aggiunta
     const sec = audio.length / 24000 - (m.pausa || 0);
@@ -192,7 +240,7 @@ async function gestisci(m) {
     const parti = [];
     for (let i = 0; i < lotti.length; i++) {
       const p = i < lotti.length - 1 ? pausaDopo(lotti[i]) : 0;
-      parti.push(await lotto(lotti[i], m.velocita ?? 1, p));
+      parti.push(await lotto(lotti[i], m.velocita ?? 1, p, false, m.voce));
     }
     const tot = parti.reduce((s, p) => s + p.length, 0);
     const audio = new Float32Array(tot);

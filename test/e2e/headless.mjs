@@ -175,14 +175,14 @@ try {
   const s4 = await attendi(off, (s) => s.fase === 'lettura');
   const s5 = await attendi(off, (s) => s.fase === 'inattivo');
   R.articolo = { primoSuonoMs: s4.metriche.primoSuonoMs, blocchi: s5.totale, rtf: s5.rtf, buchi: s5.metriche.buchi || 0, buchiSec: s5.metriche.buchiSec || [], durataMs: Date.now() - t4 };
-  const reg = await off.evaluate(() => __test.registrazioneWav());
-  R.articolo.secondiAudio = +reg.secondi.toFixed(1);
+  R.articolo.secondiAudio = s5.metriche.secondiAudio;
   log('articolo:', JSON.stringify(R.articolo));
 
   // 5) diagnostica
   const dia = await b.newPage();
   await dia.setViewport({ width: 1280, height: 800 });
   await dia.goto(`chrome-extension://${extId}/diagnostica.html`);
+  await dia.$eval('#problemi', (d) => { d.open = true; }); // la prova sta nella sezione chiusa "Risoluzione problemi"
   await dia.click('#avvia');
   await dia.waitForFunction(() => globalThis.__risultatoDiagnostica, { timeout: 300000, polling: 500 });
   R.diagnostica = await dia.evaluate(() => __testoDiagnostica());

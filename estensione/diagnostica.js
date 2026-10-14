@@ -1,6 +1,6 @@
 // Pagina di diagnostica: misura la sintesi su questo PC con lo stesso motore
 // della lettura, e salva la stima, cosi' la lettura si adatta da subito.
-import { modelliInCache, BYTE_TOTALI } from './lib/modelli.js';
+import { modelliInCache, BYTE_TOTALI, VOCI, voceValida } from './lib/modelli.js';
 import { wav, FREQUENZA } from './lib/audio.js';
 import { leggiDizionario, salvaDizionario as salvaInSync } from './lib/dizionario.js';
 
@@ -71,6 +71,10 @@ function avviaWorker() {
   worker.onmessage = (ev) => {
     const m = ev.data;
     if (m.tipo === 'progresso') {
+      if (m.voce && m.file && m.file !== 'voce' && m.file !== 'modello') {
+        $('voceStato').textContent = `Scarico la voce ${VOCI[voceValida(m.voce)].nome}: ${Math.floor((100 * m.scaricati) / m.totale)}%`;
+        return;
+      }
       if (m.fase === 'download' && m.totale) {
         $('avanz').hidden = false;
         $('avanz').value = m.scaricati / m.totale;
@@ -91,7 +95,7 @@ let audioProva = null;
 function verdetto(rtf) {
   if (rtf < 0.7) return ['ok', 'Nessun rischio di pause: la sintesi è ben più veloce della lettura.'];
   if (rtf < 0.9) return ['ok', 'Lettura continua; al massimo una breve pausa all\'avvio di testi lunghi.'];
-  if (rtf < 1.1) return ['attenzione', 'Rischio di brevi pause fra un blocco e l\'altro. L\'estensione si adatta da sola: blocchi più corti e più anticipo.'];
+  if (rtf < 1.1) return ['attenzione', 'La sintesi va quasi alla velocità della voce: possibili brevi pause, sempre a fine frase. L\'estensione misura il computer e decide da sola quanto testo preparare per volta.'];
   return ['male', 'Computer lento per una lettura continua: ci saranno pause fra i blocchi, anche con l\'adattamento automatico.'];
 }
 
@@ -208,6 +212,51 @@ async function salvaDizionario(msg) {
   }
   if (r.errore) {
     await caricaDizionario();
+
+// ---- Voce (Sara o Nicola): la scelta vale per letture e MP3, il service worker la ricorda ----
+let voceScelta = 'sara';
+const radioVoce = [...document.querySelectorAll('input[name="voce"]')];
+chrome.storage.local.get('voce').then(({ voce }) => {
+  voceScelta = voceValida(voce);
+  for (const r of radioVoce) r.checked = r.value === voceScelta;
+});
+for (const r of radioVoce) {
+  r.addEventListener('change', async () => {
+    if (!r.checked) return;
+    voceScelta = voceValida(r.value);
+    $('voceStato').textContent = `Voce scelta: ${VOCI[voceScelta].nome}.`;
+    try {
+      await chrome.runtime.sendMessage({ a: 'background', tipo: 'voce', valore: voceScelta });
+    } catch {}
+  });
+}
+const FRASE_PROVA = (nome) => `Ciao, sono ${nome}. Posso leggerti un articolo intero, o salvarlo in un file MP3 da ascoltare quando vuoi.`;
+let audioVoce = null;
+for (const b of document.querySelectorAll('[data-ascolta]')) {
+  b.addEventListener('click', async () => {
+    const v = voceValida(b.dataset.ascolta);
+    try {
+      if (!(await modelliInCache())) {
+        $('voceStato').textContent = 'La voce non è ancora scaricata: prova di nuovo fra poco.';
+        return;
+      }
+      b.disabled = true;
+      if (!worker) avviaWorker();
+      $('voceStato').textContent = 'Preparo la voce…';
+      await chiedi({ tipo: 'avvia' });
+      const { fonemi } = await chiedi({ tipo: 'fonemi', testo: FRASE_PROVA(VOCI[v].nome), normalizza: true });
+      const s = await chiedi({ tipo: 'sintetizza', fonemi, velocita: 1, pausa: 0, voce: v });
+      if (audioVoce) audioVoce.pause();
+      audioVoce = new Audio(URL.createObjectURL(new Blob([wav(s.audio)], { type: 'audio/wav' })));
+      await audioVoce.play();
+      $('voceStato').textContent = `Ascolti ${VOCI[v].nome}.`;
+    } catch (e) {
+      $('voceStato').textContent = `Errore: ${e.message || e}`;
+    } finally {
+      b.disabled = false;
+    }
+  });
+}
     $('dizStato').textContent = r.errore;
     return false;
   }
@@ -265,7 +314,7 @@ async function ascolta(scritto, extra) {
     await chiedi({ tipo: 'avvia' });
     const diz = extra ? [...voci, extra] : voci;
     const { fonemi } = await chiedi({ tipo: 'fonemi', testo: scritto, normalizza: true, dizionario: diz });
-    const s = await chiedi({ tipo: 'sintetizza', fonemi, velocita: 1, pausa: 0 });
+    const s = await chiedi({ tipo: 'sintetizza', fonemi, velocita: 1, pausa: 0, voce: voceScelta });
     if (audioDiz) audioDiz.pause();
     audioDiz = new Audio(URL.createObjectURL(new Blob([wav(s.audio)], { type: 'audio/wav' })));
     await audioDiz.play();
@@ -317,3 +366,48 @@ $('dizImporta').addEventListener('click', async () => {
   if (!ok) $('dizStato').textContent += ` Nessuna voce importata (${scartate} righe scartate).`;
 });
 caricaDizionario();
+
+// ---- Voce (Sara o Nicola): la scelta vale per letture e MP3, il service worker la ricorda ----
+let voceScelta = 'sara';
+const radioVoce = [...document.querySelectorAll('input[name="voce"]')];
+chrome.storage.local.get('voce').then(({ voce }) => {
+  voceScelta = voceValida(voce);
+  for (const r of radioVoce) r.checked = r.value === voceScelta;
+});
+for (const r of radioVoce) {
+  r.addEventListener('change', async () => {
+    if (!r.checked) return;
+    voceScelta = voceValida(r.value);
+    $('voceStato').textContent = `Voce scelta: ${VOCI[voceScelta].nome}.`;
+    try {
+      await chrome.runtime.sendMessage({ a: 'background', tipo: 'voce', valore: voceScelta });
+    } catch {}
+  });
+}
+const FRASE_PROVA = (nome) => `Ciao, sono ${nome}. Posso leggerti un articolo intero, o salvarlo in un file MP3 da ascoltare quando vuoi.`;
+let audioVoce = null;
+for (const b of document.querySelectorAll('[data-ascolta]')) {
+  b.addEventListener('click', async () => {
+    const v = voceValida(b.dataset.ascolta);
+    try {
+      if (!(await modelliInCache())) {
+        $('voceStato').textContent = 'La voce non è ancora scaricata: prova di nuovo fra poco.';
+        return;
+      }
+      b.disabled = true;
+      if (!worker) avviaWorker();
+      $('voceStato').textContent = 'Preparo la voce…';
+      await chiedi({ tipo: 'avvia' });
+      const { fonemi } = await chiedi({ tipo: 'fonemi', testo: FRASE_PROVA(VOCI[v].nome), normalizza: true });
+      const s = await chiedi({ tipo: 'sintetizza', fonemi, velocita: 1, pausa: 0, voce: v });
+      if (audioVoce) audioVoce.pause();
+      audioVoce = new Audio(URL.createObjectURL(new Blob([wav(s.audio)], { type: 'audio/wav' })));
+      await audioVoce.play();
+      $('voceStato').textContent = `Ascolti ${VOCI[v].nome}.`;
+    } catch (e) {
+      $('voceStato').textContent = `Errore: ${e.message || e}`;
+    } finally {
+      b.disabled = false;
+    }
+  });
+}

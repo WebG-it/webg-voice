@@ -12,7 +12,8 @@
     "test:fonemi": "node test/confronta-fonemi.mjs",
     "test:testo": "node test/prova-testo.mjs",
     "build:test": "node scripts/build.mjs --test",
-    "test:pronuncia": "node test/pronuncia.mjs"
+    "test:pronuncia": "node test/pronuncia.mjs",
+    "test:funzioni": "node test/funzioni.mjs"
   },
   "dependencies": {
     "onnxruntime-web": "1.30.0"

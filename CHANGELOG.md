@@ -4,6 +4,13 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.2.0] - in lavorazione
+
+- Lettura piu' fluida: gli a capo dentro una frase non spezzano piu' la lettura, i blocchi si chiudono a fine frase, niente attesa di due blocchi prima di partire, stima della velocita' del PC limitata, motore caricato all'apertura del pannello. (Misure finali da fare.)
+- Leggi l'articolo intero: Alt+Q senza selezione, pulsante nel popup e menu contestuale.
+- Scarica in MP3, tutto in locale.
+- Voce maschile Nicola accanto a Sara.
+
 ## [1.1.1] - 2026-10-13
 
 - Scheda store: la giustificazione del permesso storage dice com'è davvero: le impostazioni restano in locale, il dizionario di pronuncia usa chrome.storage.sync e quindi viaggia con la sincronizzazione di Chrome dell'utente se è attiva; lo sviluppatore non riceve nulla.

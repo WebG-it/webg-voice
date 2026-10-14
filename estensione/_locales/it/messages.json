@@ -4,7 +4,7 @@
     "description": "Nome dell'estensione: marchio, non tradurre"
   },
   "descrizione": {
-    "message": "Legge ad alta voce in italiano il testo selezionato, con una voce naturale sul tuo computer. Gratis, offline dopo il primo download."
+    "message": "Legge ad alta voce in italiano testi e articoli interi, con le voci Sara e Nicola sul tuo computer. Salva anche in MP3. Gratis."
   },
   "titoloAzione": {
     "message": "WebG Voice, leggi ad alta voce"
@@ -12,8 +12,11 @@
   "menuLeggi": {
     "message": "Leggi ad alta voce"
   },
+  "menuArticolo": {
+    "message": "Leggi tutto l'articolo"
+  },
   "comandoLeggi": {
-    "message": "Leggi il testo selezionato (di nuovo: pausa o riprendi)"
+    "message": "Leggi la selezione, o l'articolo se non c'è selezione (di nuovo: pausa o riprendi)"
   },
   "comandoFerma": {
     "message": "Ferma la lettura"

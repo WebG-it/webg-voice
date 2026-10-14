@@ -27,8 +27,10 @@ function ripulisci(dir) {
   }
 }
 
-export function costruisci({ test = false } = {}) {
-  const out = join(RADICE, test ? 'estensione-test' : 'estensione');
+export function costruisci({ test = false, uscita = null } = {}) {
+  // uscita: cartella diversa per le prove sulla build di produzione, senza toccare estensione/
+  // (che puo' essere caricata come estensione non pacchettizzata in un Chrome in uso)
+  const out = uscita || join(RADICE, test ? 'estensione-test' : 'estensione');
   const ort = join(RADICE, 'node_modules', 'onnxruntime-web');
   if (!existsSync(ort)) throw new Error('Manca onnxruntime-web: lancia prima "npm install".');
 
@@ -42,6 +44,14 @@ export function costruisci({ test = false } = {}) {
   mkdirSync(join(out, 'vendor', 'espeak'), { recursive: true });
   for (const f of ['espeak-ng.mjs', 'espeak-ng.wasm', 'espeak-dati.bin', 'espeak-dati.json', 'COPYING']) {
     cpSync(join(RADICE, 'vendor', 'espeak', f), join(out, 'vendor', 'espeak', f));
+  }
+  // estrazione dell'articolo (Mozilla Readability, Apache-2.0) e codificatore MP3 (lamejs, LGPL-3.0)
+  for (const [dir, files] of [
+    ['readability', ['Readability.js', 'LICENSE.md']],
+    ['lame', ['lame.all.js', 'LICENSE-lamejs.txt', 'COPYING.LESSER']],
+  ]) {
+    mkdirSync(join(out, 'vendor', dir), { recursive: true });
+    for (const f of files) cpSync(join(RADICE, 'vendor', dir, f), join(out, 'vendor', dir, f));
   }
   for (const f of ['LICENSE', 'LICENSE-APACHE-2.0.txt', 'THIRD_PARTY.md']) cpSync(join(RADICE, f), join(out, f));
   if (test) {
@@ -68,6 +78,8 @@ export function costruisci({ test = false } = {}) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const test = process.argv.includes('--test');
-  const t = costruisci({ test });
-  console.log(`${test ? 'estensione-test' : 'estensione'}/ pronta: ${(t / 1048576).toFixed(1)} MB`);
+  const i = process.argv.indexOf('--uscita');
+  const uscita = i > 0 ? process.argv[i + 1] : null;
+  const t = costruisci({ test, uscita });
+  console.log(`${uscita || (test ? 'estensione-test' : 'estensione')}/ pronta: ${(t / 1048576).toFixed(1)} MB`);
 }

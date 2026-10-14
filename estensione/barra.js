@@ -173,6 +173,7 @@
       return `Scarico la voce: ${Math.floor((s.download.scaricati / s.download.totale) * 100)}%`;
     }
     if (s.download && s.download.avvio) return 'Avvio il motore…';
+    if (s.downloadVoce && s.downloadVoce.totale) return `Scarico la voce: ${Math.floor((s.downloadVoce.scaricati / s.downloadVoce.totale) * 100)}%`;
     if (s.fase === 'preparazione') return 'Preparo la voce…';
     if (s.fase === 'pausa') return 'In pausa';
     if (s.fase === 'lettura') return s.totale > 1 ? `In lettura · ${Math.min(s.blocco + 1, s.totale)} di ${s.totale}` : 'In lettura';

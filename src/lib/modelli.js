@@ -30,6 +30,32 @@ export const FILE_REMOTI = {
 
 export const BYTE_TOTALI = Object.values(FILE_REMOTI).reduce((s, f) => s + f.byte, 0);
 
+// Voci in piu': stesso modello, solo lo stile cambia (circa mezzo MB). Si scaricano
+// quando l'utente le sceglie, non al primo avvio: chi resta con Sara non scarica nulla
+// e il primo download resta quello di prima.
+export const FILE_VOCI = {
+  voceNicola: {
+    nome: 'stile della voce Nicola',
+    byte: 522240,
+    sha256: 'bc578e510d52a96d6940d46f12e96d7b3df00905dbea075113226d100e6e1ab0',
+    fonti: [`${GITHUB}im_nicola.bin`, `${HF}voices/im_nicola.bin`],
+  },
+};
+
+/** Voci fra cui si sceglie: id salvato in chrome.storage.local ("voce") -> file e nome. */
+export const VOCI = {
+  sara: { nome: 'Sara', file: 'voce', kokoro: 'if_sara' },
+  nicola: { nome: 'Nicola', file: 'voceNicola', kokoro: 'im_nicola' },
+};
+export const VOCE_PREDEFINITA = 'sara';
+export const voceValida = (v) => (typeof v === 'string' && Object.hasOwn(VOCI, v) ? v : VOCE_PREDEFINITA);
+
+/** Descrizione di un file da scaricare (modello, voce di base o voce in piu'). */
+export const fileRemoto = (nome) => FILE_REMOTI[nome] || FILE_VOCI[nome];
+
+/** true se il file della voce scelta e' gia' sul computer. */
+export const voceInCache = (id) => esiste(chiave(VOCI[voceValida(id)].file));
+
 /** Chiavi nell'archivio locale. */
 export const chiave = (nome) => `v1/${nome}`;
 export const chiaveParte = (nome, i) => `v1/parti/${nome}/${i}`;
