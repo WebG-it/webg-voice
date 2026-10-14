@@ -9,23 +9,68 @@ const ABBR = new Set(['sig', 'sigg', 'dott', 'dr', 'prof', 'ing', 'avv', 'arch',
   'on', 'ecc', 'etc', 'art', 'pag', 'pagg', 'pp', 'n', 'nn', 'cap', 'cfr', 'es', 'vol', 'fig',
   'tel', 'sec', 'ca', 'circa', 'st', 'mr', 'mrs', 'ms', 'vs', 'p', 'c', 'v', 'lett', 'int']);
 
-// Fine di riga che chiude davvero un periodo (o un titolo, se la riga dopo e' maiuscola)
+// Fine di riga che chiude davvero un periodo
 const FINE_PERIODO = /[.!?…:;]["'»”’)\]]*$/u;
 
+// Parole che a fine riga tengono il trattino quando continuano sulla riga dopo
+// (nord-est, ex-marito, anti-age, euro-atlantico): non e' una sillabazione.
+const PREFISSI_TRATTINO = new Set([
+  'nord', 'sud', 'est', 'ovest', 'centro', 'ex', 'anti', 'post', 'pre', 'socio', 'euro', 'extra',
+  'super', 'ultra', 'iper', 'mini', 'maxi', 'multi', 'semi', 'neo', 'vice', 'pro', 'filo', 'para',
+  'pseudo', 'sotto', 'sovra', 'inter', 'intra', 'infra', 'micro', 'macro', 'auto', 'tele', 'ecco',
+  'italo', 'franco', 'anglo', 'ispano', 'russo', 'cino', 'afro', 'greco', 'tedesco', 'arabo',
+  'mezzo', 'non', 'co', 'bio', 'eco', 'e', 'self', 'top', 'web', 'smart', 'full', 'open',
+]);
+const ELENCO = /^([-•*–·▪◦]|\d+[.)]|[a-z][.)])\s/u;
+
 /**
- * Paragrafi. Un a capo e' un confine di paragrafo se la riga prima chiude un periodo, se c'e'
- * una riga vuota, o se la riga dopo comincia con una maiuscola, un elenco o un numero di
- * paragrafo (titoli e voci). Altrimenti e' l'a capo di una riga lunga (PDF, mail, testo a righe
- * fisse) e le due righe si uniscono: prima ogni riga diventava un blocco a se', con una pausa
- * a ogni fine riga anche a meta' frase. Una parola sillabata a fine riga si ricompone.
+ * Larghezza delle righe di un testo "a righe fisse" (PDF, mail, testo copiato da un riquadro
+ * stretto), oppure 0 se non lo e'. A righe fisse vuol dire: almeno tre righe lunghe, la meta'
+ * almeno vicina alla larghezza massima, e righe non piu' larghe di 200 caratteri. In un testo
+ * normale (paragrafi di lunghezza qualsiasi, titoli, voci di elenco) ogni a capo resta un confine.
+ */
+function larghezzaRighe(righe) {
+  const lunghe = righe.map((r) => r.length).filter((n) => n >= 20).sort((a, b) => a - b);
+  if (lunghe.length < 3) return 0;
+  const larga = lunghe[Math.floor((lunghe.length - 1) * 0.9)];
+  if (larga > 200) return 0;
+  const vicine = lunghe.filter((n) => n >= larga * 0.7).length;
+  return vicine >= lunghe.length * 0.5 ? larga : 0;
+}
+
+/** Unisce `cur` (fine di riga) e `r` (riga dopo) quando la riga di prima e' spezzata. */
+function unisci(cur, r) {
+  // trattino a fine riga
+  const t = /(\S*?)(\p{L}+|\d+)-$/u.exec(cur);
+  if (t) {
+    const parola = t[2];
+    // davanti a una cifra, dopo una sigla in maiuscolo o dopo un prefisso il trattino resta
+    if (/^\d/.test(r) || /^\p{Lu}{2,}$/u.test(parola) || /^\d+$/.test(parola) || PREFISSI_TRATTINO.has(parola.toLowerCase())) return cur + r;
+    if (/^\p{Ll}/u.test(r)) return cur.slice(0, -1) + r; // sillabazione: docu-menti
+    return cur + r;
+  }
+  return `${cur} ${r}`;
+}
+
+/**
+ * Paragrafi. Una riga vuota e' sempre un confine. Nei testi a righe fisse (larghezzaRighe) una
+ * riga lunga che non chiude un periodo continua nella riga dopo, anche se questa comincia con
+ * una maiuscola (un nome, "Stati Uniti"); le righe corte, cioe' titoli, voci di elenco,
+ * indirizzi, restano a se'. Una riga che finisce con una cifra seguita da una che comincia con
+ * una cifra (civico e CAP) resta un confine. Negli altri testi ogni a capo e' un confine, salvo
+ * la parola spezzata col trattino a fine riga. Il trattino morbido (U+00AD) si toglie.
  */
 export function paragrafi(testo) {
-  const righe = testo
+  const righe = String(testo)
     .replace(/\r\n?/g, '\n')
+    .replace(/­[ \t]*\n[ \t]*/g, '')
+    .replace(/­/g, '')
     .split('\n')
     .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim());
+  const larga = larghezzaRighe(righe);
   const out = [];
   let cur = '';
+  let ultima = ''; // ultima riga fisica raccolta in `cur`
   for (const r of righe) {
     if (!r) {
       if (cur) out.push(cur);
@@ -33,16 +78,18 @@ export function paragrafi(testo) {
       continue;
     }
     if (!cur) {
-      cur = r;
+      cur = ultima = r;
       continue;
     }
-    const continua = !FINE_PERIODO.test(cur) && /^[\p{Ll}\d(«"“'‘,;]/u.test(r) && !/^\d+[.)]\s/.test(r);
-    if (continua && /\p{L}-$/u.test(cur) && /^\p{Ll}/u.test(r)) cur = cur.slice(0, -1) + r; // sillabazione
-    else if (continua) cur = `${cur} ${r}`;
+    const trattino = /[\p{L}\d]-$/u.test(ultima) && /^[\p{Ll}\d]/u.test(r);
+    const aRighe = larga && ultima.length >= larga * 0.6 && !FINE_PERIODO.test(ultima);
+    const confine = ELENCO.test(r) || (/\d$/.test(ultima) && /^\d/.test(r) && !/-$/.test(ultima));
+    if (!confine && (trattino || aRighe)) cur = unisci(cur, r);
     else {
       out.push(cur);
       cur = r;
     }
+    ultima = r;
   }
   if (cur) out.push(cur);
   return out.filter((p) => /[\p{L}\p{N}]/u.test(p));
@@ -164,35 +211,67 @@ export function blocchi(testo, fonemizza, opzioni = {}) {
 export const LIMITE_SEZIONI = BLOCCO_MAX;
 
 /**
- * Divide un testo lungo in sezioni sui confini di paragrafo, per prepararlo a tappe:
- * la prima e' corta (si sente presto), le altre si preparano mentre la prima suona.
- * Un paragrafo lunghissimo in testa si taglia a fine frase.
+ * Taglia una riga troppo lunga in pezzi di al massimo `max` caratteri: all'ultima fine di frase
+ * che ci sta, altrimenti all'ultimo spazio, e solo come ultima risorsa a `max` esatto.
+ */
+function tagliaRiga(r, max) {
+  const out = [];
+  while (r.length > max) {
+    const finestra = r.slice(0, max + 1);
+    let i = -1;
+    const re = /[.!?…]+["'»”’)\]]*\s+/gu;
+    let m;
+    while ((m = re.exec(finestra))) if (m.index > max * 0.3) i = m.index + m[0].length;
+    if (i < 0) {
+      const s = finestra.lastIndexOf(' ');
+      i = s > max * 0.3 ? s + 1 : max;
+    }
+    out.push(r.slice(0, i).trimEnd());
+    r = r.slice(i).trimStart();
+  }
+  out.push(r);
+  return out;
+}
+
+/**
+ * Divide un testo lungo in sezioni, per prepararlo a tappe: la prima e' corta (si sente presto),
+ * le altre si preparano mentre la prima suona. Una sezione si chiude dove una riga chiude un
+ * periodo; una riga piu' lunga della sezione si taglia a fine frase (a parola come ultima
+ * risorsa), e nessuna sezione supera 1,25 volte la sua misura anche senza punteggiatura.
+ * I pezzi di una stessa riga restano uniti da uno spazio, le righe da un a capo.
  */
 export function dividiSezioni(testo, primo = 1200, altre = 12000) {
   const righe = String(testo).replace(/\r\n?/g, '\n').split('\n');
   const out = [];
-  let cur = [];
-  let lun = 0;
+  let cur = '';
+  let iniziata = false;
+  let ultimoPunto = -1; // in `cur`, posizione dopo l'ultimo pezzo che chiude un periodo
   const chiudi = () => {
-    if (cur.length) out.push(cur.join('\n'));
-    cur = [];
-    lun = 0;
+    if (iniziata) out.push(cur);
+    cur = '';
+    iniziata = false;
+    ultimoPunto = -1;
   };
-  for (let r of righe) {
-    if (!out.length && !lun && r.length > 2 * primo) {
-      // prima riga enorme: il primo pezzo finisce alla prima fine di frase dopo `primo` caratteri
-      const re = /[.!?…]+["'»”’)\]]*\s+(?=["'«“(]?\s*[\p{Lu}\p{N}])/gu;
-      re.lastIndex = primo;
-      const m = re.exec(r);
-      if (m && m.index + m[0].length < r.length) {
-        out.push(r.slice(0, m.index + m[0].length).trim());
-        r = r.slice(m.index + m[0].length);
+  for (const riga of righe) {
+    const pezzi = tagliaRiga(riga, primo);
+    pezzi.forEach((p, k) => {
+      const misura = out.length ? altre : primo;
+      const sep = !iniziata ? '' : k ? ' ' : '\n';
+      if (iniziata && cur.length + sep.length + p.length > misura * 1.25) {
+        // tetto: si chiude all'ultimo punto fermo raccolto, se c'e', e il resto passa avanti
+        if (ultimoPunto > 0 && ultimoPunto < cur.length) {
+          const resto = cur.slice(ultimoPunto + 1);
+          cur = cur.slice(0, ultimoPunto);
+          chiudi();
+          cur = resto;
+          iniziata = resto.length > 0;
+        } else chiudi();
       }
-    }
-    cur.push(r);
-    lun += r.length + 1;
-    // si taglia solo dove la riga chiude un periodo (o prima di una riga vuota): mai a meta' frase
-    if (lun >= (out.length ? altre : primo) && (!r.trim() || FINE_PERIODO.test(r.trim()))) chiudi();
+      cur += (iniziata ? (k ? ' ' : '\n') : '') + p;
+      iniziata = true;
+      if (!p.trim() || FINE_PERIODO.test(p.trim())) ultimoPunto = cur.length;
+      if (cur.length >= (out.length ? altre : primo) && ultimoPunto === cur.length) chiudi();
+    });
   }
   chiudi();
   return out.filter((x) => /[\p{L}\p{N}]/u.test(x));
@@ -202,8 +281,8 @@ export function dividiSezioni(testo, primo = 1200, altre = 12000) {
 // Il testo si prepara in pezzi: frasi in fonemi, divise ai segni , ; : solo per poter
 // partire presto (primo blocco) o per le frasi piu' lunghe di quanto il modello accetta.
 // I blocchi si compongono mentre si legge (componiBlocco), con la misura vera del costo
-// della sintesi: se il blocco successivo puo' non essere pronto in tempo, il passaggio cade a
-// fine frase; a una virgola solo quando il motore e' abbastanza veloce da non far aspettare.
+// della sintesi (regolaBlocco): un blocco si chiude all'ultima fine di frase che sta nel limite,
+// e solo se nemmeno una frase ci sta all'ultimo inciso (virgola, punto e virgola, due punti).
 
 const MAX_FRASE = 400; // fonemi: oltre, una frase si divide agli incisi (il modello ne accetta 510)
 
@@ -215,6 +294,8 @@ export function pezzi(testo, fonemizza) {
   const out = [];
   for (const par of paragrafi(testo)) {
     const fr = frasi(par);
+    // titolo vero: paragrafo breve senza punteggiatura finale (non una riga spezzata)
+    const titolo = par.length <= 150 && !/[.!?…:;,]["'»”’)\]]*$/u.test(par);
     fr.forEach((f, i) => {
       const fon = fonemizza(f);
       if (!fon) return;
@@ -232,7 +313,7 @@ export function pezzi(testo, fonemizza) {
         const ultimo = k === uniti.length - 1;
         const fineParagrafo = ultimo && i === fr.length - 1;
         // un titolo senza punto: il punto da' la pausa anche quando il titolo sta dentro un blocco
-        const f = fineParagrafo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
+        const f = fineParagrafo && titolo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
         out.push({ fonemi: f, fineFrase: ultimo, fineParagrafo });
       });
     });
@@ -246,14 +327,13 @@ const pausaBlocco = (fonemi, fineParagrafo) => pausaDopo(fonemi) + (fineParagraf
  * Compone il blocco che parte dal pezzo `da`, al massimo di `limite` fonemi.
  * - primo blocco: si chiude anche a un inciso, e se il primo inciso e' piu' lungo del
  *   limite lo si divide a una parola (restituisce `dividi` per sostituire il pezzo);
- * - blocchi successivi: frasi intere, quante ne stanno nel limite. Se nemmeno la prima frase
- *   ci sta: con `virgole` (motore piu' veloce della voce) si chiude all'ultimo inciso che ci sta,
- *   perche' il blocco dopo arrivera' in tempo e la virgola non fa aspettare; senza, si prende la
- *   frase intera (meglio un'attesa a fine frase che tante attese alle virgole);
+ * - blocchi successivi: frasi intere, quante ne stanno nel limite; se nemmeno la prima frase ci
+ *   sta, si chiude all'ultimo inciso che ci sta (almeno 20 fonemi). Il limite lo decide
+ *   regolaBlocco, perche' il blocco dopo arrivi in tempo o l'attesa resti breve;
  * - il primo blocco non scavalca la fine del primo paragrafo; gli altri si'.
  * Restituisce { fonemi, a (pezzo dopo l'ultimo), pausa, dividi? }.
  */
-export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true, virgole = false } = {}) {
+export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true } = {}) {
   let fonemi = '';
   let a = da;
   let ultimaFrase = -1; // indice dopo l'ultima fine di frase raccolta
@@ -264,7 +344,7 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
     if (fonemi && lung(nuovo) > limite) {
       if (primo) break; // il primo blocco si chiude al confine d'inciso
       if (ultimaFrase > da) break; // ci sono gia' frasi intere: si chiude li'
-      if (virgole && lung(fonemi) >= 20) break; // frase troppo lunga: si chiude a un inciso
+      if (lung(fonemi) >= 20) break; // frase piu' lunga del limite: si chiude a un inciso
       if (lung(nuovo) > MAX_FRASE + 100) break; // frase lunghissima: anche qui a un inciso
     }
     if (!fonemi && primo && lung(p.fonemi) > limite * 1.6) {
@@ -314,27 +394,26 @@ export function limiteDaMargine(margineS, k) {
   return Math.round(Math.min(420, Math.max(40, (0.85 * margineS * 1000 - k.fisso) / k.perFonema)));
 }
 
-/** true se il motore e' abbastanza piu' veloce della voce da poter chiudere un blocco a un inciso. */
-export const virgoleConsentite = (k) => k.perFonema < 0.95 * k.audio;
+/** true se la sintesi e' abbastanza piu' veloce della voce da recuperare margine a ogni blocco. */
+export const motoreVeloce = (k) => k.perFonema < 0.95 * k.audio;
 
 // Attesa massima voluta fra due blocchi quando la sintesi non e' piu' veloce della voce
 const ATTESA_LENTO_MS = 3000;
 
 /**
- * Regola per il blocco dopo il primo, dato l'audio pronto davanti (secondi) e il costo.
- * - Motore piu' veloce della voce: blocco grande quanto il margine permette, chiuso a fine
- *   frase o, se la frase non ci sta, a un inciso (il blocco dopo arriva in tempo).
- * - Motore lento come la voce o piu': le attese ci saranno comunque (il silenzio totale e' circa
- *   la sintesi totale meno la durata della voce) e conta che siano brevi: il blocco si
- *   dimensiona perche' l'attesa resti intorno ai 3 secondi, a fine frase se ci sta, altrimenti a un
- *   inciso. Prima: blocchi da una frase intera, anche con attese di 12-13 secondi.
- * Restituisce { limite, virgole }.
+ * Limite di fonemi per il blocco dopo il primo, dato l'audio pronto davanti (secondi) e il costo.
+ * - Sintesi piu' veloce della voce: il blocco e' grande quanto il margine permette, cosi' arriva
+ *   prima che finisca l'audio in coda e il passaggio non si sente.
+ * - Sintesi lenta come la voce o piu': le attese ci saranno comunque (il silenzio totale e' circa
+ *   la sintesi totale meno la durata della voce) e conta che siano brevi: il blocco si dimensiona
+ *   perche' l'attesa resti intorno ai 3 secondi (fra 90 e 160 fonemi). Di solito l'attesa cade a
+ *   fine frase; in una frase piu' lunga del limite puo' cadere a una virgola.
  */
 export function regolaBlocco(margineS, k) {
-  if (virgoleConsentite(k)) return { limite: limiteDaMargine(margineS, k), virgole: true };
+  if (motoreVeloce(k)) return limiteDaMargine(margineS, k);
   const n = (margineS * 1000 + ATTESA_LENTO_MS - k.fisso) / k.perFonema;
   // almeno 90 fonemi: blocchi piu' piccoli pagano troppi costi fissi e allungano il silenzio totale
-  return { limite: Math.round(Math.min(160, Math.max(90, n))), virgole: true };
+  return Math.round(Math.min(160, Math.max(90, n)));
 }
 
 /**
@@ -379,8 +458,7 @@ export function pianoIniziale(lista, k, { orizzonteS = 60 } = {}) {
     let primaPausa = true;
     while (cur < copia.length && fineAudio - primoMs < orizzonteS * 1000) {
       const margine = Math.max(0, fineAudio - orologio) / 1000;
-      const rb = regolaBlocco(margine, k);
-      const b = componiBlocco(copia, cur, rb.limite, { fineTesto: false, virgole: rb.virgole });
+      const b = componiBlocco(copia, cur, regolaBlocco(margine, k), { fineTesto: false });
       const nb = lung(b.fonemi);
       orologio += k.fisso + k.perFonema * nb;
       if (orologio > fineAudio) {

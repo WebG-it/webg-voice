@@ -447,13 +447,12 @@ async function pompa(L) {
       const primo = !L.partito;
       const k = stimaCosto();
       let limite;
-      let virgole = false;
       if (primo) {
         const piano = pianoIniziale(L.pezzi, k);
         L.parametri.piano = piano;
         limite = piano.limite;
-      } else ({ limite, virgole } = regolaBlocco(margine, k));
-      const b = componiBlocco(L.pezzi, L.cursore, limite, { primo, fineTesto: L.preparato, virgole });
+      } else limite = regolaBlocco(margine, k);
+      const b = componiBlocco(L.pezzi, L.cursore, limite, { primo, fineTesto: L.preparato });
       if (b.dividi) {
         L.pezzi.splice(L.cursore, 1, ...b.dividi);
         stato.totale = L.pezzi.length;

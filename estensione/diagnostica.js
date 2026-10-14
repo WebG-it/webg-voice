@@ -95,7 +95,7 @@ let audioProva = null;
 function verdetto(rtf) {
   if (rtf < 0.7) return ['ok', 'Nessun rischio di pause: la sintesi è ben più veloce della lettura.'];
   if (rtf < 0.9) return ['ok', 'Lettura continua; al massimo una breve pausa all\'avvio di testi lunghi.'];
-  if (rtf < 1.1) return ['attenzione', 'La sintesi va quasi alla velocità della voce: possibili brevi pause, sempre a fine frase. L\'estensione misura il computer e decide da sola quanto testo preparare per volta.'];
+  if (rtf < 1.1) return ['attenzione', 'La sintesi va quasi alla velocità della voce: possibili brevi pause, di solito a fine frase. L\'estensione misura il computer e decide da sola quanto testo preparare per volta.'];
   return ['male', 'Computer lento per una lettura continua: ci saranno pause fra i blocchi, anche con l\'adattamento automatico.'];
 }
 

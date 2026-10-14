@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.2.0
+# Scheda Chrome Web Store, WebG Voice 1.2.1
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -74,7 +74,8 @@ Privacy
 Nessun dato raccolto, nessun tracciamento, nessuna pubblicità. Le sole connessioni servono a
 scaricare i file della voce.
 
-Tecnologia: modello Kokoro-82M (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0).
+Tecnologia: modello Kokoro-82M (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0),
+Mozilla Readability per l'articolo (Apache-2.0), lamejs per l'MP3 (LGPL-3.0).
 Codice sorgente aperto con licenza GPL-3.0: https://github.com/WebG-it/webg-voice
 Realizzata da WebG, https://www.webg.it
 
@@ -127,7 +128,8 @@ page has a troubleshooting test.
 Privacy
 No data collected, no tracking, no ads. The only network connections download the voice files.
 
-Technology: Kokoro-82M model (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0).
+Technology: Kokoro-82M model (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0),
+Mozilla Readability for articles (Apache-2.0), lamejs for MP3 (LGPL-3.0).
 Open source under GPL-3.0: https://github.com/WebG-it/webg-voice
 Made by WebG, https://www.webg.it
 

@@ -126,7 +126,9 @@
     let titolo = titoloPulito(art.title || document.title || '', art.siteName);
     const confronta = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
     if (titolo && corpo.length && confronta(corpo[0]) === confronta(titolo)) corpo.shift();
-    const testo = (titolo ? [titolo, ...corpo] : corpo).join('\n');
+    // una riga vuota fra i paragrafi: titoli, voci di elenco e citazioni restano separati
+    // anche quando non finiscono con un punto (paragrafi() unirebbe le righe di un testo a capo)
+    const testo = (titolo ? [titolo, ...corpo] : corpo).join('\n\n');
     return {
       titolo: titolo || null,
       testo,

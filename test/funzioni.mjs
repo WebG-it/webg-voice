@@ -30,7 +30,18 @@ prova('sezioni: la prima e\' corta', sez[0].length < 3000, `${sez[0].length} car
 prova('sezioni: le altre al massimo ~12.000 caratteri + un paragrafo', sez.slice(1).every((s) => s.length < 16000));
 const unaRiga = 'Frase di prova abbastanza lunga per il test. '.repeat(400);
 const sez2 = dividiSezioni(unaRiga);
-prova('sezioni: un paragrafo enorme in testa si taglia a fine frase', sez2.length === 2 && sez2[0].length < 1400 && /\.$/.test(sez2[0]), sez2.map((s) => s.length).join(' + '));
+prova('sezioni: un paragrafo enorme si taglia a fine frase, entro il tetto', sez2.length >= 2 && sez2[0].length <= 1200 && sez2.every((s) => /\.$/.test(s.trim())) && sez2.slice(1).every((s) => s.length <= 15000), sez2.map((s) => s.length).join(' + '));
+{
+  const enorme = 'Una frase di prova un po\' lunga che si ripete. '.repeat(1300); // circa 63.000 caratteri su una riga
+  const s1 = dividiSezioni(enorme);
+  prova('sezioni: riga da 63.000 caratteri entro il tetto', s1.every((s, i) => s.length <= (i ? 15000 : 1500)), `${enorme.length} caratteri: ${s1.length} sezioni, la piu' lunga ${Math.max(...s1.map((s) => s.length))}`);
+  const voci = Array.from({ length: 3000 }, (_, i) => `voce numero ${i} senza punto finale`).join('\n');
+  const s2 = dividiSezioni(voci);
+  prova('sezioni: 3.000 righe senza punto entro il tetto', s2.every((s, i) => s.length <= (i ? 15000 : 1500)), `${s2.length} sezioni, la piu' lunga ${Math.max(...s2.map((s) => s.length))}`);
+  const parole = 'parola '.repeat(3000);
+  const s3 = dividiSezioni(parole);
+  prova('sezioni: senza punteggiatura si taglia a parola', s3.every((s) => !/\S$/.test(s) || / parola$|^parola/.test(s)) && s3.join(' ').split(/\s+/).filter(Boolean).length === 3000, `${s3.length} sezioni`);
+}
 prova('sezioni: testo corto = una sezione', dividiSezioni('Ciao a tutti.').length === 1);
 prova('sezioni: righe vuote o senza lettere scartate', dividiSezioni('\n\n  \n---\n').length === 0);
 
@@ -88,8 +99,8 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
       const primo = primoSuono === null;
       const margine = primo ? 0 : Math.max(0, fineAudio - orologio);
       const stima = { fisso, perFonema: perFonema * 1.1, audio };
-      const rb = primo ? { limite: pianoIniziale(lista, stima).limite, virgole: false } : regolaBlocco(margine / 1000, stima);
-      const b = componiBlocco(lista, cur, rb.limite, { primo, virgole: rb.virgole });
+      const lim = primo ? pianoIniziale(lista, stima).limite : regolaBlocco(margine / 1000, stima);
+      const b = componiBlocco(lista, cur, lim, { primo });
       if (b.dividi) lista.splice(cur, 1, ...b.dividi);
       const k = lung(b.fonemi);
       orologio += fisso + perFonema * k;
@@ -146,8 +157,45 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   prova('a capo: un testo a righe non fa un blocco per riga', confini.length < righe / 2 && confini.every((c) => c.fineFrase), `${righe} righe, ${confini.length} blocchi, tutti a fine frase`);
   const titolo = pezzi(normalizza('Titolo senza punto\nIl corpo del capitolo.'), fon);
   prova('a capo: un titolo senza punto riceve la pausa', /\.$/.test(titolo[0].fonemi), titolo[0].fonemi);
-  const sez = dividiSezioni(('Una frase lunga che continua\nsulla riga dopo senza punto ' + 'e ancora parole '.repeat(80) + 'fine.\n').repeat(3), 200, 400);
-  prova('sezioni: mai tagliate a meta\' frase', sez.every((s) => /[.!?…:;]$/.test(s.trim())), `${sez.length} sezioni`);
+  const sez = dividiSezioni('Una frase che continua\nsulla riga dopo senza punto e poi finisce.\n'.repeat(30), 200, 400);
+  prova('sezioni: con righe a fine periodo si taglia solo li\'', sez.every((s) => /[.!?…:;]$/.test(s.trim())), `${sez.length} sezioni`);
+}
+
+// ---- rilievi della controprova sulla 1.2.0 ----
+{
+  const { paragrafi, pezzi } = await import('../src/lib/testo.js');
+  // 1. articolo: i paragrafi arrivano separati da una riga vuota (src/articolo.js)
+  const articolo = ['Ricetta della torta', 'Come si prepara', 'farina', 'uova fresche', 'latte intero', 'Cosa dice il ministro', '«Non ci sono problemi», ha detto.', 'Risultati', '2024 è stato un anno record per le vendite.'].join('\n\n');
+  const pa = paragrafi(articolo);
+  prova('articolo: titoli, voci e citazioni restano paragrafi', pa.length === 9 && pa.includes('farina') && pa.includes('Come si prepara') && pa.includes('Risultati'), JSON.stringify(pa));
+  const fonte = readFileSync(join(qui, '..', 'src', 'articolo.js'), 'utf8');
+  prova('articolo: i paragrafi si uniscono con una riga vuota', /\.join\('\\n\\n'\)/.test(fonte));
+  // 2. testo a righe fisse: una riga lunga senza punto continua anche se la dopo ha la maiuscola
+  const righe = [
+    'La riunione di ieri è andata bene e ha deciso di affidare il lavoro al collega',
+    'Mario Rossi, che ha già seguito progetti simili per clienti in Italia e negli',
+    'Stati Uniti. Il budget resta quello previsto a settembre dalla direzione generale',
+    'e la consegna è fissata per la fine di novembre, salvo imprevisti tecnici.',
+    'Prossimi passi',
+    '- preparare il contratto',
+    '- fissare la riunione di avvio',
+  ].join('\n');
+  const pr = paragrafi(righe);
+  prova('a capo: nomi e "Stati Uniti" a inizio riga non spezzano la frase', pr[0].includes('al collega Mario Rossi') && pr[0].includes('negli Stati Uniti'), pr[0].slice(0, 120));
+  prova('a capo: titolo e voci di elenco restano separati', pr.length === 4 && pr[1] === 'Prossimi passi' && pr[2] === '- preparare il contratto', JSON.stringify(pr.slice(1)));
+  const fonP = pezzi(normalizza(righe), fon);
+  const conPunto = fonP.filter((p) => p.fineParagrafo && /\.$/.test(p.fonemi)).length;
+  prova('a capo: il punto si aggiunge solo ai titoli veri, non a meta\' frase', fonP.filter((p) => !p.fineParagrafo).every((p) => !/[a-zˈˌː]\.$/.test(p.fonemi) || p.fineFrase) && conPunto >= 2, `${fonP.length} pezzi`);
+  // 3. trattini a fine riga
+  const tr = (a, b) => paragrafi(`${'Il vento soffiava forte da giorni e le previsioni parlavano di una perturbazione da'} ${a}\n${b} che sarebbe durata almeno fino alla fine della settimana prossima, con piogge.\nUna seconda riga lunga quanto le altre serve solo a far riconoscere il testo a righe.\nE una terza riga di lunghezza simile chiude il paragrafo del nostro piccolo esempio.`)[0];
+  prova('trattino: nord-est resta col trattino', tr('nord-', 'est').includes('nord-est'), tr('nord-', 'est').slice(80, 120));
+  prova('trattino: ex-marito resta col trattino', tr('ex-', 'marito').includes('ex-marito'));
+  prova('trattino: COVID-19 resta attaccato', tr('COVID-', '19').includes('COVID-19'));
+  prova('trattino: la sillabazione si ricompone', tr('docu-', 'menti').includes('documenti'));
+  prova('trattino: il trattino morbido sparisce', !paragrafi('una parola con trat­tino mor­\nbido').join(' ').includes('­') && paragrafi('una parola con trat­tino mor­\nbido').join(' ').includes('trattino morbido'));
+  // 4. testo incollato: indirizzi ed elenchi brevi
+  prova('a capo: civico e CAP restano separati', JSON.stringify(paragrafi('Via Roma 12\n10100 Torino')) === JSON.stringify(['Via Roma 12', '10100 Torino']));
+  prova('a capo: un elenco di parole resta un elenco', paragrafi('Frutta\nmele\npere').length === 3);
 }
 
 // ---- nome del file ----

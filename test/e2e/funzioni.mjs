@@ -42,10 +42,21 @@ const ok = (nome, cond, dettaglio) => {
 
 // pagine locali: articolo di prova e pagina senza articolo
 const ARTICOLO = readFileSync(join(QUI, 'articolo.html'), 'utf8');
+// articolo con sottotitoli, elenco e citazione: i confini di paragrafo devono restare
+const STRUTTURA = `<!doctype html><html lang="it"><head><meta charset="utf-8"><title>La torta della nonna</title></head><body><main><article>
+<h1>La torta della nonna</h1>
+<p>Questa torta si prepara da generazioni nella nostra famiglia e ogni volta che la portiamo in tavola finisce in pochi minuti. Gli ingredienti sono semplici e si trovano in qualsiasi supermercato, ma il segreto sta nella pazienza e nella cottura lenta.</p>
+<h2>Come si prepara</h2>
+<ul><li>farina</li><li>uova fresche</li><li>latte intero</li></ul>
+<p>Si mescolano gli ingredienti con calma, senza fretta, finché l'impasto non diventa liscio e lucido. Poi si versa nello stampo imburrato e si lascia riposare per una decina di minuti prima di infornare.</p>
+<h2>Cosa dice la nonna</h2>
+<blockquote>«Non ci sono problemi», ha detto.</blockquote>
+<p>La cottura dura circa quaranta minuti in forno statico a centottanta gradi. Quando la superficie è dorata si spegne il forno e si lascia la torta dentro ancora qualche minuto, con lo sportello socchiuso.</p>
+</article></main></body></html>`;
 const VUOTA = '<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Accedi</title></head><body><nav><a href="/">Home</a> <a href="/chi">Chi siamo</a></nav><form><label>Email <input></label><button>Entra</button></form><footer>© 2026</footer></body></html>';
 const server = http.createServer((q, r) => {
   r.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-  r.end(q.url.startsWith('/vuota') ? VUOTA : ARTICOLO);
+  r.end(q.url.startsWith('/vuota') ? VUOTA : q.url.startsWith('/struttura') ? STRUTTURA : ARTICOLO);
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const LOCALE = `http://127.0.0.1:${server.address().port}`;
@@ -177,6 +188,18 @@ try {
         ok(`estrazione ${url}`, false, String(e.message || e));
       }
     }
+  }
+
+  // ---- 1b. articolo strutturato: titoli, voci di elenco e citazioni restano paragrafi ----
+  if (FASI.has('estrazione')) {
+    await vai(`${LOCALE}/struttura`);
+    const pop = await apriPopup();
+    const a = await sw.evaluate(() => __testArticolo());
+    await pop.close().catch(() => {});
+    const t = a.testo || '';
+    writeFileSync(join(OUT, 'articolo-struttura.txt'), t);
+    const fuso = t.split(/\n\n/).some((p) => /prepara farina|farina uova|nonna «|problemi», ha detto\. La/.test(p));
+    ok('articolo strutturato: confini di paragrafo', !a.nessuno && t.includes('\n\nfarina\n\n') && t.includes('\n\nCome si prepara\n\n') && !fuso, t.slice(0, 200));
   }
 
   // ---- 2. pagina senza articolo: "!" sull'icona e spiegazione nel popup ----

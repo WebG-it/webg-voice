@@ -67,9 +67,10 @@ al primo uso compare un pulsante per scaricarlo.
   Chrome dell'utente e si sincronizza con i suoi dispositivi se ha la sincronizzazione attiva.
 - La lettura si regola da sola sulla velocità del computer: misura quanto costa la sintesi
   (una parte fissa per ogni blocco e una per ogni suono) e decide durante la lettura quanto testo
-  preparare per volta. Il primo blocco è corto per partire presto; dal secondo in poi i passaggi
-  fra un blocco e l'altro cadono solo a fine frase, mai su una virgola. Se il computer è lento,
-  meglio una pausa fra due frasi che una a metà.
+  preparare per volta. Il primo blocco è corto per partire presto. Dal secondo in poi un blocco si
+  chiude all'ultima fine di frase che ci sta, e solo in una frase più lunga a una virgola. Se il
+  computer è più veloce della voce il passaggio non si sente; se è lento come la voce o più, le
+  attese restano intorno ai 3 secondi, di solito a fine frase.
 - Nelle opzioni dell'estensione, sezione **Risoluzione problemi**: se senti pause, una prova misura
   la sintesi su quel computer e dà un risultato da mandarci.
 
