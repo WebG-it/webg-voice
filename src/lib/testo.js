@@ -3,6 +3,7 @@
 // i successivi piu' lunghi, perche' Kokoro suona piu' naturale su frasi intere.
 
 import { dividiFonemi, pausaDopo, MAX_FONEMI } from './fonemi.js';
+import { togliCitazioniRighe } from './normalizza.js';
 
 // Parole dopo cui il punto non chiude la frase (se non sono gia' state sciolte)
 const ABBR = new Set(['sig', 'sigg', 'dott', 'dr', 'prof', 'ing', 'avv', 'arch', 'geom', 'rag',
@@ -90,21 +91,14 @@ function unisci(cur, r) {
  * la parola spezzata col trattino a fine riga. Il trattino morbido (U+00AD) si toglie.
  */
 export function paragrafi(testo) {
-  const righe = String(testo)
+  let righe = String(testo)
     .replace(/\r\n?/g, '\n')
     .replace(/\u00AD[ \t]*\n[ \t]*/g, '')
     .replace(/\u00AD/g, '')
     .split('\n')
     .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim());
-  // mail citata: se almeno due righe e la maggioranza cominciano con ">", il segno si toglie.
-  // Un ">" davanti a un numero e' un confronto ("> 18 anni" si legge "maggiore di 18 anni"):
-  // non conta come citazione e resta, anche in un elenco di requisiti.
-  const citata = (r) => /^>/.test(r) && !/^>\s?[-+]?\d/.test(r);
-  const piene = righe.filter(Boolean);
-  const quotate = piene.filter(citata).length;
-  if (quotate >= 2 && quotate > piene.length / 2) {
-    for (let k = 0; k < righe.length; k++) if (citata(righe[k])) righe[k] = righe[k].replace(/^(?:>\s?)+/, '');
-  }
+  // mail citata: via il ">" (stessa regola di normalizza, vedi togliCitazioniRighe)
+  righe = togliCitazioniRighe(righe);
   const larga = larghezzaRighe(righe);
   const out = [];
   let cur = '';
@@ -356,8 +350,9 @@ export function pezzi(testo, fonemizza) {
         const ultimo = k === uniti.length - 1;
         const fineParagrafo = ultimo && i === fr.length - 1;
         // un titolo senza punto: il punto da' la pausa anche quando il titolo sta dentro un blocco
-        const f = fineParagrafo && titolo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
-        out.push({ fonemi: f, fineFrase: ultimo, fineParagrafo });
+        const fonemi = fineParagrafo && titolo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
+        // testo: la frase scritta, sul suo primo pezzo (serve a evidenziarla nella pagina)
+        out.push({ fonemi, fineFrase: ultimo, fineParagrafo, testo: k === 0 ? f : '' });
       });
     });
   }
@@ -376,7 +371,7 @@ const pausaBlocco = (fonemi, fineParagrafo) => pausaDopo(fonemi) + (fineParagraf
  * - il primo blocco non scavalca la fine del primo paragrafo; gli altri si'.
  * Restituisce { fonemi, a (pezzo dopo l'ultimo), pausa, dividi? }.
  */
-export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true } = {}) {
+export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true, unaFrase = false, pausaFrase = 0 } = {}) {
   let fonemi = '';
   let a = da;
   let ultimaFrase = -1; // indice dopo l'ultima fine di frase raccolta
@@ -404,7 +399,8 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
           fonemi: testa,
           a: da + 1,
           pausa: 0.05,
-          dividi: [{ fonemi: testa, fineFrase: false, fineParagrafo: false }, { ...p, fonemi: coda }],
+          // la testa porta il testo della frase (serve a evidenziarla), la coda no
+          dividi: [{ fonemi: testa, fineFrase: false, fineParagrafo: false, testo: p.testo || '' }, { ...p, fonemi: coda, testo: '' }],
         };
       }
     }
@@ -418,6 +414,7 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
     // attraversare la fine di un paragrafo: con paragrafi brevi si pagano meno costi fissi
     if (primo && p.fineParagrafo) break;
     if (primo && lung(fonemi) >= limite * 0.6 && p.fineFrase) break;
+    if (unaFrase && p.fineFrase) break; // "Rileggi la bozza": una frase per blocco
   }
   // i blocchi dopo il primo si chiudono all'ultima fine di frase raccolta
   if (!primo && ultimaFrase > da && ultimaFrase < a) {
@@ -426,7 +423,8 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
   }
   const ultimo = lista[a - 1];
   const finito = fineTesto && a >= lista.length;
-  return { fonemi, a, pausa: finito ? 0 : pausaBlocco(fonemi, ultimo && ultimo.fineParagrafo) };
+  const extra = ultimo && ultimo.fineFrase ? pausaFrase : 0; // pausa in piu' fra le frasi (bozza)
+  return { fonemi, a, pausa: finito ? 0 : pausaBlocco(fonemi, ultimo && ultimo.fineParagrafo) + extra };
 }
 
 /**

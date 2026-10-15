@@ -10,6 +10,7 @@ import puppeteer from 'puppeteer';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const QUI = dirname(fileURLToPath(import.meta.url));
 const OUT = process.env.USCITE || join(QUI, 'uscite');
@@ -19,6 +20,12 @@ const RTF = process.env.RTF ? Number(process.env.RTF) : undefined;
 const VEL = Number(process.env.VELOCITA || 1);
 const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
+// memoria privata dei processi di questa istanza (solo Windows), in MB
+const memoriaMB = (pid) => {
+  if (process.platform !== 'win32') return null;
+  const ps = `$t=0; Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${pid} -or $_.ProcessId -eq ${pid} } | ForEach-Object { $t += $_.PrivatePageCount }; $t`;
+  return Math.round(Number(execFileSync('powershell.exe', ['-NoProfile', '-Command', ps], { encoding: 'utf8' }).trim()) / 1048576);
+};
 const R = { ext: process.env.EXT, rtfSimulato: RTF ?? null, parole: TESTO.split(/\s+/).filter(Boolean).length };
 
 const b = await puppeteer.launch({
@@ -112,6 +119,16 @@ try {
     await attendi((s) => s.fase === 'inattivo', 120000);
   }
   log('caldo', JSON.stringify(R.caldo.map((c) => c.primoSuonoMs)));
+  // memoria a riposo: motore caricato e fermo, poi senza motore
+  await dorme(5000);
+  R.memoria = { motoreFermoMB: memoriaMB(pid) };
+  await chiudiOffscreen();
+  await dorme(3000);
+  R.memoria.senzaMotoreMB = memoriaMB(pid);
+  log('memoria', JSON.stringify(R.memoria));
+  await crea();
+  await aOff('preparaMotore');
+  await attendi((s) => s.motorePronto, 120000);
 
   // 3. testo lungo letto tutto
   const t0 = Date.now();

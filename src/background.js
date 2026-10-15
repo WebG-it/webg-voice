@@ -4,6 +4,7 @@
 import { modelliInCache, VOCI, voceValida } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
 import { leggiDizionario } from './lib/dizionario.js';
+import './lib/ripetizioni.js'; // registra globalThis.webgRipetizioni ("Rileggi la bozza")
 
 const OFFSCREEN = 'offscreen.html';
 const VEL_DEFAULT = 1;
@@ -311,17 +312,56 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
     }
   }
   const conBarra = await iniettaBarra(tab.id);
+  // una lettura normale toglie i colori delle ripetizioni lasciati da "Rileggi la bozza"
+  if (conBarra) chrome.tabs.sendMessage(tab.id, { da: 'background', tipo: 'ripetizioni', parole: [] }).catch(() => {});
   await aOffscreen({ tipo: 'leggi', testo, titolo: scelto.titolo, ...(await impostazioni()), tabId: conBarra ? tab.id : null, t0 });
   return true;
 }
 
+// ---- Partenza a freddo ----
+// Con la scorciatoia o il menu il motore comincia a caricarsi subito, mentre si legge la
+// selezione dalla pagina, invece che dopo. Non scarica niente: se il modello manca non fa nulla.
+async function preriscaldaSubito() {
+  try {
+    if (await modelliInCache()) await aOffscreen({ tipo: 'prerisc' });
+  } catch {}
+}
+
+// "Tieni la voce pronta": predefinita accesa, spenta sui computer con meno di 8 GB dichiarati
+async function tienePronta() {
+  const { tienePronta: v } = await chrome.storage.local.get('tienePronta');
+  if (typeof v === 'boolean') return v;
+  return !(navigator.deviceMemory && navigator.deviceMemory < 8);
+}
+
+// Chrome in uso: cambi di scheda, di finestra e pagine caricate tengono pronta la voce
+// (al massimo un avviso al minuto all'offscreen, e solo se e' gia' aperto). Nessun permesso:
+// questi eventi arrivano senza URL ne' contenuto delle pagine.
+let ultimoAvvisoAttivita = 0;
+async function attivitaChrome() {
+  if (Date.now() - ultimoAvvisoAttivita < 60 * 1000) return;
+  ultimoAvvisoAttivita = Date.now();
+  try {
+    if (await chrome.offscreen.hasDocument()) chrome.runtime.sendMessage({ a: 'offscreen', tipo: 'attivita', tienePronta: await tienePronta() }).catch(() => {});
+  } catch {}
+}
+chrome.tabs.onActivated.addListener(attivitaChrome);
+chrome.tabs.onUpdated.addListener((id, info) => {
+  if (info.status === 'complete') attivitaChrome();
+});
+chrome.windows.onFocusChanged.addListener((w) => {
+  if (w !== chrome.windows.WINDOW_ID_NONE) attivitaChrome();
+});
+
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  preriscaldaSubito();
   if (info.menuItemId === 'leggi-selezione') leggiDaScheda(tab, info.selectionText, false, info.frameId);
   else if (info.menuItemId === 'leggi-articolo') leggiDaScheda(tab, '', false, undefined, 'articolo');
 });
 
 chrome.commands.onCommand.addListener(async (comando, tab) => {
   if (comando === 'leggi-selezione') {
+    preriscaldaSubito();
     const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
     leggiDaScheda(t);
   } else if (comando === 'ferma-lettura') {
@@ -334,7 +374,7 @@ const BASE_ESTENSIONE = chrome.runtime.getURL('');
 const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
-const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta']);
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'riallinea']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
 
@@ -358,6 +398,14 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     chrome.offscreen.closeDocument().catch(() => {});
     return;
   }
+  // frase in corso: alla scheda che sta leggendo, se l'utente non ha spento l'evidenziazione
+  if (msg.da === 'offscreen' && msg.tipo === 'evidenzia') {
+    if (Number.isInteger(msg.tabId))
+      chrome.storage.local.get('evidenzia').then(({ evidenzia }) => {
+        if (evidenzia !== false) chrome.tabs.sendMessage(msg.tabId, { da: 'offscreen', tipo: 'evidenzia', testo: msg.testo, nuova: !!msg.nuova, articolo: !!msg.articolo }).catch(() => {});
+      });
+    return;
+  }
   if (msg.a !== 'background') return;
   const daPagina = daPaginaEstensione(mittente);
   const daBarretta = !daPagina && !!mittente.tab;
@@ -366,6 +414,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.tipo === 'leggiTesto' && (typeof msg.testo !== 'string' || !msg.testo.trim() || msg.testo.length > MAX_TESTO)) return;
   if (msg.tipo === 'voce' && !Object.hasOwn(VOCI, msg.valore)) return;
   if (msg.tipo === 'mp3' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
+  if (msg.tipo === 'rileggi' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
   (async () => {
     switch (msg.tipo) {
       case 'stato': {
@@ -386,6 +435,31 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
         const esito = await leggiDaScheda(tab, '', true, undefined, 'articolo');
         return esito === true ? { letto: true } : { letto: false, motivo: esito || 'articolo' };
+      }
+      case 'rileggi': {
+        // "Rileggi la bozza": testo incollato nel pannello, altrimenti la selezione della scheda
+        // (anche dentro TinyMCE, textarea e CodeMirror). Non l'articolo: e' per chi scrive.
+        let testo = typeof msg.testo === 'string' ? msg.testo : '';
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (!testo.trim()) {
+          if (!tab) return { avviato: false, motivo: 'vuoto' };
+          const scelto = await testoDellaScheda(tab, { modo: 'selezione' });
+          if (!scelto.testo) return { avviato: false, motivo: scelto.motivo };
+          testo = scelto.testo;
+        }
+        const gruppi = globalThis.webgRipetizioni.trova(testo);
+        const imp = await impostazioni();
+        // piu' lenta della velocita' scelta, di 0,15, e mai sotto 0,7
+        const velocita = Math.max(0.7, Math.round((imp.velocita - 0.15) * 100) / 100);
+        const conBarra = !msg.testo && tab ? await iniettaBarra(tab.id) : false;
+        await aOffscreen({ tipo: 'leggi', testo, ...imp, velocita, bozza: true, tabId: conBarra ? tab.id : null, t0: Date.now() });
+        // le parole ripetute si colorano nella pagina, dove si puo' (non dentro editor e riquadri)
+        if (conBarra) chrome.tabs.sendMessage(tab.id, { da: 'background', tipo: 'ripetizioni', parole: gruppi.flatMap((g) => g.parole).slice(0, 200) }).catch(() => {});
+        return {
+          avviato: true,
+          velocita,
+          ripetizioni: gruppi.slice(0, 15).map((g) => ({ parole: g.parole.slice(0, 4), volte: g.volte })),
+        };
       }
       case 'mp3': {
         // testo incollato nel popup, altrimenti la selezione, altrimenti l'articolo della scheda
@@ -437,6 +511,10 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       case 'alterna':
       case 'stop':
         if (await chrome.offscreen.hasDocument()) return aOffscreen({ tipo: msg.tipo });
+        return { ok: true };
+      case 'riallinea':
+        // la scheda che legge e' tornata visibile: l'offscreen le rimanda la frase che si sente
+        if (daBarretta && (await chrome.offscreen.hasDocument())) return aOffscreen({ tipo: 'riallinea', tabId: mittente.tab.id });
         return { ok: true };
       default:
         return { errore: 'comando sconosciuto' };

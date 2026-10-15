@@ -26,8 +26,9 @@ nessun servizio esterno li riceve.
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
 - i file della voce (circa {{MB}} MB, più mezzo MB per la voce Nicola se la scegli), per
   funzionare offline;
-- la velocità di lettura e la voce scelte, l'ultimo testo incollato nel popup e una misura della
-  velocità di sintesi del computer;
+- la velocità di lettura e la voce scelte, l'ultimo testo incollato nel popup, una misura della
+  velocità di sintesi del computer e le scelte delle opzioni "Evidenzia nella pagina la frase"
+  e "Tieni la voce pronta";
 - il dizionario di pronuncia, se lo usi: le coppie di parole che scrivi nelle opzioni. Si salva
   nello spazio di sincronizzazione di Chrome, quindi se hai la sincronizzazione attiva Chrome lo
   copia sui tuoi altri dispositivi tramite il tuo account Google; WebG non lo riceve.

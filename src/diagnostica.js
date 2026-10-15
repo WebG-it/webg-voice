@@ -417,3 +417,12 @@ for (const b of document.querySelectorAll('[data-ascolta]')) {
     }
   });
 }
+
+// ---- Lettura: evidenziazione della frase e voce pronta (chrome.storage.local) ----
+chrome.storage.local.get(['evidenzia', 'tienePronta']).then(({ evidenzia, tienePronta }) => {
+  $('optEvidenzia').checked = evidenzia !== false;
+  // predefinita accesa, spenta sui computer con meno di 8 GB di memoria dichiarati
+  $('optPronta').checked = typeof tienePronta === 'boolean' ? tienePronta : !(navigator.deviceMemory && navigator.deviceMemory < 8);
+});
+$('optEvidenzia').addEventListener('change', (e) => chrome.storage.local.set({ evidenzia: e.target.checked }));
+$('optPronta').addEventListener('change', (e) => chrome.storage.local.set({ tienePronta: e.target.checked }));

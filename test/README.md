@@ -63,3 +63,18 @@ legge i file dell'offscreen dal disco quando lo apre.
 costo fisso e costo per fonema (`FILI=n` per provare un altro numero di thread, `OPZIONI=<json>`
 per opzioni di sessione di ONNX Runtime). `parallelo.mjs` prova più motori in parallelo
 (`PROVE=1x8,2x4,...`) con la memoria occupata.
+
+## Prove della 1.3.0
+
+```
+CHROME=<chrome> PROFILO=<profilo con la voce> USCITE=<cartella> node test/e2e/novita130.mjs
+CHROME=<chrome> PROFILO=<profilo con la voce> [VARIANTI=<json>] node test/e2e/freddo.mjs
+```
+
+`novita130.mjs` prova su pagine locali l'evidenziazione della frase in lettura (articolo e
+selezione, scorrimento verso una frase fuori vista, nessun riporto dopo la rotella dell'utente,
+opzione spenta, area di testo senza evidenziazione), "Rileggi la bozza" su selezione, area di
+testo, riquadro modificabile e testo incollato (elenco nel pannello, colori nella pagina, lettura
+a 0,15 in meno e una frase per blocco) e la partenza a freddo con la scorciatoia. `iframe.mjs`
+prova "Rileggi la bozza" anche dentro TinyMCE. `freddo.mjs` misura le fasi del caricamento del
+motore e la memoria dei processi a motore fermo, con varianti di opzioni di sessione.

@@ -9,6 +9,7 @@ import { impronta } from './lib/impronta.js';
 import { dividiSezioni, componiBlocco, pianoIniziale, regolaBlocco } from './lib/testo.js';
 import { VOCI, voceValida } from './lib/modelli.js';
 import { KBPS, nomeFile, tagId3 } from './lib/mp3.js';
+import { daLiberare } from './lib/riposo.js';
 
 class Annullato extends Error {}
 
@@ -57,22 +58,30 @@ const stato = {
   versione: null, // l'offscreen document non ha chrome.runtime.getManifest: si legge sotto
 };
 
-// Dopo 10 minuti senza letture il documento si fa chiudere, cosi' il modello
-// (circa 330 MB in memoria) non resta caricato per niente. Non mentre si crea un
-// MP3, ne' finche' un MP3 pronto non e' stato salvato (al massimo 30 minuti).
-const RIPOSO_MS = 10 * 60 * 1000;
+// Riposo: il motore caricato occupa circa 0,9-1,2 GB, e ricaricarlo costa circa 1,5 secondi
+// in piu' sulla prima lettura (partenza a freddo). Si tiene pronto 30 minuti dall'ultimo uso
+// finche' Chrome e' in uso (il service worker segnala cambi di scheda, finestra e pagina), e
+// lo si libera dopo 10 minuti se in Chrome non succede niente o se l'utente ha spento
+// "tieni la voce pronta". Mai mentre si crea un MP3, ne' finche' un MP3 pronto non e' salvato
+// (al massimo 30 minuti).
 const MP3_TENUTO_MS = 30 * 60 * 1000;
+let ultimoUso = Date.now();
+let ultimaAttivita = Date.now();
+let tienePronta = true;
 let timerRiposo = null;
 function controllaRiposo() {
-  clearTimeout(timerRiposo);
-  if (stato.fase !== 'inattivo') return;
-  timerRiposo = setTimeout(() => {
+  if (stato.fase !== 'inattivo' || caricamento || lavoroMp3) ultimoUso = Date.now();
+  if (timerRiposo) return;
+  timerRiposo = setInterval(() => {
+    if (stato.fase !== 'inattivo' || caricamento || lavoroMp3) {
+      ultimoUso = Date.now();
+      return;
+    }
     const m = stato.mp3;
-    if (lavoroMp3) return controllaRiposo();
-    if (m && m.fase === 'pronto' && !m.salvato && Date.now() - m.quando < MP3_TENUTO_MS) return controllaRiposo();
-    // non durante il download in sottofondo
-    if (stato.fase === 'inattivo' && !caricamento) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
-  }, RIPOSO_MS);
+    if (m && m.fase === 'pronto' && !m.salvato && Date.now() - m.quando < MP3_TENUTO_MS) return;
+    const libera = daLiberare({ fermoMs: Date.now() - ultimoUso, chromeFermoMs: Date.now() - ultimaAttivita, tienePronta });
+    if (libera) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
+  }, 30 * 1000);
 }
 
 fetch('manifest.json')
@@ -88,6 +97,7 @@ function pubblica(subito = true) {
   const manda = () => {
     ultimoInvio = Date.now();
     controllaRiposo();
+    if (stato.fase !== 'inattivo') ultimoUso = Date.now();
     chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'stato', stato }).catch(() => {});
   };
   if (subito) {
@@ -137,7 +147,18 @@ function errore(e) {
 
 let ctx = null;
 function contesto() {
-  if (!ctx) ctx = new AudioContext({ sampleRate: FREQUENZA, latencyHint: 'playback' });
+  if (!ctx) {
+    ctx = new AudioContext({ sampleRate: FREQUENZA, latencyHint: 'playback' });
+    // La pausa la decide solo l'utente (pulsante, pannello, scorciatoia): se il browser sospende
+    // l'audio durante una lettura in corso (cambio di scheda, dispositivo audio, risparmio
+    // energetico) lo si riprende subito, e la lettura continua.
+    ctx.addEventListener('statechange', () => {
+      if (ctx.state !== 'running' && ctx.state !== 'closed' && lettura && stato.fase === 'lettura') {
+        stato.metriche.audioRipreso = (stato.metriche.audioRipreso || 0) + 1;
+        ctx.resume().catch(() => {});
+      }
+    });
+  }
   return ctx;
 }
 
@@ -338,12 +359,12 @@ function attendi(L, motivo) {
  * corto per partire presto, poi frasi intere quante ne permette l'audio gia' pronto.
  * L'audio gia' suonato non resta in memoria.
  */
-async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo }) {
+async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo, bozza = false }) {
   ferma(false);
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
   if (voce) stato.voce = voceValida(voce);
   if (await serveConsenso()) {
-    richiestaInAttesa = { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo };
+    richiestaInAttesa = { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo, bozza };
     Object.assign(stato, { fase: 'consenso', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0 });
     pubblica();
     return;
@@ -362,8 +383,10 @@ async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, 
     daPreparare: null,
     preparato: false,
     registrazione: [],
-    richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo },
+    richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo, bozza },
+    bozza, // "Rileggi la bozza": una frase per blocco e pause piu' lunghe fra le frasi
   };
+  L.tabId = tabId ?? null;
   lettura = ultimaLettura = L;
   if (typeof velocita === 'number') stato.velocita = velocita;
   Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0, impronta: impronta(testo), titolo: titolo || null });
@@ -390,6 +413,7 @@ async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, 
       return;
     }
     pompa(L);
+    seguiFrase(L);
   } catch (e) {
     if (L === lettura && !(e instanceof Annullato)) errore(e);
   }
@@ -455,7 +479,7 @@ async function pompa(L) {
         L.parametri.piano = piano;
         limite = piano.limite;
       } else limite = regolaBlocco(margine, k);
-      const b = componiBlocco(L.pezzi, L.cursore, limite, { primo, fineTesto: L.preparato });
+      const b = componiBlocco(L.pezzi, L.cursore, limite, { primo, fineTesto: L.preparato, unaFrase: L.bozza, pausaFrase: L.bozza ? PAUSA_BOZZA : 0 });
       if (b.dividi) {
         L.pezzi.splice(L.cursore, 1, ...b.dividi);
         stato.totale = L.pezzi.length;
@@ -470,7 +494,8 @@ async function pompa(L) {
       misuraCosto(n, r.ms, r.audio.length / FREQUENZA, b.pausa);
       aggiornaRtf(r.rtf);
       if (gen !== L.generazione) continue; // velocita' o voce cambiate nel frattempo
-      L.blocchi.push({ da, a: b.a });
+      // testo scritto delle frasi del blocco, per evidenziarle nella pagina mentre suonano
+      L.blocchi.push({ da, a: b.a, testo: L.pezzi.slice(da, b.a).map((p) => p.testo).filter(Boolean).join(' ') });
       L.cursore = b.a;
       programma(L, L.blocchi.length - 1, r.audio);
       L.partito = true;
@@ -482,6 +507,42 @@ async function pompa(L) {
   } finally {
     L.pompaAttiva = false;
   }
+}
+
+// Pausa in piu' fra le frasi in "Rileggi la bozza" (secondi)
+const PAUSA_BOZZA = 0.35;
+
+// Frase in corso: ogni 150 ms si guarda quale blocco sta suonando (il tempo dell'audio si ferma
+// in pausa, quindi l'evidenziazione resta giusta) e, se cambia, lo si dice alla scheda.
+let timerFrase = null;
+function seguiFrase(L) {
+  if (timerFrase || L.tabId === null || L.tabId === undefined) return;
+  L.evidenziato = -1;
+  L.primaInviata = false;
+  timerFrase = setInterval(() => {
+    if (L !== lettura) {
+      clearInterval(timerFrase);
+      timerFrase = null;
+      if (L.evidenziato >= 0) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'evidenzia', tabId: L.tabId, testo: null }).catch(() => {});
+      return;
+    }
+    const t = contesto().currentTime;
+    const v = L.sorgenti.find((x) => x.inizio <= t + 0.02 && t < x.fine);
+    if (!v || (v.indice === L.evidenziato && !L.riallinea)) return;
+    L.evidenziato = v.indice;
+    let b = L.blocchi[v.indice];
+    if (L.riallinea) {
+      // la scheda torna visibile: si rimanda la frase in corso, anche a meta' (blocco senza testo)
+      L.riallinea = false;
+      for (let i = v.indice; i >= 0 && !(b && b.testo); i--) b = L.blocchi[i];
+    }
+    if (!b || !b.testo) return; // il resto di una frase gia' evidenziata
+    // "nuova": la prima frase di questa lettura, la pagina riparte dalla selezione o dall'inizio
+    const nuova = !L.primaInviata;
+    L.primaInviata = true;
+    const articolo = !!(L.richiesta && L.richiesta.titolo);
+    chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'evidenzia', tabId: L.tabId, testo: b.testo.slice(0, 4000), nuova, articolo }).catch(() => {});
+  }, 150);
 }
 
 function programma(L, i, audio) {
@@ -770,6 +831,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   switch (msg.tipo) {
     case 'leggi':
       leggi({
+        bozza: msg.bozza === true,
         testo: msg.testo,
         velocita: msg.velocita,
         tabId: msg.tabId,
@@ -838,6 +900,14 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     case 'prerisc':
       preriscalda();
       break;
+    case 'riallinea':
+      if (lettura && lettura.tabId === msg.tabId) lettura.riallinea = true;
+      break;
+    case 'attivita':
+      // il service worker segnala che Chrome e' in uso (e se tenere pronta la voce)
+      ultimaAttivita = Date.now();
+      if (typeof msg.tienePronta === 'boolean') tienePronta = msg.tienePronta;
+      break;
     case 'stato':
       break;
     default:
@@ -845,6 +915,9 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   }
   rispondi({ stato });
 });
+
+// il controllo del riposo parte subito (qui, dopo tutte le dichiarazioni)
+controllaRiposo();
 
 // @@test-inizio  (tolto dalla build di produzione, vedi scripts/build.mjs)
 // ---- Solo per i test automatici (nessun effetto nell'uso normale) ----
@@ -865,6 +938,16 @@ function unisci(parti) {
 }
 globalThis.__test = {
   stato: () => JSON.parse(JSON.stringify(stato)),
+  // frase che si sente adesso (l'ultimo blocco col testo scritto fino a quello che suona) e tempo dell'audio
+  fraseCorrente: () => {
+    const L = lettura;
+    if (!L || !ctx) return null;
+    const t = ctx.currentTime;
+    const v = L.sorgenti.find((x) => x.inizio <= t + 0.02 && t < x.fine);
+    if (!v) return { tempo: t, testo: null };
+    for (let i = v.indice; i >= 0; i--) if (L.blocchi[i] && L.blocchi[i].testo) return { tempo: t, indice: v.indice, testo: L.blocchi[i].testo };
+    return { tempo: t, indice: v.indice, testo: null };
+  },
   blocchi: () => (ultimaLettura ? ultimaLettura.blocchi.map((b) => ({ ...b, fonemi: ultimaLettura.pezzi.slice(b.da, b.a).map((p) => p.fonemi).join(' ') })) : []),
   registra: (si = true) => {
     registra = si;
@@ -880,6 +963,8 @@ globalThis.__test = {
     return { fonemi: r.fonemi, lotti: r.lotti, ms: r.ms, secondi: r.audio.length / FREQUENZA, wav: base64(wav(r.audio)) };
   },
   contesto: () => ({ stato: ctx && ctx.state, tempo: ctx && ctx.currentTime }),
+  // come se il browser sospendesse l'audio da se'
+  sospendiAudio: () => ctx && ctx.suspend(),
   provaFonte: (url) => chiedi({ tipo: 'provaFonte', url }),
   // simula un PC lento o veloce: fissa la stima e la blocca alle misure vere
   forzaRtf: (v) => {
@@ -893,6 +978,13 @@ globalThis.__test = {
   // MP3 pronto in base64, per controllarlo fuori dal browser
   mp3Base64: async () => (urlMp3 ? base64(new Uint8Array(await (await fetch(urlMp3)).arrayBuffer())) : null),
   inAttesaLettura: () => (lettura ? lettura.inAttesa : null),
+  // banco di prova: avvio del motore con opzioni di sessione di prova; restituisce info e tempi
+  avvia: async (opzioni) => {
+    const t0 = performance.now();
+    if (opzioni) await chiedi({ tipo: 'avvia', opzioni });
+    await motore();
+    return { ms: Math.round(performance.now() - t0), info: stato.info };
+  },
   // banco di prova: N motori in parallelo (ognuno con `fili` thread) sugli stessi blocchi
   parallelo: async (testo, nMotori = 2, fili = 4, nBlocchi = 12, n = 150, opzioni) => {
     const motori = [];

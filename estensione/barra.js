@@ -203,6 +203,7 @@
   }
 
   function rimuovi() {
+    if (window.__leggiAdAltaVoceBarra && window.__leggiAdAltaVoceBarra.evid) window.__leggiAdAltaVoceBarra.evid.pulisci();
     barra.classList.remove('visibile');
     setTimeout(() => {
       if (!barra.classList.contains('visibile')) host.remove();
@@ -218,6 +219,237 @@
     }
   });
 
-  window.__leggiAdAltaVoceBarra = { mostra };
+  // ---- Evidenziazione della frase in lettura e delle ripetizioni (CSS Custom Highlight API) ----
+  // Non tocca il DOM della pagina: gli intervalli si registrano in CSS.highlights e lo stile
+  // arriva da un foglio costruito in JavaScript. Dove non si puo' (testo in una textarea, in un
+  // riquadro o in un editor) le parole non si trovano e non succede niente.
+  const evid = (() => {
+    const ok = typeof CSS !== 'undefined' && CSS.highlights && typeof Highlight === 'function';
+    let foglio = null;
+    let indice = null; // [{ w, nodo, inizio, fine }]
+    let cursore = 0;
+    let attivo = true;
+    // Scheda nascosta (l'utente fa altro mentre ascolta): la lettura continua, ma evidenziazione e
+    // scorrimento si fermano. Si tiene solo l'ultima frase arrivata; quando la scheda torna
+    // visibile si evidenzia quella, cioe' la frase che si sta ascoltando.
+    let sospesa = null;
+    // testo letto da un'area di testo, da un campo o da un riquadro: non sta nei nodi della pagina,
+    // e la stessa frase scritta altrove non va evidenziata al suo posto
+    const fuoriPagina = () => {
+      const ae = document.activeElement;
+      return !!ae && ['TEXTAREA', 'INPUT', 'IFRAME', 'FRAME'].includes(ae.tagName);
+    };
+    let ultimoScorrimentoUtente = 0;
+    const nota = () => {
+      ultimoScorrimentoUtente = Date.now();
+    };
+    for (const ev of ['wheel', 'touchstart', 'touchmove']) window.addEventListener(ev, nota, { passive: true, capture: true });
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) nota();
+    }, { capture: true });
+
+    const norma = (w) => w.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+    function stile() {
+      if (foglio) return;
+      try {
+        foglio = new CSSStyleSheet();
+        foglio.replaceSync(
+          '::highlight(webg-voice-lettura){background-color:rgba(255,213,79,.55);color:inherit}' +
+            '::highlight(webg-voice-ripetizioni){background-color:rgba(239,108,108,.35);text-decoration:underline wavy rgba(198,40,40,.9)}'
+        );
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, foglio];
+      } catch {
+        foglio = null;
+      }
+    }
+    function togliStile() {
+      if (!foglio || CSS.highlights.has('webg-voice-lettura') || CSS.highlights.has('webg-voice-ripetizioni')) return;
+      document.adoptedStyleSheets = document.adoptedStyleSheets.filter((f) => f !== foglio);
+      foglio = null;
+    }
+    // parole dei nodi di testo visibili della pagina (non script, stili, campi, la barretta)
+    function costruisci() {
+      const out = [];
+      const radice = document.body || document.documentElement;
+      const w = document.createTreeWalker(radice, NodeFilter.SHOW_TEXT, {
+        acceptNode(n) {
+          const p = n.parentElement;
+          if (!p || p.closest('script,style,noscript,template,textarea,input,select,[data-leggi-ad-alta-voce]')) return NodeFilter.FILTER_REJECT;
+          return /[\p{L}\p{N}]/u.test(n.data) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        },
+      });
+      for (let n = w.nextNode(); n; n = w.nextNode()) {
+        const re = /[\p{L}\p{N}]+/gu;
+        let m;
+        while ((m = re.exec(n.data))) out.push({ w: norma(m[0]), nodo: n, inizio: m.index, fine: m.index + m[0].length });
+      }
+      return out;
+    }
+    // inizio della selezione nella pagina, se c'e': la lettura parte da li'
+    function partenza() {
+      const sel = getSelection();
+      if (!sel || !sel.rangeCount || sel.isCollapsed) return 0;
+      const r = sel.getRangeAt(0);
+      for (let i = 0; i < indice.length; i++) {
+        try {
+          if (r.comparePoint(indice[i].nodo, indice[i].fine) >= 0) return i;
+        } catch {}
+      }
+      return 0;
+    }
+    // Trova nella pagina le parole del blocco, dal cursore in avanti (con un piccolo margine
+    // indietro). Fra i candidati sceglie quello che copre piu' parole del blocco: una frase
+    // ripetuta in un riquadro laterale o in un menu, spesso troncata, perde contro quella
+    // dell'articolo. Le parole che non si trovano (numeri scritti in lettere, sigle sciolte)
+    // si saltano; una corrispondenza sparpagliata su troppe parole della pagina si scarta.
+    function cerca(testo) {
+      const bw = (testo.match(/[\p{L}\p{N}]+/gu) || []).map(norma).filter((w) => w.length >= 2);
+      if (!bw.length) return null;
+      const da = Math.max(0, cursore - 30);
+      const fino = Math.min(indice.length, cursore + 6000);
+      let migliore = null;
+      let limite = fino;
+      for (let s = da; s < limite; s++) {
+        const w = indice[s].w;
+        for (let k = 0; k < Math.min(8, bw.length); k++) {
+          // ancora: la prima parola del blocco, o una delle successive se non e' troppo corta
+          if (w !== bw[k] || (k > 0 && bw[k].length < 4)) continue;
+          let p = s;
+          const presi = [s];
+          for (let j = k + 1; j < bw.length; j++) {
+            for (let x = p + 1; x <= Math.min(indice.length - 1, p + 6); x++) {
+              if (indice[x].w === bw[j]) {
+                p = x;
+                presi.push(x);
+                break;
+              }
+            }
+          }
+          // via le parole isolate agli estremi (una data nella riga dell'autore, una parola di una
+          // nota prima del testo): l'evidenziazione comincia e finisce dove le parole sono fitte
+          while (presi.length > 3 && presi[1] - presi[0] > 3) presi.shift();
+          while (presi.length > 3 && presi[presi.length - 1] - presi[presi.length - 2] > 3) presi.pop();
+          const trovate = presi.length;
+          const inizio = presi[0];
+          const ultimo = presi[presi.length - 1];
+          const attese = bw.length - k;
+          if (trovate < Math.min(3, attese)) continue;
+          if (ultimo - inizio + 1 > attese * 1.6 + 6) continue; // troppo sparpagliata
+          const copertura = trovate / bw.length;
+          const densita = trovate / (ultimo - inizio + 1);
+          // vince chi copre piu' parole del blocco; a pari copertura, chi le ha piu' fitte
+          // (una nota prima del testo che finisce con le stesse parole perde)
+          const meglio = !migliore || copertura > migliore.copertura + 0.02 || (copertura >= migliore.copertura - 0.02 && densita > migliore.densita + 0.01);
+          if (meglio) migliore = { s: inizio, ultimo, copertura, densita };
+          break;
+        }
+        // trovata una buona: si guarda ancora un poco piu' avanti se ce n'e' una piu' fitta
+        if (migliore && migliore.copertura >= 0.9 && limite === fino) limite = Math.min(fino, s + 60);
+      }
+      return migliore && migliore.copertura >= 0.5 ? [migliore.s, migliore.ultimo] : null;
+    }
+    function scorri(range) {
+      if (Date.now() - ultimoScorrimentoUtente < 5000) return; // l'utente sta scorrendo da se'
+      const r = range.getBoundingClientRect();
+      if (!r.height) return;
+      if (r.top >= 60 && r.bottom <= innerHeight - 90) return;
+      const el = range.startContainer.parentElement;
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (sospesa) {
+        const s = sospesa;
+        sospesa = null;
+        api.frase(s.testo, s.nuova, s.articolo);
+      }
+      // i messaggi arrivati mentre Chrome teneva ferma la scheda si possono perdere: si chiede
+      // all'offscreen la frase che si sta ascoltando adesso
+      if (host.isConnected && (fase === 'lettura' || fase === 'pausa')) comando('riallinea');
+    });
+    const api = {
+      frase(testo, nuova, articolo) {
+        if (!ok) return;
+        if (document.hidden && testo) {
+          sospesa = { testo, nuova: !!(nuova || (sospesa && sospesa.nuova)), articolo };
+          return;
+        }
+        sospesa = null;
+        try {
+          if (!testo) {
+            // fine lettura (l'offscreen manda il testo vuoto solo alla fine): pulizia completa
+            indice = null;
+            cursore = 0;
+            CSS.highlights.delete('webg-voice-lettura');
+            togliStile();
+            return;
+          }
+          if (nuova || !indice) {
+            // l'articolo sta sempre nella pagina, anche se un banner o un riquadro ha il fuoco
+            attivo = articolo || !fuoriPagina();
+            indice = attivo ? costruisci() : [];
+            cursore = attivo ? partenza() : 0;
+          }
+          if (!attivo) return;
+          const t = cerca(testo);
+          if (!t) return;
+          const [a, b] = t;
+          const range = new Range();
+          range.setStart(indice[a].nodo, indice[a].inizio);
+          range.setEnd(indice[b].nodo, indice[b].fine);
+          stile();
+          CSS.highlights.set('webg-voice-lettura', new Highlight(range));
+          cursore = b + 1;
+          scorri(range);
+        } catch {}
+      },
+      ripetizioni(parole) {
+        if (!ok) return;
+        try {
+          CSS.highlights.delete('webg-voice-ripetizioni');
+          if (!parole || !parole.length) return togliStile();
+          // solo dentro una selezione vera della pagina (il testo che si sta rileggendo): non se il
+          // testo viene da un'area di testo, da un campo o da un riquadro
+          const sel = getSelection();
+          const r = sel && sel.rangeCount && !sel.isCollapsed && !fuoriPagina() ? sel.getRangeAt(0) : null;
+          if (!r) return;
+          const voglio = new Set(parole.map(norma));
+          const tutte = costruisci();
+          const ranges = [];
+          for (const x of tutte) {
+            if (!voglio.has(x.w)) continue;
+            if (!r.intersectsNode(x.nodo)) continue;
+            const rr = new Range();
+            rr.setStart(x.nodo, x.inizio);
+            rr.setEnd(x.nodo, x.fine);
+            ranges.push(rr);
+          }
+          if (!ranges.length) return;
+          stile();
+          CSS.highlights.set('webg-voice-ripetizioni', new Highlight(...ranges));
+        } catch {}
+      },
+      // fine lettura: via l'evidenziazione, l'indice delle parole (la pagina puo' cambiare prima
+      // della prossima lettura) e il foglio di stile, se non serve piu' alle ripetizioni
+      pulisci() {
+        sospesa = null;
+        indice = null;
+        cursore = 0;
+        if (!ok) return;
+        try {
+          CSS.highlights.delete('webg-voice-lettura');
+          togliStile();
+        } catch {}
+      },
+    };
+    return api;
+  })();
+  chrome.runtime.onMessage.addListener((msg, mittente) => {
+    if (mittente.id !== chrome.runtime.id || !msg) return;
+    if (msg.da === 'offscreen' && msg.tipo === 'evidenzia') evid.frase(typeof msg.testo === 'string' ? msg.testo : null, !!msg.nuova, !!msg.articolo);
+    if (msg.da === 'background' && msg.tipo === 'ripetizioni' && Array.isArray(msg.parole)) evid.ripetizioni(msg.parole.filter((p) => typeof p === 'string'));
+  });
+
+  window.__leggiAdAltaVoceBarra = { mostra, evid };
   mostra();
 })();

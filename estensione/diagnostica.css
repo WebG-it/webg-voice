@@ -70,3 +70,6 @@ kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1p
 .sceltaVoce input { accent-color: var(--accento); width: 16px; height: 16px; }
 .sceltaVoce button { padding: 5px 10px; }
 #dizionario details summary { margin: 6px 0; color: var(--accento); }
+.scelta { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; cursor: pointer; margin: 10px 0 2px; }
+.scelta input { accent-color: var(--accento); width: 16px; height: 16px; margin-top: 2px; flex: none; }
+.scelta + .nota { margin: 0 0 6px 24px; }

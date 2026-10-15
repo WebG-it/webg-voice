@@ -72,8 +72,164 @@ function ora(h, m) {
   return mm === 0 ? `${hh}` : `${hh} e ${mm}`;
 }
 
+// Apostrofo al posto dell'accento ("perche'", "citta'", "E'"): eSpeak sbaglia l'accento
+// (pˈɛrke invece di perkˌe). Troncamenti che vogliono l'apostrofo e restano come sono:
+const TRONCAMENTI = new Set(['po', 'mo', 'va', 'fa', 'sta', 'da', 'di', 'to', 'be', 'de', 'ca', 'pie']);
+// parole con la "e" chiusa: perché, poiché, né, sé, ventitré...
+const E_CHIUSA = /(?:ch|^n|^s|tr)e$/i;
+const ACCENTI = { a: 'à', e: 'è', i: 'ì', o: 'ò', u: 'ù', A: 'À', E: 'È', I: 'Ì', O: 'Ò', U: 'Ù' };
+
+const LETTERA = /\p{L}/u;
+const APICI = "'’‘";
+
+/**
+ * Converte l'apostrofo finale usato come accento: "E' vero" -> "È vero", "perche'" -> "perché",
+ * "com'e'" -> "com'è". Non tocca le elisioni (l'albero, un'altra), i troncamenti (po', va')
+ * ne' l'apice che chiude una citazione ('basta', 'ok'). Una citazione si apre con un apice
+ * prima di una lettera (dopo uno spazio, un segno o un apostrofo d'elisione: l'‘albero’) e si
+ * chiude col primo apice dopo una parola o un segno; si chiude comunque a fine frase e a capo.
+ */
+export function accentiDaApostrofo(t) {
+  let out = '';
+  let ultimo = 0;
+  let aperta = false; // c'e' una citazione fra apici singoli aperta
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (c === '\n' || (/[.!?…]/.test(c) && (i + 1 === t.length || /\s/.test(t[i + 1])))) {
+      aperta = false;
+      continue;
+    }
+    if (!APICI.includes(c)) continue;
+    const primaL = i > 0 && LETTERA.test(t[i - 1]);
+    const dopoL = i + 1 < t.length && LETTERA.test(t[i + 1]);
+    if (dopoL) {
+      // elisione dentro una parola (l'albero) o apice che apre una citazione
+      if (c === '‘' || !primaL) aperta = true;
+      continue;
+    }
+    if (!primaL) {
+      // apice dopo un segno ("'Basta!' disse"): chiude la citazione
+      aperta = false;
+      continue;
+    }
+    // apice dopo una parola: chiude la citazione o fa da accento
+    let j = i;
+    while (j > 0 && LETTERA.test(t[j - 1])) j--;
+    const parola = t.slice(j, i);
+    // dentro una citazione l'apice chiude, salvo che ne segua subito un altro ('perche'' =
+    // 'perché'): allora questo e' l'accento e il prossimo chiude
+    if (aperta && !(i + 1 < t.length && APICI.includes(t[i + 1]))) {
+      aperta = false;
+      continue;
+    }
+    if (c === '‘') continue;
+    const v = parola[parola.length - 1];
+    if (!ACCENTI[v] || TRONCAMENTI.has(parola.toLowerCase())) continue;
+    let acc = ACCENTI[v];
+    if ((v === 'e' || v === 'E') && E_CHIUSA.test(parola)) acc = v === 'e' ? 'é' : 'É';
+    out += t.slice(ultimo, i - 1) + acc;
+    ultimo = i + 1;
+  }
+  return out + t.slice(ultimo);
+}
+
+// Mail citata: le righe che cominciano con ">" sono il messaggio a cui si risponde e il segno
+// si toglie. Citazione = un blocco di almeno due righe consecutive col ">" in cui almeno meta'
+// delle righe non e' "> numero" (cosi' "> 2024 e' stato..." dentro una mail perde il segno),
+// oppure piu' righe citate sparse che sono la maggioranza del testo. Un blocco fatto per lo piu'
+// di "> numero" e' un elenco di requisiti ("> 18 anni / > 5 anni / > patente B"): il segno
+// resta e davanti al numero si legge "maggiore di".
+const CITATA = /^[ \t]*>/;
+const CONFRONTO = /^[ \t]*>[ \t]?[-+]?\d/;
+export function togliCitazioniRighe(righe) {
+  const out = righe.slice();
+  const togli = new Set();
+  for (let k = 0; k < out.length; ) {
+    if (!CITATA.test(out[k])) {
+      k++;
+      continue;
+    }
+    let f = k;
+    while (f < out.length && CITATA.test(out[f])) f++;
+    const blocco = out.slice(k, f);
+    if (blocco.length >= 2 && blocco.filter((r) => !CONFRONTO.test(r)).length * 2 >= blocco.length) for (let x = k; x < f; x++) togli.add(x);
+    k = f;
+  }
+  const piene = out.filter((r) => r.trim());
+  const sparse = out.map((r, k) => (CITATA.test(r) && !CONFRONTO.test(r) ? k : -1)).filter((k) => k >= 0);
+  if (sparse.length >= 2 && sparse.length > piene.length / 2) for (const k of sparse) togli.add(k);
+  for (const k of togli) out[k] = out[k].replace(/^[ \t]*(?:>[ \t]?)+/, '');
+  return out;
+}
+export function togliCitazioni(testo) {
+  return togliCitazioniRighe(String(testo).replace(/\r\n?/g, '\n').split('\n')).join('\n');
+}
+
+// "<3" e' un cuore, non "minore di 3": attaccato al 3, senza altre cifre dopo e senza un'unita'
+// di misura o un conteggio dopo ("<3 anni", "<3%" restano confronti).
+const UNITA_CUORE = '(?:%|‰|°|€|\\$|anni|anno|mesi|mese|settimane|giorni|giorno|ore|ora|minuti|min|secondi|sec|volte|euro|dollari|punti|persone|figli|metri|chili|litri|gradi|pezzi|kg|hg|g|mg|mcg|µg|ml|cl|dl|l|mm|cm|m|km|kb|mb|gb|tb|kw|kwh|w|v|x)(?![\\p{L}])';
+const CUORE = new RegExp(`(^|[\\s(])<3(?![\\d.,]?\\d)(?!\\s?${UNITA_CUORE})`, 'giu');
+
+// Numeri interi in lettere (fino a 999.999.999), per l'elisione davanti a un numero.
+const UNITA_L = ['zero', 'uno', 'due', 'tre', 'quattro', 'cinque', 'sei', 'sette', 'otto', 'nove', 'dieci', 'undici',
+  'dodici', 'tredici', 'quattordici', 'quindici', 'sedici', 'diciassette', 'diciotto', 'diciannove'];
+const DECINE_L = ['', '', 'venti', 'trenta', 'quaranta', 'cinquanta', 'sessanta', 'settanta', 'ottanta', 'novanta'];
+function sotto100(n) {
+  if (n < 20) return UNITA_L[n];
+  const u = n % 10;
+  let d = DECINE_L[Math.floor(n / 10)];
+  if (u === 0) return d;
+  if (u === 1 || u === 8) d = d.slice(0, -1); // ventuno, ventotto
+  return d + (u === 3 ? 'tré' : UNITA_L[u]);
+}
+function sotto1000(n) {
+  const c = Math.floor(n / 100);
+  const r = n % 100;
+  let cs = c === 0 ? '' : c === 1 ? 'cento' : UNITA_L[c] + 'cento';
+  if (!r) return cs || 'zero';
+  if (cs && Math.floor(r / 10) === 8) cs = cs.slice(0, -1); // centottanta
+  return cs + sotto100(r);
+}
+export function inLettere(n) {
+  if (!Number.isInteger(n) || n < 0 || n > 999999999) return null;
+  if (n < 1000) return sotto1000(n);
+  const mi = Math.floor(n / 1e6);
+  const k = Math.floor(n / 1000) % 1000;
+  const r = n % 1000;
+  const parti = [];
+  if (mi) parti.push(mi === 1 ? 'un milione' : `${inLettere(mi)} milioni`);
+  const resto = (k ? (k === 1 ? 'mille' : `${sotto1000(k)}mila`) : '') + (r ? sotto1000(r) : '');
+  if (resto) parti.push(resto);
+  return parti.join(' ');
+}
+
+// Elisione davanti a un numero: "l'8 settembre" -> "l'otto settembre" (eSpeak leggeva "elle
+// otto"). L'apostrofo resta solo se il numero in lettere comincia per vocale (otto, undici, uno,
+// ottanta, ottocento, un milione...); "l'1 settembre" si legge "il primo settembre". Gli altri
+// casi ("l'2", un errore di battitura) restano come sono. Non tocca "'90" ne' "5' 30''".
+const ARTICOLO_PIENO = { l: 'il', dell: 'del', all: 'al', nell: 'nel', dall: 'dal', sull: 'sul', coll: 'col', pell: 'pel', quell: 'quel', quest: 'questo', un: 'un' };
+const ELISIONE_NUMERO = new RegExp(
+  `(^|[^\\p{L}])(${Object.keys(ARTICOLO_PIENO).join('|')})['’](\\d+)(?![\\dº°])(,\\d+)?(\\s+(?:${MESI.join('|')})\\b)?`,
+  'giu'
+);
+function elisioneNumero(t) {
+  return t.replace(ELISIONE_NUMERO, (m, prima, art, num, dec, mese) => {
+    const n = parseInt(num, 10);
+    const pieno = ARTICOLO_PIENO[art.toLowerCase()];
+    const maiusc = art[0] !== art[0].toLowerCase();
+    const comeArt = (x) => (maiusc ? x[0].toUpperCase() + x.slice(1) : x);
+    if (n === 1 && mese && !dec) return `${prima}${comeArt(pieno)} primo${mese}`;
+    const parola = String(n) === num ? inLettere(n) : null; // niente zeri davanti
+    if (!parola || !/^[aeiou]/.test(parola)) return m;
+    const virgola = dec ? ` virgola ${dec.slice(1)}` : '';
+    // "un'8" e' un errore per "un 8": si legge "un otto"
+    const legato = art.toLowerCase() === 'un' ? `${art} ${parola}` : `${art}'${parola}`;
+    return `${prima}${legato}${virgola}${mese || ''}`;
+  });
+}
+
 export function normalizza(testo) {
-  let t = testo;
+  let t = accentiDaApostrofo(togliCitazioni(testo));
 
   // Spazi strani e caratteri invisibili
   t = t.replace(/[   ]/g, ' ').replace(/[​-‍﻿­]/g, '');
@@ -83,6 +239,9 @@ export function normalizza(testo) {
   t = t.replace(/(\b[\w.-]+\.(?:it|com|org|net|eu|io))\/[^\s)]*/gi, '$1');
 
   for (const [re, s] of ABBREVIAZIONI) t = t.replace(re, s);
+
+  // il cuore si toglie con lo spazio davanti: "Ciao <3." -> "Ciao."
+  t = t.replace(CUORE, (m, prima) => (prima === '(' || prima === '\n' ? prima : ''));
 
   // Segni di confronto davanti a un numero ("> 18 anni", "<5 euro", "≥ 3"): eSpeak li scarta.
   // Solo davanti a una cifra, cosi' frecce e altri usi del segno restano come sono.
@@ -125,6 +284,8 @@ export function normalizza(testo) {
   }
   // 24h, 12h -> ore
   t = t.replace(/\b(\d{1,3})\s?h\b/g, '$1 ore');
+
+  t = elisioneNumero(t);
 
   return t;
 }

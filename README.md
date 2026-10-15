@@ -62,6 +62,25 @@ al primo uso compare un pulsante per scaricarlo.
   (download, browser, Google, YouTube, WhatsApp, iPhone, Wi-Fi…) e le parole tipo CamelCase
   (VHelper → «vi helper») si leggono con la pronuncia inglese, dentro la frase italiana. Non è
   perfetto su tutto: per le parole che restano storte c'è il dizionario.
+- **Evidenzia la frase in lettura**: mentre legge una selezione o un articolo, la frase che si sente
+  si evidenzia nella pagina (CSS Custom Highlight API: il testo della pagina non viene modificato) e
+  la pagina scorre per tenerla in vista. Se scorri tu, per qualche secondo non la sposta. Se passi a
+  un'altra scheda la lettura continua; evidenziazione e scorrimento si fermano e, quando torni,
+  riprendono dalla frase che si sta ascoltando. Dentro aree
+  di testo, campi, riquadri ed editor non si evidenzia. Si spegne nelle opzioni, sezione Lettura.
+- **Rileggi la bozza**: pulsante del pannello, per chi scrive. Rilegge il testo incollato o
+  selezionato (anche dentro TinyMCE, aree di testo e CodeMirror) un po' più lentamente, una frase
+  alla volta con una pausa in più, e mostra nel pannello le parole ripetute a poche frasi di
+  distanza (stessa parola o stessa radice, escluse articoli, preposizioni e simili); nella pagina le
+  colora, dove si può. Niente grammatica e niente stile: solo ascolto e ripetizioni.
+- **Voce pronta**: mentre usi Chrome il motore resta caricato 30 minuti dall'ultima lettura (prima
+  10), così la lettura parte in un paio di secondi; se Chrome resta fermo 10 minuti si libera. Occupa
+  circa 1,2 GB di memoria: si spegne nelle opzioni ("Tieni la voce pronta"), ed è spenta in partenza
+  sui computer con meno di 8 GB. Con la scorciatoia e il menu il motore comincia a caricarsi subito,
+  insieme alla lettura della selezione.
+- **Accenti**: le parole scritte con l'apostrofo al posto dell'accento ("perche'", "citta'", "E'",
+  "puo'") si leggono accentate; le elisioni (l'albero, un'altra) e po' restano come sono. I segni di
+  confronto davanti a un numero si leggono ("> 18" diventa "maggiore di 18").
 - **Dizionario di pronuncia** nelle opzioni: coppie «scritto → come si legge» (es. VHelper → vi
   helper), con il pulsante Ascolta per provarle e import/export a righe. Si salva nel profilo
   Chrome dell'utente e si sincronizza con i suoi dispositivi se ha la sincronizzazione attiva.

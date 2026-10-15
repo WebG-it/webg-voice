@@ -256,6 +256,39 @@ play.addEventListener('click', async () => {
   avvisoPagina(r && r.nessunArticolo ? 'Non trovo testo selezionato né un articolo in questa pagina: incolla un testo qui sopra o seleziona quello da leggere.' : 'Incolla un testo qui sopra, oppure seleziona del testo nella pagina e premi Leggi.');
   testo.focus();
 });
+// ---- Rileggi la bozza: lettura lenta e ripetizioni vicine ----
+$('rileggi').addEventListener('click', async () => {
+  avvisoPagina('');
+  const t = testo.value.trim();
+  const box = $('bozzaBox');
+  const lista = $('bozzaLista');
+  lista.textContent = '';
+  box.hidden = false;
+  $('bozzaTesto').textContent = 'Preparo la rilettura…';
+  const r = await comando('rileggi', t ? { testo: t } : {});
+  if (!r || !r.avviato) {
+    box.hidden = true;
+    avvisoPagina(
+      r && r.motivo === 'protetta'
+        ? AVVISO_PROTETTA
+        : 'Per rileggere una bozza incolla il testo qui sopra, oppure selezionalo nella pagina o nell\'editor (anche TinyMCE e aree di testo).'
+    );
+    return;
+  }
+  const rip = r.ripetizioni || [];
+  $('bozzaTesto').textContent = rip.length
+    ? `Rileggo più lenta (${fmt(r.velocita)}). Parole ripetute vicine:`
+    : `Rileggo più lenta (${fmt(r.velocita)}). Nessuna parola ripetuta a poche frasi di distanza.`;
+  for (const g of rip) {
+    const li = document.createElement('li');
+    li.textContent = g.parole.join(', ');
+    const v = document.createElement('span');
+    v.className = 'volte';
+    v.textContent = ` ${g.volte} volte`;
+    li.append(v);
+    lista.append(li);
+  }
+});
 $('articolo').addEventListener('click', async () => {
   avvisoPagina('');
   const r = await comando('leggiArticolo');
