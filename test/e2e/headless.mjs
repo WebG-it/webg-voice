@@ -147,7 +147,34 @@ try {
   R.stop = (await stato(off)).fase;
   log('pausa/ripresa/stop:', R.pausa, R.ripresa, R.stop);
 
-  // 2) popup con testo incollato (schermata)
+  // 2) screenshot 2 dello store: pannello e barretta durante la STESSA lettura. Il pannello e'
+  // vuoto (cosi' legge la selezione evidenziata nella pagina) e le due catture si ripetono finche'
+  // lo stato e' identico prima e dopo: "parte X di Y" del pannello = "X di Y" della barretta.
+  pop = await apriPopup();
+  await pop.$eval('#testo', (e) => { e.value = ''; });
+  await pop.evaluate(() => chrome.storage.local.set({ bozza: '' }));
+  await seleziona('#testo p:nth-of-type(2)');
+  pop = await apriPopup();
+  await pop.click('#play');
+  await attendi(off, (s) => s.fase === 'lettura' && s.totale > 1 && !s.titolo);
+  await dorme(1500);
+  R.cattura2 = null;
+  for (let k = 0; k < 8 && !R.cattura2; k++) {
+    const prima = await stato(off);
+    await page.screenshot({ path: join(OUT, 'store-2-lettura.png') });
+    await pop.screenshot({ path: join(OUT, 'store-2-popup.png') });
+    const dopo = await stato(off);
+    const testoPannello = await pop.$eval('#statoTesto', (e) => e.textContent);
+    const coerente = prima.fase === 'lettura' && dopo.fase === 'lettura' && prima.blocco === dopo.blocco && prima.totale === dopo.totale && testoPannello.includes(`parte ${Math.min(dopo.blocco + 1, dopo.totale)} di ${dopo.totale}`);
+    if (coerente) R.cattura2 = { blocco: dopo.blocco + 1, totale: dopo.totale, pannello: testoPannello, campoVuoto: await pop.$eval('#testo', (e) => e.value === '') };
+    else await dorme(400);
+  }
+  if (!R.cattura2) R.errori.push('screenshot 2: pannello e barretta non coerenti dopo 8 tentativi');
+  log('cattura 2:', JSON.stringify(R.cattura2));
+  await comando('stop');
+  await dorme(800);
+
+  // 2b) popup con testo incollato (catture di controllo, non usate nello store)
   pop = await apriPopup();
   await pop.$eval('#testo', (e) => { e.value = 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli crescono in fretta.'; });
   await pop.click('#play');

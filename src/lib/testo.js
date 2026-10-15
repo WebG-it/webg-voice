@@ -20,12 +20,13 @@ const PREFISSI_TRATTINO = new Set([
 ]);
 const ELENCO = /^([-•*–·▪◦]|\d+[.)]|[a-z][.)])\s/u;
 
-// Parole che non possono chiudere una frase ne' un titolo: una riga che finisce cosi' e' spezzata
+// Parole che non possono chiudere una frase ne' un titolo: una riga che finisce cosi' e' spezzata.
+// Non ci sono "piu'" e "come", che chiudono pulsanti e inviti ("Scopri di piu'", "Leggi di piu'").
 const NON_FINALI = new Set([
   'il', 'lo', 'la', 'i', 'gli', 'le', 'l', 'un', 'uno', 'una', 'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
   'e', 'ed', 'o', 'od', 'che', 'del', 'dello', 'della', 'dei', 'degli', 'delle', 'al', 'allo', 'alla', 'ai', 'agli',
   'alle', 'dal', 'dallo', 'dalla', 'dai', 'dagli', 'dalle', 'nel', 'nello', 'nella', 'nei', 'negli', 'nelle', 'sul',
-  'sullo', 'sulla', 'sui', 'sugli', 'sulle', 'col', 'coi', 'ma', 'se', 'come', 'non', 'piu', 'più', 'cui', 'quale',
+  'sullo', 'sulla', 'sui', 'sugli', 'sulle', 'col', 'coi', 'ma', 'se', 'non', 'cui', 'quale',
 ]);
 // parola finale che non chiude: solo in minuscolo (una sigla come TO o IL resta una sigla)
 const nonFinale = (riga) => {
@@ -91,10 +92,19 @@ function unisci(cur, r) {
 export function paragrafi(testo) {
   const righe = String(testo)
     .replace(/\r\n?/g, '\n')
-    .replace(/­[ \t]*\n[ \t]*/g, '')
-    .replace(/­/g, '')
+    .replace(/\u00AD[ \t]*\n[ \t]*/g, '')
+    .replace(/\u00AD/g, '')
     .split('\n')
-    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim().replace(/^(?:>\s?)+/, '')); // via i ">" delle mail citate
+    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim());
+  // mail citata: se almeno due righe e la maggioranza cominciano con ">", il segno si toglie.
+  // Un ">" davanti a un numero e' un confronto ("> 18 anni" si legge "maggiore di 18 anni"):
+  // non conta come citazione e resta, anche in un elenco di requisiti.
+  const citata = (r) => /^>/.test(r) && !/^>\s?[-+]?\d/.test(r);
+  const piene = righe.filter(Boolean);
+  const quotate = piene.filter(citata).length;
+  if (quotate >= 2 && quotate > piene.length / 2) {
+    for (let k = 0; k < righe.length; k++) if (citata(righe[k])) righe[k] = righe[k].replace(/^(?:>\s?)+/, '');
+  }
   const larga = larghezzaRighe(righe);
   const out = [];
   let cur = '';
@@ -115,7 +125,9 @@ export function paragrafi(testo) {
     // in ogni testo: riga che finisce con una virgola o con una parola che non chiude una frase
     // ("fissata per il / 12 ottobre", "Torino, / Milano, / Roma"); la minuscola da sola non basta
     const forte = /,$/.test(ultima) || nonFinale(ultima);
-    if (!confine && (trattino || aRighe || forte)) cur = unisci(cur, r);
+    // riga lunga senza punto seguita da una minuscola: e' la stessa frase anche in un testo corto
+    const lungaSpezzata = ultima.length >= 50 && !FINE_PERIODO.test(ultima) && /^\p{Ll}/u.test(r);
+    if (!confine && (trattino || aRighe || forte || lungaSpezzata)) cur = unisci(cur, r);
     else {
       out.push(cur);
       cur = r;

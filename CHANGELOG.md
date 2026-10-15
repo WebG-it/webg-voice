@@ -4,6 +4,16 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.2.3] - in preparazione
+
+- A capo: "più" e "come" non contano più fra le parole che non chiudono una riga, perché chiudono pulsanti e inviti. "Scopri di più / Leggi tutto" e "Leggi di più / Accedi" restano separati.
+- Segno ">" a inizio riga: si toglie solo quando almeno due righe e la maggioranza del testo sono citate, come in una mail. Un ">" davanti a un numero è un confronto e resta anche in un elenco di requisiti ("> 18 anni").
+- I segni di confronto davanti a un numero si leggono: "> 18 anni" diventa "maggiore di 18 anni", "<5 euro" diventa "minore di 5 euro", "≥" e ">=" "maggiore o uguale a", "≤" e "<=" "minore o uguale a". Prima eSpeak li saltava. Frecce e confronti senza numero restano come sono.
+- A capo: una riga di almeno 50 caratteri senza punto finale, seguita da una riga che comincia in minuscolo, continua nella riga dopo anche nei testi troppo corti per essere riconosciuti come testi a righe fisse.
+- Catture per lo store: lo screenshot 2 ora prende pagina e pannello durante la stessa lettura della selezione, con il pannello vuoto, e ripete le catture finché lo stato è identico prima e dopo. Così "parte X di Y" del pannello e "X di Y" della barretta coincidono. Lo script delle immagini usa la cattura delle opzioni con il nome che il test produce davvero. Le immagini si rigenerano al momento del rilascio.
+- Il trattino morbido nel sorgente è scritto come \u00AD invece che come carattere invisibile.
+- Verifiche: test:funzioni 73 su 73, fonemi 44 su 44, script di controllo del revisore a posto.
+
 ## [1.2.2] - 2026-10-15
 
 - A capo, correzione di una regressione della 1.2.1: righe di larghezza simile che non sono un testo a righe fisse venivano unite in un paragrafo solo (cinque titoli di giornale incollati uno per riga, voci lunghe senza punto, citazioni che chiudono con «»). Ora un testo è "a righe fisse" solo se, oltre alla larghezza simile, almeno metà dei passaggi fra righe lunghe mostra una frase spezzata: la riga dopo comincia in minuscolo o con una cifra, oppure la riga prima finisce con una virgola, un trattino o una parola che non chiude una frase (di, il, negli, e, che…). Restano unite le righe dei PDF e "il collega / Mario Rossi … negli / Stati Uniti".

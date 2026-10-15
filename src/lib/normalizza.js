@@ -84,6 +84,13 @@ export function normalizza(testo) {
 
   for (const [re, s] of ABBREVIAZIONI) t = t.replace(re, s);
 
+  // Segni di confronto davanti a un numero ("> 18 anni", "<5 euro", "≥ 3"): eSpeak li scarta.
+  // Solo davanti a una cifra, cosi' frecce e altri usi del segno restano come sono.
+  t = t.replace(/(^|[\s(])(>=|≥|<=|≤|>|<)\s?(?=[-+]?\d)/g, (m, prima, segno) => {
+    const parole = { '>=': 'maggiore o uguale a', '≥': 'maggiore o uguale a', '<=': 'minore o uguale a', '≤': 'minore o uguale a', '>': 'maggiore di', '<': 'minore di' };
+    return `${prima}${parole[segno]} `;
+  });
+
   // Date: 17/10/2026, 3/3/25, 17-10-2026 -> "17 ottobre 2026"
   t = t.replace(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})\b/g, (m, g, me, a) => {
     const gi = parseInt(g, 10);

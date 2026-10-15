@@ -226,6 +226,29 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   prova('a capo: mail citata senza ">" dentro la frase', mail.length === 1 && !mail[0].includes('>'), mail[0].slice(0, 80));
 }
 
+// ---- 1.2.3: pulsanti, segno ">" e catture dello store ----
+{
+  const { paragrafi } = await import('../src/lib/testo.js');
+  prova('pulsanti: "Scopri di più / Leggi tutto" restano separati', paragrafi('Scopri di più\nLeggi tutto').length === 2);
+  prova('pulsanti: "Leggi di più / Accedi" restano separati', paragrafi('Leggi di più\nAccedi').length === 2);
+  prova('pulsanti: "Guarda come / Iscriviti" restano separati', paragrafi('Guarda come\nIscriviti').length === 2);
+  const isolata = paragrafi('Vietato ai minori\n> 18 anni');
+  prova('segno ">": una riga isolata lo tiene', isolata[1] === '> 18 anni', JSON.stringify(isolata));
+  prova('segno ">": anche un testo di una sola riga lo tiene', paragrafi('> 18 anni compiuti per partecipare.')[0].startsWith('>'));
+  const mail = paragrafi('Ciao,\n> ti scrivo per la riunione di\n> domani mattina in ufficio.\n> A presto');
+  prova('segno ">": in una mail citata si toglie', mail.every((p) => !p.startsWith('>')) && mail[0].includes('riunione di domani'), JSON.stringify(mail));
+  prova('segno ">": si legge "maggiore di"', fon(normalizza('> 18 anni')).startsWith('madʒːˈore dɪ') && normalizza('Temperatura ≥ 30 gradi') === 'Temperatura maggiore o uguale a 30 gradi' && normalizza('<5 euro').startsWith('minore di 5'), normalizza('> 18 anni'));
+  const requisiti = paragrafi('Requisiti:\n> 18 anni\n> 5 anni di esperienza');
+  prova('segno ">": elenco di requisiti con numeri non e\' una mail citata', requisiti[1] === '> 18 anni' && requisiti[2] === '> 5 anni di esperienza', JSON.stringify(requisiti));
+  const lunga = paragrafi('Gli ingredienti necessari per la preparazione sono molti: farina,\nuova, latte, burro, zucchero, sale e lievito e vanno raccolti con attenzione\nprima di iniziare.');
+  prova('a capo: riga lunga senza punto seguita da minuscola continua', lunga.length === 1, JSON.stringify(lunga).slice(0, 90));
+  prova('segno ">": frecce e confronti senza numero restano', normalizza('a -> b') === 'a -> b' && normalizza('x>y') === 'x>y');
+  const py = readFileSync(join(qui, '..', 'scripts', 'immagini-store.py'), 'utf8');
+  const e2e = readFileSync(join(qui, 'e2e', 'headless.mjs'), 'utf8');
+  prova('store: screenshot 2 da pagina e pannello della stessa lettura', /\("store-2-lettura\.png", "store-2-popup\.png"\)/.test(py) && e2e.includes("'store-2-lettura.png'") && e2e.includes("'store-2-popup.png'") && /prima\.blocco === dopo\.blocco/.test(e2e));
+  prova('store: ogni cattura usata dallo script la produce il test e2e', [...py.matchAll(/"(store-[^"]+\.png)"/g)].every((m) => e2e.includes(`'${m[1]}'`)), [...py.matchAll(/"(store-[^"]+\.png)"/g)].map((m) => m[1]).join(', '));
+}
+
 // ---- nome del file ----
 prova('nome: dal titolo', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x') === 'Sito vetrina nel 2026 a cosa serve e quando basta.mp3', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x'));
 prova('nome: dall\'inizio del testo', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.') === 'Per cominciare conviene puntare su piante facili basilico.mp3', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.'));
