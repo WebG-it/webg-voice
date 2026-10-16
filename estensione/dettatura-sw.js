@@ -49,8 +49,21 @@ function sondaCampo() {
  * @param {object} c { aOffscreen, assicuraOffscreen, scorciatoia, fermaLettura }
  */
 export function creaDettatura(c) {
+  // la pagina della dettatura si apre una volta: se c'e' gia', si porta in primo piano
+  let ultimaApertura = 0;
   async function apriPagina(motivo) {
     const url = chrome.runtime.getURL(`${PAGINA}${motivo ? `#${motivo}` : ''}`);
+    try {
+      const ctx = await chrome.runtime.getContexts({ contextTypes: ['TAB'] });
+      const gia = ctx.find((x) => x.tabId >= 0 && typeof x.documentUrl === 'string' && x.documentUrl.startsWith(chrome.runtime.getURL(PAGINA)));
+      if (gia) {
+        await chrome.tabs.update(gia.tabId, { active: true });
+        if (gia.windowId >= 0) await chrome.windows.update(gia.windowId, { focused: true });
+        return;
+      }
+    } catch {}
+    if (Date.now() - ultimaApertura < 3000) return;
+    ultimaApertura = Date.now();
     await chrome.tabs.create({ url });
   }
 
@@ -79,16 +92,28 @@ export function creaDettatura(c) {
   async function avvia(tab, opz = {}) {
     if (!tab || tab.id === undefined) return { avviata: false, motivo: 'nessunaScheda' };
     const imp = await impostazioniDettatura();
+    // l'indicatore compare subito nella pagina ("Preparo il microfono…"), poi i controlli
+    const pagina = !!opz.pagina || (typeof tab.url === 'string' && tab.url.startsWith(BASE + PAGINA));
+    const r = await preparaScheda(tab, imp, pagina);
+    if (!r.d) return { avviata: false, motivo: r.motivo };
     await c.assicuraOffscreen();
     const perm = await c.aOffscreen({ tipo: 'dettPermesso' });
     const pronto = imp.motore === 'webspeech' ? { completo: true } : await c.aOffscreen({ tipo: 'dettPronto', modello: imp.modello });
     if (perm.permesso !== 'granted' || !pronto.completo) {
-      // primo uso: microfono e modello si preparano nella pagina della dettatura
-      if (!opz.pagina) await apriPagina(perm.permesso !== 'granted' ? 'microfono' : 'modello');
+      // primo uso: lo si dice nella pagina, poi microfono e modello si preparano nella pagina della dettatura
+      const errore =
+        perm.permesso !== 'granted'
+          ? 'Serve il permesso del microfono: apro la pagina della dettatura.'
+          : 'Prima va scaricato il modello di riconoscimento: apro la pagina della dettatura.';
+      await aPagina(r.d, 0, { dett: 'stato', stato: { fase: 'errore', errore } });
+      await aPagina(r.d, r.d.frameCampo, { dett: 'fine' });
+      await salva(null);
+      if (!pagina) {
+        await new Promise((ok) => setTimeout(ok, 1200));
+        await apriPagina(perm.permesso !== 'granted' ? 'microfono' : 'modello');
+      }
       return { avviata: false, motivo: 'primoUso', permesso: perm.permesso, modelloPronto: pronto.completo };
     }
-    const r = await preparaScheda(tab, imp, !!opz.pagina);
-    if (!r.d) return { avviata: false, motivo: r.motivo };
     await c.fermaLettura();
     await c.aOffscreen({ tipo: 'dettAvvia', modello: imp.modello, termini: imp.termini, motore: imp.motore, t0: Date.now() });
     return { avviata: true, campo: r.haCampo };
@@ -171,9 +196,52 @@ export function creaDettatura(c) {
     return avvia(tab);
   }
 
+  // ---- Scorciatoia: premi per parlare, oppure tocco breve a mani libere ----
+  // Chrome da' solo la pressione (e la ripete finche' il tasto resta giu'). Il rilascio lo vede la
+  // pagina (keyup di Ctrl o Spazio, o perdita del fuoco) e lo manda qui: se il tasto e' stato tenuto
+  // piu' di 300 ms la dettatura finisce al rilascio, altrimenti continua finche' non si preme di nuovo.
+  const TOCCO_MS = 300;
+  const RIPETIZIONE_MS = 700; // la ripetizione automatica della tastiera arriva ogni 30-50 ms
+  let ultimoComando = 0;
+  let premuto = null; // { t0 } dalla pressione che ha avviato al rilascio
+  let occupato = false;
+  async function comando(tab) {
+    const ora = Date.now();
+    const ripetuto = ora - ultimoComando < RIPETIZIONE_MS;
+    ultimoComando = ora;
+    if (ripetuto || occupato) return { ignorato: true };
+    occupato = true;
+    try {
+      if (await attiva()) {
+        premuto = null;
+        await ferma();
+        return { fermata: true };
+      }
+      premuto = { t0: ora };
+      const r = await avvia(tab);
+      if (!r.avviata) premuto = null;
+      return r;
+    } finally {
+      occupato = false;
+    }
+  }
+  async function rilascio() {
+    while (occupato) await new Promise((ok) => setTimeout(ok, 30));
+    const p = premuto;
+    premuto = null;
+    if (!p) return { niente: true };
+    if (Date.now() - p.t0 < TOCCO_MS) return { maniLibere: true };
+    if (await attiva()) await ferma();
+    return { fermata: true };
+  }
+
   /** Messaggi dall'offscreen document (gia' verificati dal chiamante). */
   async function daOffscreen(msg) {
     const d = await dett();
+    if (msg.tipo === 'livelloDettatura') {
+      if (d) await aPagina(d, 0, { dett: 'livello', v: msg.v });
+      return;
+    }
     if (msg.tipo === 'statoDettatura') {
       if (!d) return;
       badge(msg.stato);
@@ -210,5 +278,5 @@ export function creaDettatura(c) {
     if (d && d.tabId === tabId && !d.pagina) ferma();
   });
 
-  return { alterna, avvia, ferma, attiva, daOffscreen, apriPagina, preparaScheda, MODELLI_DETTATURA };
+  return { alterna, comando, rilascio, avvia, ferma, attiva, daOffscreen, apriPagina, preparaScheda, MODELLI_DETTATURA };
 }

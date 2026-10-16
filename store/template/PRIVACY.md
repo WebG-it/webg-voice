@@ -26,9 +26,9 @@ nessun servizio esterno li riceve.
 Il microfono si usa solo per la dettatura, solo dopo il permesso che l'utente dà una volta nella
 pagina della dettatura, e solo mentre la dettatura è attiva: si accende con Ctrl+Spazio (o il pulsante
 Detta) e si spegne quando l'utente la ferma, cambia scheda o chiude la pagina. Mentre ascolta, la
-pagina mostra un pallino rosso e Chrome il suo indicatore del microfono.
+pagina mostra un indicatore rosso in alto e Chrome il suo indicatore del microfono.
 
-L'audio si trascrive interamente sul computer dell'utente, con il modello Whisper dentro il browser:
+L'audio si trascrive interamente sul computer dell'utente, con il modello di riconoscimento dentro il browser:
 non viene registrato su disco, non viene inviato a WebG né a terzi, e resta in memoria solo il tempo
 di trascrivere una frase. Il testo trascritto va solo nel campo scelto dall'utente (o nella casella
 della dettatura, per copiarlo).
@@ -81,7 +81,7 @@ it) is turned into speech locally in your browser and never leaves your computer
 also created locally. The only network requests download the voice files (about {{MB}} MB, plus
 half a MB for the Nicola voice if you pick it) from the project's GitHub release or, as a
 fallback, from Hugging Face. Dictation (Ctrl+Space) uses the microphone only while it is active and
-transcribes the audio locally with Whisper; the audio is never stored or sent anywhere, unless you
+transcribes the audio locally; the audio is never stored or sent anywhere, unless you
 explicitly choose the optional Chrome speech recognition that sends audio to Google. The dictation
 models (77 to 565 MB) are downloaded only the first time you dictate. Settings and
 the voice files are stored locally and removed when you uninstall the extension.

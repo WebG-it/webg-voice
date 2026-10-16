@@ -251,10 +251,15 @@
 
   const CSS = `
     :host { all: initial; }
-    .pillola { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; display: flex; align-items: center; gap: 8px;
-      font: 13px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1d2433; background: #fff; border: 1px solid #d5dae3;
-      border-radius: 999px; padding: 6px 8px 6px 12px; box-shadow: 0 4px 16px rgba(0,0,0,.14); max-width: min(420px, calc(100vw - 32px)); }
-    .pallino { width: 10px; height: 10px; border-radius: 50%; background: #c0392b; flex: none; }
+    .pillola { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex; align-items: center; gap: 10px;
+      font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1d2433; background: #fff; border: 2px solid #c0392b;
+      border-radius: 999px; padding: 8px 10px 8px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.22); max-width: min(560px, calc(100vw - 32px)); }
+    .preparazione.pillola, .trascrivo.pillola { border-color: #23417b; }
+    .errore.pillola { border-color: #d86f22; }
+    .pallino { width: 12px; height: 12px; border-radius: 50%; background: #c0392b; flex: none; }
+    .livello { display: inline-flex; align-items: flex-end; gap: 2px; height: 18px; flex: none; }
+    .livello i { width: 4px; height: 3px; border-radius: 2px; background: #c0392b; transition: height .08s linear; }
+    .preparazione .livello, .errore .livello, .inattiva .livello { display: none; }
     .ascolto .pallino { animation: respiro 1.6s ease-in-out infinite; }
     .parlato .pallino { background: #e74c3c; transform: scale(1.25); box-shadow: 0 0 0 4px rgba(231,76,60,.22); }
     .trascrivo .pallino, .preparazione .pallino { background: #23417b; animation: respiro .8s ease-in-out infinite; }
@@ -263,7 +268,7 @@
     .testo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     button { font: inherit; border: 1px solid #c9cfda; background: #f4f6f9; color: inherit; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
     button:hover { background: #e9edf3; }
-    .casella { position: fixed; right: 16px; bottom: 60px; z-index: 2147483647; width: min(420px, calc(100vw - 32px)); background: #fff; color: #1d2433;
+    .casella { position: fixed; right: 16px; top: 70px; z-index: 2147483647; width: min(420px, calc(100vw - 32px)); background: #fff; color: #1d2433;
       border: 1px solid #d5dae3; border-radius: 12px; box-shadow: 0 6px 22px rgba(0,0,0,.16); padding: 10px; font: 13px/1.4 system-ui, sans-serif; }
     .casella textarea { width: 100%; box-sizing: border-box; min-height: 90px; font: 14px/1.45 system-ui, sans-serif; border: 1px solid #d5dae3; border-radius: 8px; padding: 6px 8px; resize: vertical; color: inherit; background: #fff; }
     .casella .azioni { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
@@ -288,7 +293,8 @@
         <div class="azioni"><button class="svuota">Svuota</button><button class="copia">Copia</button><button class="inserisci">Inserisci nel campo</button></div>
       </div>
       <div class="pillola preparazione" role="status" aria-live="polite">
-        <span class="pallino" aria-hidden="true"></span><span class="testo">Preparo la dettatura…</span>
+        <span class="pallino" aria-hidden="true"></span><span class="testo">Preparo il microfono…</span>
+        <span class="livello" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
         <button class="ferma" title="Ferma la dettatura">Ferma</button>
       </div>`;
     (document.body || document.documentElement).appendChild(host);
@@ -320,7 +326,7 @@
   }
 
   const TESTI = {
-    preparazione: 'Preparo la dettatura…',
+    preparazione: 'Preparo il microfono…',
     ascolto: 'Ti ascolto',
     parlato: 'Ti ascolto',
     trascrivo: 'Scrivo…',
@@ -372,11 +378,23 @@
     host = ombra = null;
   }
 
+  // premi per parlare: il rilascio di Ctrl o Spazio (o la perdita del fuoco) va al service worker,
+  // che decide se era un tocco breve (mani libere) o un tasto tenuto (fine della dettatura)
+  let rilascioMandato = false;
+  const rilascia = () => {
+    if (!D.attiva || rilascioMandato) return;
+    rilascioMandato = true;
+    chrome.runtime.sendMessage({ a: 'background', tipo: 'dettaturaRilascio' }).catch(() => {});
+  };
+  window.addEventListener('keyup', (e) => (e.key === 'Control' || e.code === 'Space' || e.key === ' ') && rilascia(), true);
+  window.addEventListener('blur', rilascia, true);
+
   chrome.runtime.onMessage.addListener((m, mittente, rispondi) => {
     if (!m || typeof m.dett !== 'string') return;
     switch (m.dett) {
       case 'avvia':
         D.attiva = true;
+        rilascioMandato = false;
         D.sostituzioni = Array.isArray(m.sostituzioni) ? m.sostituzioni : [];
         D.automatica = m.automatica !== false;
         D.scorciatoia = m.scorciatoia || '';
@@ -388,6 +406,14 @@
           if (m.casella) mostraCasella('', m.casella === true ? undefined : m.casella);
         }
         rispondi({ ok: true, campo: !!campo });
+        return;
+      case 'livello':
+        // livello del microfono (0..1): cinque barrette
+        if (ombra) {
+          const v = Math.max(0, Math.min(1, Number(m.v) || 0));
+          ombra.querySelectorAll('.livello i').forEach((b, k) => (b.style.height = `${3 + Math.max(0, Math.min(1, v * 5 - k)) * 15}px`));
+        }
+        rispondi({ ok: true });
         return;
       case 'stato':
         if (host || D.attiva) aggiornaIndicatore(m.stato);

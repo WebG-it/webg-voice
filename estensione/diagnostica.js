@@ -13,10 +13,26 @@ $('versioneTesta').textContent = `Versione ${manifest.version}.`;
 chrome.commands.getAll().then((c) => {
   const tasto = (nome) => {
     const x = c.find((k) => k.name === nome);
-    return x && x.shortcut ? x.shortcut.replace(/Shift/g, 'Maiusc') : 'non assegnata';
+    return x && x.shortcut ? x.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : '';
   };
-  $('tasto').textContent = tasto('leggi-selezione');
-  $('tastoStop').textContent = tasto('ferma-lettura');
+  $('tasto').textContent = tasto('leggi-selezione') || 'non assegnata';
+  $('tastoStop').textContent = tasto('ferma-lettura') || 'non assegnata';
+  let mancanti = false;
+  for (const k of document.querySelectorAll('kbd[data-comando]')) {
+    const t = tasto(k.dataset.comando);
+    k.textContent = t || 'non assegnata';
+    k.classList.toggle('manca', !t);
+    if (!t) mancanti = true;
+  }
+  $('tastiMancanti').hidden = !mancanti;
+});
+$('apriTasti').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+$('apriDettatura').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('dettatura.html') }));
+chrome.storage.local.get(['dettModello', 'dettMotore', 'dettRiserva']).then((o) => {
+  const nomi = { leggero: 'Leggero', normale: 'Normale', qualita: 'Qualità' };
+  $('dettModello').textContent = nomi[o.dettModello] || 'Normale (non ancora scaricato, si sceglie alla prima dettatura)';
+  $('dettGoogle').textContent =
+    o.dettMotore === 'webspeech' && o.dettRiserva === 'google' ? 'sì: l\'audio della dettatura va ai server di Google' : 'no: l\'audio resta sul computer';
 });
 $('tasti').addEventListener('click', (e) => {
   e.preventDefault();

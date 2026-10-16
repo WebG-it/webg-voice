@@ -83,7 +83,9 @@ al primo uso compare un pulsante per scaricarlo.
 - Clicca nel campo dove vuoi scrivere (casella di Gmail, chat di WhatsApp Web o Claude.ai, modulo,
   editor di Joomla) e premi **Ctrl+Spazio** (su Mac **Control+Maiusc+X**: Control+Spazio sul Mac cambia la
   lingua di digitazione), oppure **Detta** nel popup. Mentre
-  ascolta, in basso a destra c'è un pallino rosso con **Ferma**; **Ctrl+Spazio** di nuovo, o «fine
+  ascolta, in alto nella pagina c'è un indicatore rosso con il livello del microfono e **Ferma**. Premi per
+  parlare: tieni premuto **Ctrl+Spazio** mentre parli, al rilascio il testo si scrive; con un tocco breve
+  invece resta in ascolto a mani libere. **Ctrl+Spazio** di nuovo, o «fine
   dettatura», finisce. Se cambi scheda la dettatura si ferma.
 - Ctrl+Spazio, finché l'estensione è attiva, vale per la dettatura su tutte le pagine: negli editor
   di codice nel browser (autocompletamento) e in Google Fogli (selezione della colonna) quella

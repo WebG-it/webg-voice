@@ -343,7 +343,7 @@ async function fermaDettatura() {
 chrome.commands.onCommand.addListener(async (comando, tab) => {
   if (comando === 'dettatura') {
     const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
-    const r = await dettatura.alterna(t);
+    const r = await dettatura.comando(t);
     if (r && r.motivo === 'protetta' && t) await avvisa(t.id, 'dettaturaProtetta');
     return;
   }
@@ -360,7 +360,7 @@ const BASE_ESTENSIONE = chrome.runtime.getURL('');
 const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
-const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'dettaturaFerma']);
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'dettaturaFerma', 'dettaturaRilascio']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
 
@@ -380,7 +380,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     if (numeroIn(msg.valore, 0.05, 20)) chrome.storage.local.set({ rtf: msg.valore });
     return;
   }
-  if (msg.da === 'offscreen' && ['statoDettatura', 'dettato', 'dettaturaFinita'].includes(msg.tipo)) {
+  if (msg.da === 'offscreen' && ['statoDettatura', 'dettato', 'dettaturaFinita', 'livelloDettatura'].includes(msg.tipo)) {
     dettatura.daOffscreen(msg);
     return;
   }
@@ -474,6 +474,8 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
           return { fermata: true };
         }
         return dettatura.avvia(mittente.tab, { pagina: true });
+      case 'dettaturaRilascio':
+        return dettatura.rilascio();
       case 'dettaturaFerma':
         await dettatura.ferma();
         return { ok: true };

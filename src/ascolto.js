@@ -172,8 +172,13 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
       await avviaWebSpeech(S);
       return;
     }
-    // modello e microfono insieme: il microfono e' pronto mentre il modello si carica
-    const [, w] = await Promise.all([caricaModello(modello), apriMicrofono()]);
+    // il microfono si apre subito e ascolta mentre il modello si carica: i primi segmenti aspettano
+    // il modello in coda, ma niente di quello che si dice va perso (serve al "premi per parlare")
+    stato.modello = modelloDettaturaValido(modello);
+    caricaModello(modello).catch((e) => {
+      if (S === sessione) errore(e);
+    });
+    const w = await apriMicrofono();
     if (S !== sessione) return chiudiMicrofono();
     const seg = creaSegmentatore({
       inizio() {
@@ -202,8 +207,22 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
       },
     });
     S.segmentatore = seg;
+    let picco = 0;
+    let ultimoLivello = 0;
     w.port.onmessage = (ev) => {
-      if (S === sessione) seg.aggiungi(ev.data);
+      if (S !== sessione) return;
+      seg.aggiungi(ev.data);
+      // livello per l'indicatore nella pagina, 8 volte al secondo
+      let s = 0;
+      for (let i = 0; i < ev.data.length; i++) s += ev.data[i] * ev.data[i];
+      const db = 10 * Math.log10(s / ev.data.length + 1e-10);
+      picco = Math.max(picco, Math.min(1, Math.max(0, (db + 60) / 45)));
+      const ora = Date.now();
+      if (ora - ultimoLivello > 120) {
+        ultimoLivello = ora;
+        pubblicaA({ tipo: 'livelloDettatura', v: +picco.toFixed(2) });
+        picco = 0;
+      }
     };
     stato.fase = 'ascolto';
     stato.prontaMs = Date.now() - S.t0;
@@ -327,7 +346,7 @@ async function avviaWebSpeech(S) {
       locale = (await SR.available({ langs: ['it-IT'], processLocally: true })) === 'available';
     } catch {}
   }
-  if (!locale && dettRiserva !== 'google') throw new Error('Il riconoscimento di Chrome sul dispositivo non è disponibile per l\'italiano: scegli Whisper nelle opzioni oppure consenti l\'invio a Google.');
+  if (!locale && dettRiserva !== 'google') throw new Error('Il riconoscimento di Chrome sul dispositivo non è disponibile per l\'italiano: scegli WebG Voice nella pagina della dettatura oppure consenti l\'invio a Google.');
   const r = new SR();
   r.lang = 'it-IT';
   r.continuous = true;

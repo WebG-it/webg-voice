@@ -26,11 +26,27 @@
     <p><a href="#" id="tasti">Cambia la scorciatoia</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="https://www.webg.it" target="_blank" rel="noopener">webg.it</a></p>
   </section>
 
+  <section class="scheda" id="scorciatoie">
+    <h2>Scorciatoie</h2>
+    <table class="tasti">
+      <tbody>
+        <tr><td>Leggi, pausa e riprendi</td><td><kbd data-comando="leggi-selezione">…</kbd></td></tr>
+        <tr><td>Ferma la lettura</td><td><kbd data-comando="ferma-lettura">…</kbd></td></tr>
+        <tr><td>Avvia e ferma la dettatura</td><td><kbd data-comando="dettatura">…</kbd></td></tr>
+      </tbody>
+    </table>
+    <p class="nota" id="tastiMancanti" hidden>Una scorciatoia «non assegnata» di solito vuol dire che un'altra estensione
+      (anche un'altra copia di WebG Voice) usa già gli stessi tasti: Chrome non li dà a due estensioni. Scegline altri,
+      oppure togli quei tasti all'altra estensione.</p>
+    <div class="azioni"><button id="apriTasti">Cambia le scorciatoie</button></div>
+  </section>
+
   <section class="scheda" id="dettatura">
     <h2>Dettatura</h2>
-    <p>Clicca in un campo di una pagina e premi <kbd>Ctrl+Spazio</kbd>: parli e il testo si scrive lì, con punteggiatura, a capo ed elenchi a voce.
-      Il riconoscimento (Whisper) gira sul tuo computer; il modello si scarica la prima volta che detti.</p>
-    <p><a href="dettatura.html">Microfono, modello, dizionario e opzioni della dettatura</a></p>
+    <p>Clicca in un campo di una pagina e premi <kbd data-comando="dettatura">…</kbd>: parli e il testo si scrive lì, con punteggiatura, a capo ed elenchi a voce.
+      Il riconoscimento gira sul tuo computer; il modello si scarica la prima volta che detti.</p>
+    <dl><dt>Modello</dt><dd id="dettModello">…</dd><dt>Invio a Google</dt><dd id="dettGoogle">…</dd></dl>
+    <div class="azioni"><button id="apriDettatura" class="primario">Microfono, modello, dizionario e opzioni</button></div>
   </section>
 
   <section class="scheda" id="voce">

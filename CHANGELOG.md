@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.4] - 2026-10-16
+
+- Prima prova di Marco: premi per parlare (Ctrl+Spazio tenuto registra, al rilascio scrive; tocco breve sotto 300 ms resta a mani libere; ripetizione automatica della tastiera ignorata; rilascio visto dalla pagina con keyup o perdita del fuoco). Pagina della dettatura aperta una volta sola e riportata in primo piano se c'e' gia'. Indicatore subito alla pressione, in alto e ben visibile, con livello del microfono; se manca il microfono o il modello lo dice nella pagina e apre la pagina della dettatura; il microfono ascolta mentre il modello si carica. Proposta del modello robusta (misura ripetuta, migliore valore, Normale salvo computer davvero lenti, niente numeri). Testi per l'utente senza nomi tecnici, esempi del dizionario neutri. Opzioni: sezioni Scorciatoie (tasto attuale, non assegnata con spiegazione, pulsante per cambiarle) e Dettatura.
+
 ## [1.3.3] - 2026-10-16
 
 - Scorciatoia della dettatura: Ctrl+Spazio, due tasti con la mano sinistra (Chrome la assegna davvero, verificato). Su Mac resta Control+Maiusc+X, perche' Control+Spazio sul Mac cambia la lingua di digitazione. Ctrl+Spazio prende il posto dell'autocompletamento negli editor di codice nel browser e della selezione di colonna in Google Fogli; si cambia da chrome://extensions/shortcuts.

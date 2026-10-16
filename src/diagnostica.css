@@ -70,3 +70,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1p
 .sceltaVoce input { accent-color: var(--accento); width: 16px; height: 16px; }
 .sceltaVoce button { padding: 5px 10px; }
 #dizionario details summary { margin: 6px 0; color: var(--accento); }
+
+.tasti { border-collapse: collapse; margin: 4px 0 8px; }
+.tasti td { padding: 5px 16px 5px 0; }
+kbd.manca { color: var(--male); border-color: var(--male); }

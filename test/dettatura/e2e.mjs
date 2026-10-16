@@ -200,6 +200,42 @@ try {
     await fine();
   }
 
+  // ---- 8. primo uso con la scorciatoia tenuta giu' (ripetizione automatica della tastiera):
+  // indicatore subito, UNA sola pagina della dettatura, e se e' gia' aperta si riusa ----
+  {
+    await preparaScheda('input', '#campo');
+    await sw.evaluate(() => globalThis.__testDettaturaFine());
+    const contaPagine = () => b.targets().filter((x) => x.url().includes('/dettatura.html')).length;
+    const t0 = Date.now();
+    const raffica = () =>
+      sw.evaluate(async () => {
+        const out = [];
+        for (let i = 0; i < 25; i++) {
+          out.push(globalThis.__testComando());
+          await new Promise((r) => setTimeout(r, 40));
+        }
+        return Promise.all(out);
+      });
+    const pr = raffica();
+    await page.waitForSelector('webg-dettatura', { timeout: 3000 }).catch(() => null);
+    const ms = Date.now() - t0;
+    const c = await page.evaluate(() => !!document.querySelector('webg-dettatura'));
+    controlla('scorciatoia: indicatore subito nella pagina', c, `${ms} ms`);
+    const rr = await pr;
+    await dorme(2500);
+    const primi = rr.filter((x) => x && x.motivo === 'primoUso').length;
+    const ignorati = rr.filter((x) => x && x.ignorato).length;
+    controlla('ripetizione automatica: un solo avvio, le altre pressioni ignorate', primi === 1 && ignorati === 24, `${primi} avvii, ${ignorati} ignorate`);
+    controlla('primo uso: una sola pagina della dettatura', contaPagine() === 1, `${contaPagine()} pagine`);
+    // seconda pressione piu' tardi: la pagina gia' aperta si riusa
+    await dorme(800);
+    await sw.evaluate(() => globalThis.__testComando());
+    await dorme(2500);
+    controlla('pagina della dettatura gia\' aperta: nessuna nuova', contaPagine() === 1, `${contaPagine()} pagine`);
+    for (const x of b.targets().filter((x) => x.url().includes('/dettatura.html'))) await (await x.asPage()).close();
+    await page.bringToFront();
+  }
+
   // ---- Parte 2: microfono finto e Whisper ----
   if (MODELLI && AUDIO) {
     const mappa = {};
@@ -230,8 +266,15 @@ try {
     await (await pt.asPage()).close();
     await page.bringToFront();
     await page.focus('#campo');
-    const av = await sw.evaluate(() => globalThis.__testAltD());
-    controlla('Ctrl+Spazio: dettatura avviata', av && av.avviata, JSON.stringify(av));
+    // TOCCO BREVE (mani libere): pressione e rilascio subito, la dettatura resta attiva
+    await dorme(800);
+    await page.keyboard.down('Control');
+    const av = await sw.evaluate(() => globalThis.__testComando());
+    await page.keyboard.up('Control');
+    controlla('tocco: dettatura avviata', av && av.avviata, JSON.stringify(av));
+    await dorme(1500);
+    const ancora = await sw.evaluate(() => globalThis.__testStatoDettatura());
+    controlla('tocco: dopo il rilascio continua ad ascoltare', ancora && ancora.attiva === true, JSON.stringify(ancora && ancora.stato && ancora.stato.fase));
     const t1 = Date.now();
     let v = '';
     while (Date.now() - t1 < 45000) {
@@ -240,15 +283,47 @@ try {
       await dorme(500);
     }
     await page.screenshot({ path: join(tmpdir(), 'dettatura-ascolto.png') });
-    // stato dal service worker (aprire una scheda fermerebbe la dettatura, come deve)
     const st = await sw.evaluate(() => globalThis.__testStatoDettatura());
-    const fermo = await sw.evaluate(() => globalThis.__testAltD());
+    const fermo = await sw.evaluate(() => globalThis.__testComando());
     await dorme(1500);
     v = await page.$eval('#campo', (e) => e.value);
     controlla('microfono finto: testo nel campo', v.length > 20, JSON.stringify(v));
-    controlla('dettatura fermata', fermo && fermo.fermata === true, JSON.stringify(fermo));
+    controlla('tocco: nuova pressione ferma', fermo && fermo.fermata === true, JSON.stringify(fermo));
     log('stato motore:', JSON.stringify({ latenzaMs: st && st.stato && st.stato.latenzaMs, latenze: st && st.stato && st.stato.latenze, info: st && st.stato && st.stato.info }));
     esiti.push({ nome: 'latenza', latenzaMs: st && st.stato && st.stato.latenzaMs, testo: v });
+
+    // PREMI PER PARLARE: tasto tenuto (con la ripetizione automatica), al rilascio trascrive e finisce
+    await page.$eval('#campo', (e) => (e.value = ''));
+    await page.focus('#campo');
+    await dorme(1000);
+    await page.keyboard.down('Control');
+    const avT = await sw.evaluate(() => globalThis.__testComando());
+    // ripetizione automatica per 6 secondi: nessun effetto
+    const rip = await sw.evaluate(async () => {
+      let ignorate = 0;
+      for (let i = 0; i < 150; i++) {
+        const r = await globalThis.__testComando();
+        if (r && r.ignorato) ignorate++;
+        await new Promise((ok) => setTimeout(ok, 40));
+      }
+      return ignorate;
+    });
+    await page.keyboard.up('Control');
+    const tRil = Date.now();
+    controlla('tenuto: dettatura avviata', avT && avT.avviata, JSON.stringify(avT));
+    controlla('tenuto: ripetizione automatica ignorata', rip === 150, `${rip} su 150`);
+    let fermata = false;
+    let vT = '';
+    while (Date.now() - tRil < 20000) {
+      const s = await sw.evaluate(() => globalThis.__testStatoDettatura());
+      vT = await page.$eval('#campo', (e) => e.value);
+      if (!s.attiva && vT) {
+        fermata = true;
+        break;
+      }
+      await dorme(300);
+    }
+    controlla('tenuto: al rilascio si ferma e scrive', fermata && vT.length > 10, `${Date.now() - tRil} ms, ${JSON.stringify(vT)}`);
     // misura a riposo, a modello gia' caricato (la prima, subito dopo il download, risente del lavoro appena fatto)
     await dorme(5000);
     const pd3 = await b.newPage();

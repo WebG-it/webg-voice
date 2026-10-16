@@ -46,7 +46,7 @@ async function carica(id) {
   const ort = await caricaOrt();
   if (EP === 'webgpu') {
     const a = navigator.gpu && (await navigator.gpu.requestAdapter());
-    if (!a) throw new Error('Questo computer non offre WebGPU a Chrome: il modello Qualità non può girare qui. Scegli Normale.');
+    if (!a) throw new Error('Questo computer non ha la scheda video adatta per il modello Qualità. Scegli Normale.');
   }
   // tokenizzatore e decoder prima, poi l'encoder ritoccato; se l'encoder ritoccato non si scarica
   // da nessuna fonte, la riserva e' l'originale (finestra intera di 30 s, piu' lento)
@@ -115,10 +115,14 @@ async function misuraPC() {
   const b = new Float32Array(K * N).map((_, i) => ((i * 104729) % 1000) / 1000 - 0.5);
   const feeds = { a: new ort.Tensor('float32', a, [M, K]), b: new ort.Tensor('float32', b, [K, N]) };
   for (let i = 0; i < 3; i++) await s.run(feeds);
-  const giri = 12;
-  const t = performance.now();
-  for (let i = 0; i < giri; i++) await s.run(feeds);
-  const ms = (performance.now() - t) / giri;
+  // 6 serie da 5: si tiene la serie migliore, cosi' un momento di carico del computer non pesa
+  let ms = Infinity;
+  for (let serie = 0; serie < 6; serie++) {
+    const t = performance.now();
+    for (let i = 0; i < 5; i++) await s.run(feeds);
+    ms = Math.min(ms, (performance.now() - t) / 5);
+    await new Promise((r) => setTimeout(r, 50));
+  }
   await s.release();
   return { ep: EP, disponibile: true, gflops: +((2 * M * K * N) / (ms / 1000) / 1e9).toFixed(1), fili: ort.env.wasm.numThreads };
 }

@@ -28,7 +28,7 @@ function mostraMicrofono() {
   $('#micAiuto').hidden = permesso !== 'denied';
   stato.textContent =
     permesso === 'granted'
-      ? 'Consentito. Il microfono si accende solo mentre detti (lo vedi dal pallino rosso nella pagina) e si spegne quando finisci.'
+      ? 'Consentito. Il microfono si accende solo mentre detti (lo vedi dall'indicatore rosso in alto nella pagina) e si spegne quando finisci.'
       : permesso === 'denied'
         ? 'Bloccato.'
         : 'Serve il permesso di usare il microfono: Chrome lo chiede una volta sola.';
@@ -80,52 +80,47 @@ for (const r of radio()) {
   });
 }
 
-/** Proposta dal confronto con il computer di sviluppo (dove il modello Normale sta sotto il secondo e mezzo). */
+/**
+ * Proposta del modello: Normale salvo computer davvero lenti. La misura (una moltiplicazione di
+ * matrici come quelle del modello, ripetuta, si tiene il valore migliore: un momento di carico del
+ * computer non deve far proporre un modello peggiore) si fa una volta e si riusa.
+ */
 async function misuraComputer() {
-  const p = $('#misuraPC');
-  // la misura si fa una volta (a computer tranquillo, prima di scaricare), poi si riusa:
-  // ripeterla mentre il computer lavora darebbe una proposta sbagliata
-  const { dettMisuraPC: salvata } = await chrome.storage.local.get('dettMisuraPC');
+  const { dettMisuraPC2: salvata } = await chrome.storage.local.get('dettMisuraPC2');
   let cpu;
   let gpu;
   if (salvata && salvata.cpu && Date.now() - salvata.quando < 30 * 86400000) ({ cpu, gpu } = salvata);
   else {
-    let m;
     try {
-      m = await manda('dettaturaMisuraPC');
-    } catch (e) {
-      p.textContent = `Misura non riuscita: ${e.message || e}`;
-      return;
-    }
-    cpu = m && m.wasm && m.wasm.gflops;
-    gpu = m && m.webgpu && m.webgpu.disponibile ? m.webgpu.gflops : null;
-    await chrome.storage.local.set({ dettMisuraPC: { cpu, gpu, quando: Date.now() } });
+      const m = await manda('dettaturaMisuraPC');
+      cpu = m && m.wasm && m.wasm.gflops;
+      gpu = m && m.webgpu && m.webgpu.disponibile ? m.webgpu.gflops : null;
+      if (cpu) await chrome.storage.local.set({ dettMisuraPC2: { cpu, gpu, quando: Date.now() } });
+    } catch {}
   }
   const qRadio = radio().find((r) => r.value === 'qualita');
   qRadio.disabled = !gpu;
-  if (!gpu) qRadio.closest('label').title = 'Questo computer non offre WebGPU a Chrome';
-  let proposta = 'normale';
-  // soglie: vedi test/dettatura/banco.mjs e il CHANGELOG della 1.3.0
-  if (!cpu || cpu < SOGLIA_CPU) proposta = 'leggero';
+  if (!gpu) qRadio.closest('label').title = 'Questo computer non ha la scheda video adatta per Qualità';
+  // Normale salvo processori davvero lenti (il Corridoio misura circa 70 a riposo e 30 sotto carico,
+  // e con Normale trascrive una frase in circa un secondo)
+  const proposta = cpu && cpu < SOGLIA_CPU ? 'leggero' : 'normale';
   const { dettModello } = await chrome.storage.local.get('dettModello');
   scelto = dettModello ? modelloDettaturaValido(dettModello) : proposta;
   if (!dettModello) await chrome.storage.local.set({ dettModello: scelto });
-  p.textContent = `Processore: ${cpu ? cpu.toFixed(0) + ' GFLOPS' : 'non misurato'}${gpu ? `; scheda video: ${gpu.toFixed(0)} GFLOPS (WebGPU)` : '; WebGPU non disponibile'}.`;
-  const v = $('#proposta');
-  v.hidden = false;
-  v.className = 'verdetto ok';
-  v.textContent =
-    proposta === 'leggero'
-      ? 'Proposta: Leggero. Il processore di questo computer è lento per il modello Normale.'
-      : gpu && gpu >= SOGLIA_GPU
-        ? 'Proposta: Normale. La scheda video regge anche Qualità, se vuoi il riconoscimento più preciso.'
-        : 'Proposta: Normale.';
+  for (const r of radio()) {
+    const b = r.closest('label').querySelector('.consigliato');
+    if (b) b.remove();
+    if (r.value === proposta) {
+      const s = document.createElement('span');
+      s.className = 'consigliato';
+      s.textContent = 'Consigliato per questo computer';
+      r.closest('label').querySelector('strong').after(s);
+    }
+  }
   mostraModello();
 }
-// GFLOPS della moltiplicazione 512x768x768 in WebAssembly sotto cui il modello Normale supera
-// i 2,5 secondi per frase (proporzione sul PC di sviluppo); scheda video sotto cui Qualita' non conviene
-const SOGLIA_CPU = 45;
-const SOGLIA_GPU = 40;
+// sotto questa misura il modello Normale supera i 3 secondi per frase
+const SOGLIA_CPU = 15;
 
 let scaricando = false;
 $('#scarica').addEventListener('click', async () => {
@@ -149,7 +144,7 @@ $('#scarica').addEventListener('click', async () => {
   const stima = 360 + r.misura.ms;
   await chrome.storage.local.set({ dettMisura: { modello: scelto, ms: r.misura.ms, stima, quando: Date.now(), ep: r.misura.ep } });
   let testo = `Pronto. Una frase di 4 secondi diventa testo circa ${sec(stima)} dopo che hai smesso di parlare.`;
-  if (r.info && r.info.finestraVariabile === false) testo += ' (Versione veloce del modello non raggiungibile: uso quella completa, più lenta.)';
+  if (r.info && r.info.finestraVariabile === false) testo += ' (La versione veloce del modello non è raggiungibile: uso quella completa, più lenta.)';
   if (stima > 2500 && scelto !== 'leggero') testo += ' È lento su questo computer: prova il modello Leggero.';
   $('#modelloStato').textContent = testo;
 });
@@ -204,6 +199,7 @@ chrome.runtime.onMessage.addListener((m, _mitt, rispondi) => {
   if (!m || m.a !== 'paginaDettatura') return;
   if (m.dett === 'avvia') {
     sessione = creaSessione({ sostituzioni: m.sostituzioni || [], automatica: m.automatica !== false });
+    rilascioMandato = false;
     mostraProva({ fase: 'preparazione' });
   } else if (m.dett === 'stato') mostraProva(m.stato);
   else if (m.dett === 'testo' && sessione) {
@@ -229,6 +225,18 @@ chrome.runtime.onMessage.addListener((m, _mitt, rispondi) => {
   }
   rispondi({ ok: true });
 });
+
+// premi per parlare anche qui: il rilascio di Ctrl o Spazio va al service worker
+let rilascioMandato = true;
+window.addEventListener(
+  'keyup',
+  (e) => {
+    if (!sessione || rilascioMandato || !(e.key === 'Control' || e.code === 'Space' || e.key === ' ')) return;
+    rilascioMandato = true;
+    manda('dettaturaRilascio').catch(() => {});
+  },
+  true
+);
 
 // scorciatoia
 async function scorciatoia() {

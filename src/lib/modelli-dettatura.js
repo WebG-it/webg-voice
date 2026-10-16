@@ -20,7 +20,7 @@ const REV = {
 };
 
 const TOKENIZZATORE = {
-  nome: 'vocabolario di Whisper',
+  nome: 'vocabolario della dettatura',
   byte: 2480466,
   sha256: '27fc476bfe7f17299480be2273fc0608e4d5a99aba2ab5dec5374b4482d1a566',
   fonti: [`${HF}${REV.small}tokenizer.json`, `${GITHUB}whisper-tokenizer.json`],
@@ -30,61 +30,61 @@ const TOKENIZZATORE = {
 export const FILE_DETTATURA = {
   dettTok: TOKENIZZATORE,
   dettTokTurbo: {
-    nome: 'vocabolario di Whisper large-v3-turbo',
+    nome: 'vocabolario del modello Qualità',
     byte: 2480617,
     sha256: '6d8cbd7cd0d8d5815e478dac67b85a26bbe77c1f5e0c6d76d1ce2abc0e5f21ca',
     fonti: [`${HF}${REV.turbo}tokenizer.json`, `${GITHUB}whisper-turbo-tokenizer.json`],
   },
   dettBaseEnc: {
-    nome: 'encoder di Whisper base',
+    nome: 'modello Leggero, parte 1',
     byte: 23156120,
     sha256: '3fbe58b61c83afc4fe92f5d6139d22d6b56877b9efb45f383a57503ac824b3d1',
     fonti: [`${GITHUB}whisper-base-encoder-int8-corto.onnx`],
   },
   dettBaseEncIntero: {
-    nome: 'encoder di Whisper base (finestra intera)',
+    nome: 'modello Leggero, parte 1 (versione completa)',
     byte: 23201297,
     sha256: 'ca6177401f86a2c6b4dc5f7fc02fbca680678906bd0c22f6d89f0b80f124253f',
     fonti: [`${HF}${REV.base}onnx/encoder_model_int8.onnx`],
   },
   dettBaseDec: {
-    nome: 'decoder di Whisper base',
+    nome: 'modello Leggero, parte 2',
     byte: 53693315,
     sha256: 'fa3ef9902734ce5ae6f9ef2bdb2ba9a6c4b5785b09f4f420ce036573dc9d090b',
     fonti: [`${HF}${REV.base}onnx/decoder_model_merged_int8.onnx`, `${GITHUB}whisper-base-decoder-int8.onnx`],
   },
   dettSmallEnc: {
-    nome: 'encoder di Whisper small',
+    nome: 'modello Normale, parte 1',
     byte: 92236367,
     sha256: '38bbd0b13f0e8bca6bce6dd1320ae0ca19c8dfa5b19989136c43dec563cf38ca',
     fonti: [`${GITHUB}whisper-small-encoder-int8-corto.onnx`],
   },
   dettSmallEncIntero: {
-    nome: 'encoder di Whisper small (finestra intera)',
+    nome: 'modello Normale, parte 1 (versione completa)',
     byte: 92326127,
     sha256: '2601c9eb2d345c5916d4576d36f663a7c96589740fb2273828c48c3fc2c7db75',
     fonti: [`${HF}${REV.small}onnx/encoder_model_int8.onnx`],
   },
   dettSmallDec: {
-    nome: 'decoder di Whisper small',
+    nome: 'modello Normale, parte 2',
     byte: 156750845,
     sha256: 'ec07c3cbb64172c39791e26ee870a65ac22b458c36722bfe2776b3dbf741e0c9',
     fonti: [`${HF}${REV.small}onnx/decoder_model_merged_int8.onnx`, `${GITHUB}whisper-small-decoder-int8.onnx`],
   },
   dettTurboEnc: {
-    nome: 'encoder di Whisper large-v3-turbo',
+    nome: 'modello Qualità, parte 1',
     byte: 369856808,
     sha256: '3b3a134ac40599497ab84cdf17b5d002077a9b8e57c40b1eee628dfa28d353d5',
     fonti: [`${GITHUB}whisper-turbo-encoder-q4f16-corto.onnx`],
   },
   dettTurboEncIntero: {
-    nome: 'encoder di Whisper large-v3-turbo (finestra intera)',
+    nome: 'modello Qualità, parte 1 (versione completa)',
     byte: 369974078,
     sha256: 'aafd3383f1aa372db0825a885730ebbbae7e34871ec0460428663c69641a63d0',
     fonti: [`${HF}${REV.turbo}onnx/encoder_model_q4f16.onnx`],
   },
   dettTurboDec: {
-    nome: 'decoder di Whisper large-v3-turbo',
+    nome: 'modello Qualità, parte 2',
     byte: 193505017,
     sha256: '45981cdd958a4c8e1447839850d2e6e27e30974ccbe31b4a1e5ebe9ad8965a5f',
     fonti: [`${HF}${REV.turbo}onnx/decoder_model_merged_q4f16.onnx`, `${GITHUB}whisper-turbo-decoder-q4f16.onnx`],
@@ -127,7 +127,7 @@ export const MODELLI_DETTATURA = {
   qualita: {
     nome: 'Qualità',
     whisper: 'large-v3-turbo',
-    descrizione: 'il piu\' preciso: 565 MB, serve una scheda video con WebGPU',
+    descrizione: 'il piu\' preciso: 565 MB, usa la scheda video',
     ep: 'webgpu',
     nMel: 128,
     teste: 20,
