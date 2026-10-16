@@ -31,9 +31,10 @@ FILE=(
   "whisper-turbo-tokenizer.json|$TURBO/tokenizer.json|-|6d8cbd7cd0d8d5815e478dac67b85a26bbe77c1f5e0c6d76d1ce2abc0e5f21ca"
 )
 
-NOTE="Modelli per la dettatura di WebG Voice: Whisper di OpenAI (licenza MIT), esportazioni ONNX di
-onnx-community a revisione fissata (whisper-base, whisper-small, whisper-large-v3-turbo).
-Decoder e tokenizzatori sono copie identiche degli originali. Gli encoder sono ritoccati con
+NOTE="Modelli per la dettatura di WebG Voice: Whisper di OpenAI, esportazioni ONNX di onnx-community
+a revisione fissata. Licenze: whisper-base e whisper-small Apache-2.0 (testo in
+LICENSE-APACHE-2.0.txt del repository), whisper-large-v3-turbo MIT, Copyright (c) OpenAI.
+Decoder e tokenizzatori sono copie identiche degli originali. Modifiche: gli encoder sono ritoccati con
 scripts/accorcia-encoder.py del repository (stessi pesi, grafo che accetta finestre piu' corte
 di 30 secondi): il risultato e' riproducibile e l'impronta SHA-256 e' quella nell'estensione,
 src/lib/modelli-dettatura.js."
