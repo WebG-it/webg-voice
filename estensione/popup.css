@@ -7,6 +7,7 @@
   --accento: #23417b;
   --accento-testo: #ffffff;
   --errore: #b3261e;
+  --rosso: #c0392b;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -18,44 +19,24 @@
     --accento: #8fb0ea;
     --accento-testo: #0f1d38;
     --errore: #f2b8b5;
+    --rosso: #e0675a;
   }
 }
 * { box-sizing: border-box; }
 body {
   width: 340px;
   margin: 0;
-  padding: 14px 16px 12px;
+  padding: 12px 14px 12px;
   font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--testo);
   background: var(--sfondo);
 }
-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
-h1 { font-size: 15px; font-weight: 600; margin: 0; }
-.versione { color: var(--tenue); font-size: 12px; }
-.voci { display: flex; align-items: center; gap: 0; margin: 0 0 10px; }
-.voci .etichetta { color: var(--tenue); font-size: 12px; margin-right: 10px; }
-.voci button { border-radius: 0; padding: 5px 14px; min-width: 76px; justify-content: center; }
-.voci button:first-of-type { border-radius: 8px 0 0 8px; }
-.voci button:last-of-type { border-radius: 0 8px 8px 0; border-left: 0; }
-.voci button[aria-checked="true"] { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-textarea {
-  width: 100%;
-  resize: vertical;
-  min-height: 90px;
-  padding: 8px 10px;
-  border: 1px solid var(--bordo);
-  border-radius: 8px;
-  background: var(--superficie);
-  color: var(--testo);
-  font: inherit;
-}
-textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
-.comandi { display: flex; gap: 8px; margin: 10px 0; }
-.comandi + .comandi { margin-top: -2px; }
-.comandi #articolo, .comandi #mp3, .comandi #rileggi { flex: 1; justify-content: center; }
-.ripetizioni { margin: 6px 0 0; padding: 0 0 0 18px; max-height: 150px; overflow: auto; }
-.ripetizioni li { margin: 2px 0; }
-.ripetizioni .volte { color: var(--tenue); font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+
+header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+h1 { font-size: 15px; font-weight: 600; margin: 0; flex: 1; }
+.versione { color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
+
 button {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
@@ -67,37 +48,85 @@ button {
   cursor: pointer;
 }
 button:hover:not(:disabled) { filter: brightness(0.96); }
-button:disabled { opacity: 0.45; cursor: default; }
-button:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
-button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; flex: 1; justify-content: center; font-weight: 600; }
-button svg { width: 14px; height: 14px; fill: currentColor; }
-button.link { padding: 0; border: 0; background: none; color: var(--accento); text-decoration: underline; }
+button:disabled { opacity: 0.5; cursor: default; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
+button svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; justify-content: center; }
+button.icona { padding: 5px; border-color: transparent; background: none; color: var(--tenue); }
+button.icona svg { width: 16px; height: 16px; }
+button.icona:hover { color: var(--testo); background: var(--superficie); filter: none; }
+
+/* le due azioni di tutti i giorni */
+.grandi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.azione { min-width: 0; }
+.coppia { display: flex; gap: 6px; }
+button.grande {
+  flex: 1; width: 100%; height: 72px; flex-direction: column; justify-content: center; gap: 1px;
+  font-size: 15px; font-weight: 600; border-radius: 12px; padding: 8px 6px;
+}
+button.grande svg { width: 18px; height: 18px; }
+button.grande .sotto { font-size: 11px; line-height: 1.35; font-weight: 500; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+button.grande .sotto:empty { display: none; }
+#detta { background: var(--superficie); }
+#detta.attiva { background: var(--rosso); color: #fff; border-color: transparent; }
+button.ferma { flex: none; width: 44px; height: 72px; justify-content: center; border-radius: 12px; padding: 0; }
+button.ferma svg { width: 16px; height: 16px; }
+.tasti { margin: 5px 0 0; padding-bottom: 2px; text-align: center; color: var(--tenue); font-size: 11px; line-height: 1.7; }
+.tasti > span { white-space: nowrap; }
+.tasti .sep { margin: 0 2px; }
+.tasti a, .avviso a { color: var(--accento); }
+.tasti .manca { color: var(--errore); }
+kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border: 1px solid var(--bordo); border-bottom-width: 2px; border-radius: 4px; background: var(--superficie); color: var(--testo); }
+
+/* voce e velocita' in una riga */
+.riga { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; }
+.voci { display: flex; align-items: center; flex: none; }
+.voci .etichetta { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.voci button { border-radius: 0; padding: 4px 10px; font-size: 12px; justify-content: center; }
+.voci button:first-of-type { border-radius: 7px 0 0 7px; }
+.voci button:last-of-type { border-radius: 0 7px 7px 0; border-left: 0; }
+.voci button[aria-checked="true"] { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
+.velocita { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.velocita input { flex: 1; min-width: 0; accent-color: var(--accento); }
+.velocita output { min-width: 38px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--tenue); }
+
+/* una riga di stato */
+.stato { margin-top: 10px; padding: 7px 10px; border-radius: 8px; background: var(--superficie); font-size: 12px; }
+.stato p { margin: 0; }
+.stato.errore p { color: var(--errore); }
+progress { width: 100%; height: 6px; margin-top: 6px; accent-color: var(--accento); }
+.mb { margin: 4px 0 0; color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
+.azioniStato { display: flex; gap: 8px; margin-top: 8px; }
+.azioniStato:not(:has(button:not([hidden]), a:not([hidden]))) { display: none; }
+#scarica { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
+.avviso { margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--bordo); font-size: 12px; }
+.riga-avviso { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* testo incollato, richiudibile */
+details { margin-top: 10px; border-top: 1px solid var(--bordo); padding-top: 8px; }
+summary { cursor: pointer; color: var(--tenue); font-size: 12px; list-style: none; display: flex; align-items: center; gap: 6px; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: '▸'; font-size: 10px; }
+details[open] summary::before { content: '▾'; }
+details[open] summary { margin-bottom: 6px; }
+textarea {
+  width: 100%; resize: vertical; min-height: 72px; padding: 7px 9px;
+  border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie); color: var(--testo); font: inherit;
+}
+textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
+.azioniIncolla { display: flex; margin-top: 6px; }
+.azioniIncolla button { flex: 1; }
+
+/* strumenti secondari */
+.strumenti { display: flex; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--bordo); }
+button.piccolo { flex: 1; justify-content: center; padding: 5px 8px; font-size: 12px; color: var(--tenue); background: none; }
+button.piccolo:hover:not(:disabled) { color: var(--testo); background: var(--superficie); filter: none; }
+
 a.bottone {
   display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 8px;
   border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); text-decoration: none;
 }
 a.bottone.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-a.bottone:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
-a[hidden], button[hidden], progress[hidden], p[hidden] { display: none !important; }
-.velocita { display: flex; align-items: center; gap: 10px; }
-.velocita input { flex: 1; accent-color: var(--accento); }
-.velocita output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
-.stato { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--superficie); }
-.stato p { margin: 0; }
-.stato.errore p { color: var(--errore); }
-progress { width: 100%; height: 6px; margin-top: 6px; accent-color: var(--accento); }
-.aiuto { color: var(--tenue); font-size: 12px; margin: 10px 0 0; }
-.avviso { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--bordo); font-size: 12px; }
-.avviso a { color: var(--accento); }
-.aiuto a { color: var(--accento); }
-kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border: 1px solid var(--bordo); border-radius: 4px; background: var(--superficie); color: var(--testo); }
-
-.mb { margin: 4px 0 0; color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
-.azioniStato { display: flex; gap: 8px; margin-top: 8px; }
-.azioniStato:empty, .azioniStato:not(:has(button:not([hidden]), a:not([hidden]))) { display: none; }
-#scarica { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-
-.dettatura { display: flex; align-items: center; gap: 8px; margin: 10px 0 2px; padding-top: 10px; border-top: 1px solid var(--bordo); }
-.dettatura .nota { flex: 1; color: var(--tenue); font-size: 12px; }
-.dettatura a { font-size: 12px; color: var(--accento); }
-#detta.attiva { background: #c0392b; color: #fff; border-color: transparent; }
+.ripetizioni { margin: 6px 0 0; padding: 0 0 0 18px; max-height: 120px; overflow: auto; }
+.ripetizioni li { margin: 2px 0; }
+.ripetizioni .volte { color: var(--tenue); font-variant-numeric: tabular-nums; }

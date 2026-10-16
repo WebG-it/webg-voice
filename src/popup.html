@@ -10,74 +10,45 @@
 <header>
   <h1 id="nome">WebG Voice</h1>
   <span class="versione" id="versione"></span>
+  <button id="impostazioni" class="icona" title="Impostazioni" aria-label="Impostazioni">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.9 1h2.2l.4 1.9c.4.1.8.3 1.1.5l1.6-1.1 1.5 1.5-1.1 1.6c.2.4.4.7.5 1.1l1.9.4v2.2l-1.9.4c-.1.4-.3.8-.5 1.1l1.1 1.6-1.5 1.5-1.6-1.1c-.4.2-.7.4-1.1.5L9.1 15H6.9l-.4-1.9c-.4-.1-.8-.3-1.1-.5l-1.6 1.1-1.5-1.5 1.1-1.6c-.2-.4-.4-.7-.5-1.1L1 9.1V6.9l1.9-.4c.1-.4.3-.8.5-1.1L2.3 3.8l1.5-1.5 1.6 1.1c.4-.2.7-.4 1.1-.5zM8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8z"/></svg>
+  </button>
 </header>
 
-<div class="voci" role="radiogroup" aria-label="Voce">
-  <span class="etichetta" id="etichettaVoce">Voce</span>
-  <button type="button" role="radio" data-voce="sara" aria-checked="true">Sara</button>
-  <button type="button" role="radio" data-voce="nicola" aria-checked="false">Nicola</button>
-</div>
-
-<textarea id="testo" rows="5" placeholder="Incolla qui un testo da leggere, oppure lascia vuoto per leggere la selezione o l'articolo della pagina…" spellcheck="false"></textarea>
-
-<div class="comandi">
-  <button id="play" class="primario" title="Leggi">
-    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg>
-    <span>Leggi</span>
-  </button>
-  <button id="stop" title="Ferma" disabled>
-    <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/></svg>
-    <span>Ferma</span>
-  </button>
-</div>
-<div class="comandi">
-  <button id="articolo" title="Legge titolo e testo dell'articolo, senza menu e pubblicità">
-    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1zm1.5 4v1h7v-1zm0 2.5v1h7V9zm0 2.5v1h5v-1z"/></svg>
-    <span>Leggi l'articolo</span>
-  </button>
-  <button id="mp3" title="Crea un file MP3 del testo incollato, della selezione o dell'articolo">
-    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 2h1.5v6.7l2.2-2.2 1.06 1.06L8 11.56 3.99 7.56 5.05 6.5l2.2 2.2zM3 12.5h10V14H3z"/></svg>
-    <span>Scarica MP3</span>
-  </button>
-</div>
-
-<section class="dettatura" aria-label="Dettatura">
-  <button id="detta" title="Detta nel campo dove hai il cursore">
-    <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.5M5.5 14.5h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-    <span>Detta</span>
-  </button>
-  <span id="dettaStato" class="nota">Clicca in un campo della pagina, poi <kbd id="tastoDetta">Ctrl+Spazio</kbd></span>
-  <a href="#" id="dettaOpzioni">Impostazioni</a>
-</section>
-
-<div class="comandi">
-  <button id="rileggi" title="Per chi scrive: legge più lenta, con pause fra le frasi, e segnala le parole ripetute vicine">
-    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.6 1.6a1.4 1.4 0 0 1 2 2L6.3 10.9l-2.8.8.8-2.8zM2 13.5h12V15H2z"/></svg>
-    <span>Rileggi la bozza</span>
-  </button>
-</div>
-
-<section id="bozzaBox" class="stato" aria-live="polite" hidden>
-  <p id="bozzaTesto"></p>
-  <ul id="bozzaLista" class="ripetizioni"></ul>
-</section>
-
-<label class="velocita">
-  <span>Velocità</span>
-  <input id="vel" type="range" min="0.7" max="1.5" step="0.05" value="1">
-  <output id="velVal">1,00×</output>
-</label>
-
-<section id="mp3Box" class="stato" aria-live="polite" hidden>
-  <p id="mp3Testo"></p>
-  <progress id="mp3Barra" max="1" value="0"></progress>
-  <p id="mp3Dettaglio" class="mb"></p>
-  <div class="azioniStato">
-    <button id="mp3Annulla">Annulla</button>
-    <a id="mp3Salva" class="bottone primario" href="#" download hidden>Salva di nuovo</a>
-    <button id="mp3Chiudi" hidden>Chiudi</button>
+<div class="grandi">
+  <div class="azione">
+    <div class="coppia">
+      <button id="play" class="grande primario" title="Legge la selezione, o l'articolo della pagina se non c'è selezione">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg>
+        <span>Leggi</span>
+      </button>
+      <button id="stop" class="ferma" title="Ferma la lettura" aria-label="Ferma la lettura" hidden>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/></svg>
+      </button>
+    </div>
+    <p class="tasti"><span id="tastoLeggi"><kbd id="tasto">Alt+Q</kbd></span> <span class="sep">·</span> <span id="tastoFerma"><kbd id="tastoStop">Alt+W</kbd> ferma</span></p>
   </div>
-</section>
+  <div class="azione">
+    <button id="detta" class="grande" title="Detta nel campo dove hai il cursore">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.5M5.5 14.5h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <span class="etichetta">Detta</span>
+      <span id="dettaStato" class="sotto"></span>
+    </button>
+    <p class="tasti"><span id="tastoDettaBox"><kbd id="tastoDetta">Ctrl+Spazio</kbd> tieni premuto</span></p>
+  </div>
+</div>
+
+<div class="riga">
+  <div class="voci" role="radiogroup" aria-label="Voce">
+    <span class="etichetta" id="etichettaVoce">Voce</span>
+    <button type="button" role="radio" data-voce="sara" aria-checked="true">Sara</button>
+    <button type="button" role="radio" data-voce="nicola" aria-checked="false">Nicola</button>
+  </div>
+  <label class="velocita" title="Velocità di lettura">
+    <input id="vel" type="range" min="0.7" max="1.5" step="0.05" value="1" aria-label="Velocità">
+    <output id="velVal">1,00×</output>
+  </label>
+</div>
 
 <section id="statoBox" class="stato" aria-live="polite">
   <p id="statoTesto">…</p>
@@ -91,9 +62,42 @@
 </section>
 
 <p id="avvisoPagina" class="avviso" role="status" hidden></p>
-<p id="avvisoTasto" class="avviso" hidden>La scorciatoia per leggere non è assegnata, forse perché un'altra estensione usa gli stessi tasti. <a href="#" id="tastiAvviso">Imposta la scorciatoia</a></p>
+<p id="avvisoTasto" class="avviso riga-avviso" hidden><span id="avvisoTastoTesto"></span> <a href="#" id="tastiAvviso">Sistema</a></p>
 
-<p class="aiuto">Seleziona del testo e premi <kbd id="tasto">Alt+Q</kbd>: senza selezione legge tutto l'articolo. Di nuovo per pausa e ripresa, <kbd id="tastoStop">Alt+W</kbd> per fermare. Anche dal tasto destro. <a href="#" id="tasti">Cambia scorciatoie</a></p>
+<details id="incolla">
+  <summary>Leggi un testo incollato</summary>
+  <textarea id="testo" rows="4" placeholder="Incolla qui il testo da leggere…" spellcheck="false"></textarea>
+  <div class="azioniIncolla">
+    <button id="leggiIncollato" class="primario">Leggi questo testo</button>
+  </div>
+</details>
+
+<section id="mp3Box" class="stato" aria-live="polite" hidden>
+  <p id="mp3Testo"></p>
+  <progress id="mp3Barra" max="1" value="0"></progress>
+  <p id="mp3Dettaglio" class="mb"></p>
+  <div class="azioniStato">
+    <button id="mp3Annulla">Annulla</button>
+    <a id="mp3Salva" class="bottone primario" href="#" download hidden>Salva di nuovo</a>
+    <button id="mp3Chiudi" hidden>Chiudi</button>
+  </div>
+</section>
+
+<section id="bozzaBox" class="stato" aria-live="polite" hidden>
+  <p id="bozzaTesto"></p>
+  <ul id="bozzaLista" class="ripetizioni"></ul>
+</section>
+
+<footer class="strumenti">
+  <button id="rileggi" class="piccolo" title="Per chi scrive: legge più lenta, con pause fra le frasi, e segnala le parole ripetute vicine">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.6 1.6a1.4 1.4 0 0 1 2 2L6.3 10.9l-2.8.8.8-2.8zM2 13.5h12V15H2z"/></svg>
+    <span>Rileggi la bozza</span>
+  </button>
+  <button id="mp3" class="piccolo" title="Crea un file MP3 del testo incollato, della selezione o dell'articolo">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 2h1.5v6.7l2.2-2.2 1.06 1.06L8 11.56 3.99 7.56 5.05 6.5l2.2 2.2zM3 12.5h10V14H3z"/></svg>
+    <span>Crea MP3</span>
+  </button>
+</footer>
 
 <script type="module" src="popup.js"></script>
 </body>

@@ -176,8 +176,8 @@ try {
 
   // 2b) popup con testo incollato (catture di controllo, non usate nello store)
   pop = await apriPopup();
-  await pop.$eval('#testo', (e) => { e.value = 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli crescono in fretta.'; });
-  await pop.click('#play');
+  await pop.$eval('#testo', (e) => { e.value = 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli crescono in fretta.'; e.closest('details').open = true; });
+  await pop.click('#leggiIncollato');
   await attendi(off, (s) => s.fase === 'lettura');
   await dorme(800);
   await pop.screenshot({ path: join(OUT, 'store-popup.png') });

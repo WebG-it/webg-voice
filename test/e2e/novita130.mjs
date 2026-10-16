@@ -278,7 +278,7 @@ try {
   await ferma();
   await pop.close();
   pop = await apriPopup();
-  await pop.$eval('#testo', (e, t) => { e.value = t; }, BOZZA);
+  await pop.$eval('#testo', (e, t) => { e.value = t; e.closest('details').open = true; }, BOZZA);
   await pop.click('#rileggi');
   await pop.waitForFunction(() => document.querySelector('#bozzaTesto').textContent.startsWith('Rileggo'), { timeout: 30000 }).catch(() => {});
   const lp = await pop.$$eval('#bozzaLista li', (l) => l.length);

@@ -24,8 +24,15 @@ const fmt = (v) => `${Number(v).toFixed(2).replace('.', ',')}×`;
 const comando = (tipo, extra = {}) => chrome.runtime.sendMessage({ a: 'background', tipo, ...extra });
 
 let fase = 'inattivo';
-const AVVISO_PROTETTA = 'Chrome non permette la lettura su questa pagina: incolla qui sopra il testo e premi Leggi.';
-const AVVISO_ARTICOLO = 'Non trovo un articolo in questa pagina: seleziona il testo da leggere oppure incollalo qui sopra.';
+const AVVISO_PROTETTA = 'Chrome non permette la lettura su questa pagina: usa «Leggi un testo incollato».';
+const AVVISO_ARTICOLO = 'Non trovo un articolo qui: seleziona il testo, oppure usa «Leggi un testo incollato».';
+const incolla = $('incolla');
+/** Testo incollato, solo se la sezione e' aperta. */
+const testoIncollato = () => (incolla.open ? testo.value.trim() : '');
+function apriIncolla() {
+  incolla.open = true;
+  testo.focus();
+}
 // avviso che resta visibile anche mentre lo stato (es. il download) si aggiorna
 function avvisoPagina(t) {
   $('avvisoPagina').textContent = t;
@@ -39,13 +46,13 @@ const ICONE = {
 };
 
 function etichettaPlay(f) {
-  const [icona, label] = {
-    lettura: [ICONE.pausa, 'Pausa'],
-    preparazione: [ICONE.pausa, 'Pausa'],
-    pausa: [ICONE.play, 'Riprendi'],
-  }[f] || [ICONE.play, 'Leggi'];
-  play.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true">${icona}</svg><span>${label}</span>`;
-  play.title = label;
+  const [icona, label, sotto] = {
+    lettura: [ICONE.pausa, 'Pausa', 'in lettura'],
+    preparazione: [ICONE.pausa, 'Pausa', 'preparo…'],
+    pausa: [ICONE.play, 'Riprendi', 'in pausa'],
+  }[f] || [ICONE.play, 'Leggi', 'selezione o pagina'];
+  play.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true">${icona}</svg><span class="etichetta">${label}</span><span class="sotto">${sotto}</span>`;
+  play.title = f === 'lettura' || f === 'pausa' || f === 'preparazione' ? label : "Legge la selezione, o l'articolo della pagina se non c'è selezione";
 }
 
 function barra(d) {
@@ -85,7 +92,8 @@ $('etichettaVoce').parentElement.addEventListener('keydown', (e) => {
 function mostra(s) {
   fase = s ? s.fase : 'inattivo';
   etichettaPlay(fase);
-  stop.disabled = !(s && ['lettura', 'pausa', 'preparazione'].includes(s.fase));
+  // Ferma accanto a Leggi solo quando c'e' qualcosa da fermare
+  stop.hidden = !(s && ['lettura', 'pausa', 'preparazione'].includes(s.fase));
   statoBox.classList.remove('errore');
   barraDl.hidden = mb.hidden = true;
   scarica.hidden = rifiuta.hidden = true;
@@ -115,7 +123,7 @@ function mostra(s) {
       ? `Connessione interrotta: riprovo da solo fra ${d.riprovoTra} secondi.`
       : d.riprovo
         ? `Connessione instabile, riprovo (tentativo ${d.riprovo})…`
-        : `Primo avvio: scarico il modello vocale, una volta sola. Poi funziona anche offline.`;
+        : 'Primo avvio: scarico la voce, una volta sola.';
     barra(d);
   } else if (dv && dv.totale) {
     statoTesto.textContent = `Scarico la voce ${VOCI[voceValida(dv.voce)].nome}, una volta sola…`;
@@ -130,9 +138,9 @@ function mostra(s) {
   } else if (s && s.fase === 'pausa') {
     statoTesto.textContent = 'In pausa';
   } else if (inCache || (s && s.motorePronto)) {
-    statoTesto.textContent = 'Voce pronta, funziona anche offline.';
+    statoTesto.textContent = 'Voce pronta, anche offline.';
   } else {
-    statoTesto.textContent = `Il modello vocale (circa ${MB(BYTE_TOTALI)}) non è ancora sul computer: si scarica una volta sola, poi funziona offline.`;
+    statoTesto.textContent = `La voce (${MB(BYTE_TOTALI)}) non è ancora sul computer: si scarica una volta sola.`;
     scarica.textContent = 'Scarica adesso';
     scarica.hidden = false;
   }
@@ -196,7 +204,7 @@ function mostraMp3(m) {
 
 $('mp3').addEventListener('click', async () => {
   avvisoPagina('');
-  const t = testo.value.trim();
+  const t = testoIncollato();
   richiestoMp3 = true;
   mp3Box.hidden = false;
   $('mp3Testo').textContent = t ? 'Preparo l\'MP3…' : 'Cerco il testo nella pagina…';
@@ -209,8 +217,8 @@ $('mp3').addEventListener('click', async () => {
   mp3Box.hidden = true;
   const motivo = r && r.motivo;
   if (motivo === 'protetta') avvisoPagina(AVVISO_PROTETTA);
-  else avvisoPagina('Per creare un MP3 incolla un testo qui sopra, seleziona del testo nella pagina o apri un articolo.');
-  testo.focus();
+  else avvisoPagina('Per l\'MP3 seleziona del testo, apri un articolo o incolla un testo.');
+  apriIncolla();
 });
 $('mp3Annulla').addEventListener('click', () => {
   richiestoMp3 = false;
@@ -222,21 +230,23 @@ $('mp3Chiudi').addEventListener('click', () => {
   comando('chiudiMp3');
 });
 
+$('leggiIncollato').addEventListener('click', () => {
+  const t = testo.value.trim();
+  if (!t) return testo.focus();
+  avvisoPagina('');
+  comando('leggiTesto', { testo: t });
+});
 play.addEventListener('click', async () => {
   if (fase === 'lettura' || fase === 'preparazione') return comando('pausa');
   if (fase === 'pausa') return comando('riprendi');
-  const t = testo.value.trim();
-  if (t) {
-    avvisoPagina('');
-    return comando('leggiTesto', { testo: t });
-  }
+  avvisoPagina('');
   // campo vuoto: si legge il testo selezionato nella scheda attiva, altrimenti l'articolo
   // (aprire il popup concede activeTab su quella scheda)
   const r = await comando('leggiSelezioneAttiva');
   if (r && r.letto) return;
   if (r && r.protetta) {
     avvisoPagina(AVVISO_PROTETTA);
-    testo.focus();
+    apriIncolla();
     return;
   }
   if (r && r.riquadri && r.riquadri.length) {
@@ -253,13 +263,13 @@ play.addEventListener('click', async () => {
     };
     return;
   }
-  avvisoPagina(r && r.nessunArticolo ? 'Non trovo testo selezionato né un articolo in questa pagina: incolla un testo qui sopra o seleziona quello da leggere.' : 'Incolla un testo qui sopra, oppure seleziona del testo nella pagina e premi Leggi.');
-  testo.focus();
+  avvisoPagina(r && r.nessunArticolo ? 'Niente selezione né articolo qui: seleziona il testo o incollalo.' : 'Seleziona il testo da leggere, oppure incollalo.');
+  apriIncolla();
 });
 // ---- Rileggi la bozza: lettura lenta e ripetizioni vicine ----
 $('rileggi').addEventListener('click', async () => {
   avvisoPagina('');
-  const t = testo.value.trim();
+  const t = testoIncollato();
   const box = $('bozzaBox');
   const lista = $('bozzaLista');
   lista.textContent = '';
@@ -271,7 +281,7 @@ $('rileggi').addEventListener('click', async () => {
     avvisoPagina(
       r && r.motivo === 'protetta'
         ? AVVISO_PROTETTA
-        : 'Per rileggere una bozza incolla il testo qui sopra, oppure selezionalo nella pagina o nell\'editor (anche TinyMCE e aree di testo).'
+        : 'Per rileggere una bozza selezionala nella pagina o nell\'editor, oppure incollala.'
     );
     return;
   }
@@ -288,12 +298,6 @@ $('rileggi').addEventListener('click', async () => {
     li.append(v);
     lista.append(li);
   }
-});
-$('articolo').addEventListener('click', async () => {
-  avvisoPagina('');
-  const r = await comando('leggiArticolo');
-  if (r && r.letto) return;
-  avvisoPagina(r && r.motivo === 'protetta' ? AVVISO_PROTETTA : AVVISO_ARTICOLO);
 });
 stop.addEventListener('click', () => comando('stop'));
 scarica.addEventListener('click', () => {
@@ -317,10 +321,18 @@ const apriScorciatoie = (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); // solo su clic dell'utente
 };
-$('tasti').addEventListener('click', apriScorciatoie);
 $('tastiAvviso').addEventListener('click', apriScorciatoie);
+$('impostazioni').addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+  window.close();
+});
+// la sezione del testo incollato resta come l'utente l'ha lasciata
+incolla.addEventListener('toggle', () => chrome.storage.local.set({ incollaAperto: incolla.open }));
 
 chrome.runtime.onMessage.addListener((msg, mittente) => {
+  // @@test-inizio
+  if (globalThis.__testFermo) return;
+  // @@test-fine
   if (mittente.id !== chrome.runtime.id) return;
   if (msg && msg.da === 'offscreen' && msg.tipo === 'stato') {
     if (msg.stato.motorePronto) inCache = true;
@@ -329,18 +341,12 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
 });
 
 (async () => {
-  const [{ bozza, voce: voceScelta }, comandi] = await Promise.all([chrome.storage.local.get(['bozza', 'voce']), chrome.commands.getAll()]);
+  const [{ bozza, voce: voceScelta, incollaAperto }, comandi] = await Promise.all([chrome.storage.local.get(['bozza', 'voce', 'incollaAperto']), chrome.commands.getAll()]);
   if (bozza) testo.value = bozza;
+  incolla.open = !!incollaAperto;
   mostraVoce(voceScelta);
   // scorciatoie lette da Chrome: restano giuste anche se l'utente le cambia
-  const tasto = (nome) => {
-    const c = comandi.find((x) => x.name === nome);
-    return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : 'non assegnata';
-  };
-  $('tasto').textContent = tasto('leggi-selezione');
-  $('tastoStop').textContent = tasto('ferma-lettura');
-  // Chrome lascia la scorciatoia vuota se e' gia' usata da un'altra estensione
-  $('avvisoTasto').hidden = tasto('leggi-selezione') !== 'non assegnata';
+  mostraTasti(comandi);
   try {
     inCache = await modelliInCache();
   } catch {
@@ -365,6 +371,45 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
   } catch {}
 })();
 
+// ---- Scorciatoie sempre in vista: i tasti veri di Chrome, o "non impostata · Sistema" ----
+function mostraTasti(comandi) {
+  const tasto = (nome) => {
+    const c = comandi.find((x) => x.name === nome);
+    return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : '';
+  };
+  const mancanti = [];
+  const mostra = (box, nome, dopo, etichetta) => {
+    const t = tasto(nome);
+    box.textContent = '';
+    if (t) {
+      const k = document.createElement('kbd');
+      k.textContent = t;
+      box.append(k);
+      if (dopo) box.append(` ${dopo}`);
+      return t;
+    }
+    mancanti.push(etichetta);
+    const s = document.createElement('span');
+    s.className = 'manca';
+    s.textContent = etichetta === 'Ferma' ? 'Ferma non impostata · ' : 'non impostata · ';
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = 'Sistema';
+    a.addEventListener('click', apriScorciatoie);
+    box.append(s, a);
+    return '';
+  };
+  mostra($('tastoLeggi'), 'leggi-selezione', '', 'Leggi');
+  mostra($('tastoFerma'), 'ferma-lettura', 'ferma', 'Ferma');
+  const td = mostra($('tastoDettaBox'), 'dettatura', 'tieni premuto', 'Detta');
+  if (td) tastoDettatura = td;
+  // il problema si vede gia' sotto il pulsante ("non impostata · Sistema"): il motivo nel suggerimento
+  for (const id of ['tastoLeggi', 'tastoFerma', 'tastoDettaBox']) {
+    $(id).title = $(id).querySelector('.manca') ? "Scorciatoia non impostata: di solito un'altra estensione usa gli stessi tasti. Sistema apre le scorciatoie di Chrome." : '';
+  }
+  $('avvisoTasto').hidden = true;
+}
+
 // ---- Dettatura ----
 let dettPronta = null; // modello della dettatura sul computer?
 let tastoDettatura = 'Ctrl+Spazio';
@@ -374,38 +419,40 @@ async function mostraDettatura(s) {
   const scarica = !!(d && d.totale > 1 && !d.avvio && d.scaricati < d.totale);
   if (s && s.info && !d) dettPronta = true;
   $('detta').classList.toggle('attiva', !!attiva);
-  $('detta').querySelector('span').textContent = attiva ? 'Ferma' : 'Detta';
+  $('detta').querySelector('.etichetta').textContent = attiva ? 'Ferma' : 'Detta';
   // mentre il modello si scarica (fuori da una dettatura) il pulsante aspetta
   $('detta').disabled = scarica && !attiva;
-  $('detta').title = scarica && !attiva ? 'Il modello della dettatura si sta scaricando' : 'Detta nel campo dove hai il cursore';
   let t;
-  if (scarica) t = `Dettatura non ancora pronta: scarico il modello, ${Math.floor((100 * d.scaricati) / d.totale)}%`;
-  else if (s && s.fase === 'preparazione') t = 'Preparo la dettatura…';
-  else if (attiva) t = 'Ti ascolto…';
-  else if (s && s.fase === 'errore') t = s.errore || 'Errore nella dettatura';
-  else if (dettPronta) t = `Dettatura pronta: clicca in un campo e premi ${tastoDettatura}`;
-  else if (dettPronta === false) t = `Dettatura non ancora pronta: il modello si scarica da solo alla prima dettatura (${tastoDettatura})`;
-  if (t) $('dettaStato').textContent = t;
+  let titolo = 'Detta nel campo dove hai il cursore';
+  if (scarica) {
+    t = `scarico ${Math.floor((100 * d.scaricati) / d.totale)}%`;
+    titolo = 'Dettatura non ancora pronta: il modello si sta scaricando, una volta sola';
+  } else if (s && s.fase === 'preparazione') t = 'preparo…';
+  else if (attiva) t = 'ti ascolto';
+  else if (s && s.fase === 'errore') {
+    t = 'errore';
+    titolo = s.errore || 'Errore nella dettatura';
+    avvisoPagina(titolo);
+  } else if (dettPronta) t = 'pronta';
+  else if (dettPronta === false) {
+    t = 'si prepara al primo uso';
+    titolo = 'Il modello si scarica da solo alla prima dettatura, una volta sola';
+  }
+  if (t !== undefined) $('dettaStato').textContent = t;
+  $('detta').title = titolo;
 }
 $('detta').addEventListener('click', async () => {
   const r = await comando('dettaturaAlterna');
   if (r && r.motivo === 'protetta') $('dettaStato').textContent = 'Chrome non permette di dettare su questa pagina.';
   else if (r && r.avviata) window.close();
 });
-$('dettaOpzioni').addEventListener('click', (e) => {
-  e.preventDefault();
-  comando('dettaturaApri');
-  window.close();
-});
 chrome.runtime.onMessage.addListener((m) => {
+  // @@test-inizio
+  if (globalThis.__testFermo) return;
+  // @@test-fine
   if (m && m.da === 'offscreen' && m.tipo === 'statoDettatura') mostraDettatura(m.stato);
 });
 (async () => {
-  const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
-  if (c && c.shortcut) {
-    tastoDettatura = c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio');
-    $('tastoDetta').textContent = tastoDettatura;
-  }
   try {
     const { dettModello } = await chrome.storage.local.get('dettModello');
     const p = await comando('dettaturaPronto', { modello: dettModello || 'normale' });
@@ -414,3 +461,8 @@ chrome.runtime.onMessage.addListener((m) => {
     mostraDettatura(r && r.stato);
   } catch {}
 })();
+
+// @@test-inizio
+// solo test: catture del pannello negli stati principali (test/e2e/popup-catture.mjs)
+globalThis.__testPopup = { mostra, mostraDettatura, mostraTasti, avvisoPagina };
+// @@test-fine

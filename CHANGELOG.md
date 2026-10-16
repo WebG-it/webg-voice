@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.4.1] - 2026-10-16
+
+- Pannello ridisegnato: due azioni grandi in alto, Leggi (selezione o articolo; Pausa e Riprendi durante la lettura, con Ferma accanto solo quando serve) e Detta (pronta, scarico 62%, ti ascolto); sotto ciascuna le scorciatoie vere come tasti, o «non impostata · Sistema»; voce e velocita' in una riga; una riga di stato; testo incollato in una sezione richiudibile che resta come la lasci; Rileggi la bozza e Crea MP3 piccoli in fondo; Impostazioni come ingranaggio in alto. Catture di controllo con test/e2e/popup-catture.mjs.
+
 ## [1.4.0] - 2026-10-16
 
 Lettura e dettatura insieme (riunisce le 1.3.x del ramo della dettatura e la 1.3.0 della lettura, mai uscite).

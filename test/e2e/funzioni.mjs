@@ -219,11 +219,11 @@ try {
     const msg = await pop2.$eval('#avvisoPagina', (e) => (e.hidden ? '' : e.textContent));
     ok('nessun articolo: spiegazione nel popup', /Non trovo un articolo/.test(msg), msg);
     await pop2.screenshot({ path: join(OUT, 'popup-nessun-articolo.png') });
-    // anche il pulsante "Leggi l'articolo" lo spiega
-    await pop2.click('#articolo');
+    // anche Leggi del popup (senza selezione cerca l'articolo) lo spiega
+    await pop2.click('#play');
     await dorme(800);
     const msg2 = await pop2.$eval('#avvisoPagina', (e) => (e.hidden ? '' : e.textContent));
-    ok('nessun articolo: pulsante del popup', /Non trovo un articolo/.test(msg2), msg2);
+    ok('nessun articolo: pulsante del popup', /articolo/.test(msg2), msg2);
     await pop2.close();
   }
 
@@ -273,7 +273,7 @@ try {
     await ferma();
     // pulsante del popup
     pop = await apriPopup();
-    await pop.click('#articolo');
+    await pop.click('#play');
     const s5 = await attendi((s) => s.fase === 'lettura' || s.errore, 60000);
     ok('pulsante "Leggi l\'articolo" del popup', s5.fase === 'lettura' && !!s5.titolo, { titolo: s5.titolo });
     await pop.close();
@@ -364,7 +364,7 @@ try {
     await vai(`${LOCALE}/articolo`);
     let pop = await apriPopup();
     const base = readFileSync(join(QUI, '..', 'testo-lungo.txt'), 'utf8');
-    await pop.$eval('#testo', (e, t) => { e.value = t; }, base);
+    await pop.$eval('#testo', (e, t) => { e.value = t; e.closest('details').open = true; }, base);
     const t0 = Date.now();
     await pop.click('#mp3');
     await attendi((s) => s.mp3 && s.mp3.fase === 'sintesi', 60000);
