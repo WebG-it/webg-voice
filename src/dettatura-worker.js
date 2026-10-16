@@ -37,7 +37,7 @@ async function modelloInCache(id) {
 
 async function carica(id) {
   const mid = modelloDettaturaValido(id);
-  if (attuale && attuale.id === mid) return attuale.info;
+  if (attuale && attuale.id === mid && !attuale.daRicaricare) return attuale.info;
   const m = MODELLI_DETTATURA[mid];
   if (m.ep !== EP) throw new Error(`il modello ${m.nome} gira su ${m.ep}, questo motore su ${EP}`);
   const t0 = performance.now();
@@ -67,9 +67,25 @@ async function carica(id) {
   let enc;
   let finestraVariabile = true;
   let riserva = null;
-  try {
-    enc = await ottieni(m.encoder, avanz, base, totale);
-  } catch (e) {
+  const haCorto = await archivio.esiste(chiave(m.encoder));
+  const haIntero = await archivio.esiste(chiave(m.encoderIntero));
+  if (!haCorto && haIntero) {
+    // c'e' la riserva (finestra intera, piu' lenta) di un download precedente: si usa subito, e
+    // intanto si scarica in sottofondo l'encoder corto dalla release; dalla volta dopo si usa quello
+    enc = await ottieni(m.encoderIntero, avanz, base, totale);
+    finestraVariabile = false;
+    riserva = 'encoder corto in arrivo';
+    ottieni(m.encoder, () => {}, 0)
+      .then(async () => {
+        await archivio.cancella(chiave(m.encoderIntero));
+        // alla prossima dettatura il modello si ricarica con l'encoder corto
+        if (attuale && attuale.id === mid) attuale.daRicaricare = true;
+      })
+      .catch((e) => console.warn('encoder corto non scaricato, resta la riserva:', e && e.message));
+  } else
+    try {
+      enc = await ottieni(m.encoder, avanz, base, totale);
+    } catch (e) {
     riserva = String((e && e.message) || e);
     console.warn('encoder ritoccato non disponibile, uso la riserva:', riserva);
     enc = await ottieni(m.encoderIntero, avanz, base, totale);

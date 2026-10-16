@@ -26,6 +26,31 @@ chrome.commands.getAll().then((c) => {
   }
   $('tastiMancanti').hidden = !mancanti;
 });
+// stato della dettatura: pronta, oppure modello in download con la percentuale
+let dettPronta = null;
+function statoDettatura(s) {
+  const d = s && s.download;
+  if (d && d.totale > 1 && !d.avvio && d.scaricati < d.totale) {
+    $('dettStato').textContent = `non ancora pronta: scarico il modello, ${Math.floor((100 * d.scaricati) / d.totale)}%`;
+    return;
+  }
+  if (s && s.info && !d) dettPronta = true;
+  $('dettStato').textContent = dettPronta ? 'pronta' : 'non ancora pronta: il modello si scarica da solo alla prima dettatura';
+}
+chrome.runtime.onMessage.addListener((m) => {
+  if (m && m.da === 'offscreen' && m.tipo === 'statoDettatura') statoDettatura(m.stato);
+});
+(async () => {
+  try {
+    const { dettModello } = await chrome.storage.local.get('dettModello');
+    const p = await chrome.runtime.sendMessage({ a: 'background', tipo: 'dettaturaPronto', modello: dettModello || 'normale' });
+    dettPronta = !!(p && p.completo);
+    const r = await chrome.runtime.sendMessage({ a: 'background', tipo: 'dettaturaStato' });
+    statoDettatura(r && r.stato);
+  } catch {
+    $('dettStato').textContent = '…';
+  }
+})();
 $('apriTasti').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
 $('apriDettatura').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('dettatura.html') }));
 chrome.storage.local.get(['dettModello', 'dettMotore', 'dettRiserva']).then((o) => {

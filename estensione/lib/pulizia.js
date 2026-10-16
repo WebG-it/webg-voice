@@ -67,6 +67,9 @@ const ALLUCINAZIONI = [
   /^grazie (a tutti )?per (la visione|l'attenzione|aver guardato)/i,
   /^(iscriviti|iscrivetevi) al canale/i,
   /^(musica|applausi|risate|silenzio)[.!]?$/i,
+  /^(grazie per (l'ascolto|aver ascoltato|averci seguito|la vostra attenzione)|a presto|ci vediamo (al prossimo video|alla prossima))[.!]?$/i,
+  /(iscriviti|iscrivetevi|lasciate un like|attivate la campanella)/i,
+  /^(sottotitoli|traduzione|revisione) (di|a cura di)\b/i,
   /^\.+$/,
 ];
 // Frasi vere, ma che Whisper inventa spesso sul silenzio: si scartano solo se il modello stesso

@@ -1,8 +1,8 @@
 // Modelli Whisper della dettatura. Si scaricano alla prima attivazione della dettatura, non
 // all'installazione, e restano nell'archivio locale (IndexedDB) come il modello della lettura.
 //
-// Fonti, in ordine: decoder e tokenizzatore da Hugging Face (revisione fissata), poi la copia
-// identica nella release "dettatura-v1" del repository WebG su GitHub. Gli encoder sono ritoccati
+// Fonti, in ordine: la release "dettatura-v1" del repository WebG su GitHub, poi (per decoder e
+// tokenizzatore, copie identiche) Hugging Face alla revisione fissata. Gli encoder sono ritoccati
 // (scripts/accorcia-encoder.py: stessi pesi, finestra corta) e stanno solo nella release: se non
 // si scaricano, la riserva e' l'encoder originale di Hugging Face, che funziona ma lavora sempre
 // su 30 secondi (piu' lento). L'impronta SHA-256 si controlla sempre.
@@ -23,7 +23,7 @@ const TOKENIZZATORE = {
   nome: 'vocabolario della dettatura',
   byte: 2480466,
   sha256: '27fc476bfe7f17299480be2273fc0608e4d5a99aba2ab5dec5374b4482d1a566',
-  fonti: [`${HF}${REV.small}tokenizer.json`, `${GITHUB}whisper-tokenizer.json`],
+  fonti: [`${GITHUB}whisper-tokenizer.json`, `${HF}${REV.small}tokenizer.json`],
 };
 
 /** File scaricabili: chiave nell'archivio -> { nome, byte, sha256, fonti } */
@@ -33,7 +33,7 @@ export const FILE_DETTATURA = {
     nome: 'vocabolario del modello Qualità',
     byte: 2480617,
     sha256: '6d8cbd7cd0d8d5815e478dac67b85a26bbe77c1f5e0c6d76d1ce2abc0e5f21ca',
-    fonti: [`${HF}${REV.turbo}tokenizer.json`, `${GITHUB}whisper-turbo-tokenizer.json`],
+    fonti: [`${GITHUB}whisper-turbo-tokenizer.json`, `${HF}${REV.turbo}tokenizer.json`],
   },
   dettBaseEnc: {
     nome: 'modello Leggero, parte 1',
@@ -51,7 +51,7 @@ export const FILE_DETTATURA = {
     nome: 'modello Leggero, parte 2',
     byte: 53693315,
     sha256: 'fa3ef9902734ce5ae6f9ef2bdb2ba9a6c4b5785b09f4f420ce036573dc9d090b',
-    fonti: [`${HF}${REV.base}onnx/decoder_model_merged_int8.onnx`, `${GITHUB}whisper-base-decoder-int8.onnx`],
+    fonti: [`${GITHUB}whisper-base-decoder-int8.onnx`, `${HF}${REV.base}onnx/decoder_model_merged_int8.onnx`],
   },
   dettSmallEnc: {
     nome: 'modello Normale, parte 1',
@@ -69,7 +69,7 @@ export const FILE_DETTATURA = {
     nome: 'modello Normale, parte 2',
     byte: 156750845,
     sha256: 'ec07c3cbb64172c39791e26ee870a65ac22b458c36722bfe2776b3dbf741e0c9',
-    fonti: [`${HF}${REV.small}onnx/decoder_model_merged_int8.onnx`, `${GITHUB}whisper-small-decoder-int8.onnx`],
+    fonti: [`${GITHUB}whisper-small-decoder-int8.onnx`, `${HF}${REV.small}onnx/decoder_model_merged_int8.onnx`],
   },
   dettTurboEnc: {
     nome: 'modello Qualità, parte 1',
@@ -87,7 +87,7 @@ export const FILE_DETTATURA = {
     nome: 'modello Qualità, parte 2',
     byte: 193505017,
     sha256: '45981cdd958a4c8e1447839850d2e6e27e30974ccbe31b4a1e5ebe9ad8965a5f',
-    fonti: [`${HF}${REV.turbo}onnx/decoder_model_merged_q4f16.onnx`, `${GITHUB}whisper-turbo-decoder-q4f16.onnx`],
+    fonti: [`${GITHUB}whisper-turbo-decoder-q4f16.onnx`, `${HF}${REV.turbo}onnx/decoder_model_merged_q4f16.onnx`],
   },
 };
 

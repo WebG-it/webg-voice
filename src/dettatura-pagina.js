@@ -345,6 +345,7 @@
         : `Preparo la dettatura, ${Math.floor((100 * s.download.scaricati) / s.download.totale)}% (solo la prima volta)`;
     }
     if (s.fase === 'errore') t = s.errore || 'Errore nella dettatura';
+    if (s.fase === 'inattiva' && s.avviso) t = s.avviso;
     if ((fase === 'ascolto' || fase === 'parlato') && D.scorciatoia) t += ` · ${D.scorciatoia} per finire`;
     p.querySelector('.testo').textContent = t;
     p.title = t;
@@ -355,7 +356,7 @@
       tempoChiusura = setTimeout(() => {
         if (!ombra.querySelector('.casella').hidden && D.casellaTesto) p.hidden = true;
         else togliIndicatore();
-      }, s.fase === 'errore' ? 8000 : 1500);
+      }, s.fase === 'errore' || s.avviso ? 6000 : 1500);
     } else {
       p.hidden = false;
       p.querySelector('.ferma').hidden = false;

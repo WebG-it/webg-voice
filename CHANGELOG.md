@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.7] - 2026-10-16
+
+- Download del modello della dettatura dalla release GitHub dettatura-v1 come fonte principale (Hugging Face resta riserva); chi aveva l'encoder originale della riserva passa da solo a quello corto (subito la riserva, il corto in sottofondo, dalla volta dopo il corto); avanzamento senza il nome del sito. Stato della dettatura nel popup e nelle opzioni: pronta, oppure non ancora pronta con la percentuale del download (Detta in attesa). Niente testo inventato sul silenzio: VAD piu' severo (picco sopra il rumore, parlato minimo 300 ms), scarto delle uscite con probabilita' di silenzio alta, modello poco sicuro, ripetizioni o testo uguale al pezzo prima, frasi tipiche dei sottotitoli; niente testo precedente nel prompt; a mani libere la dettatura si ferma da sola dopo 20 secondi di silenzio e lo dice nella pillola.
+
 ## [1.3.6] - 2026-10-16
 
 - Il modello della dettatura si scarica da solo: alla prima pressione della scorciatoia (o di Detta) l'estensione sceglie il modello adatto al computer, lo scarica con l'avanzamento nella pillola in pagina e parte da sola; se il download si interrompe, la pressione successiva riprende da dove era arrivato. La pagina della dettatura si apre solo se manca il permesso del microfono, e da li' il modello si scarica da solo; il pulsante Scarica compare solo come Riprova. ONNX Runtime per WebGPU si carica solo se si sceglie il modello Qualita' (niente piu' avviso powerPreference con Normale): la scheda video si controlla senza caricarlo.

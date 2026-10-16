@@ -136,14 +136,34 @@ function chiudiMicrofono() {
 }
 
 // ---- sessione di dettatura ----
+const SILENZIO_FINE_MS = 20000;
 let sessione = null;
 let seqSessione = 0;
 
 /** Prompt per Whisper: termini del dizionario e coda del testo gia' dettato (contesto). */
+// Solo i termini: il testo gia' dettato nel prompt faceva ripetere a Whisper frasi intere sul
+// silenzio ("Siamo in un'altra situazione" quattro volte, prima prova di Marco).
 function prompt(S) {
   const termini = S.termini.length ? S.termini.join(', ') + '.' : '';
-  const coda = S.precedente.split(/\s+/).slice(-20).join(' ');
-  return { prompt: `${termini} ${coda}`.trim(), base: termini };
+  return { prompt: termini, base: termini };
+}
+
+/**
+ * Uscite da scartare (allucinazioni): poca probabilita' che ci fosse parlato, modello poco sicuro,
+ * ripetizioni, testo identico al pezzo prima, parole che si ripetono troppo.
+ */
+export function daScartare(r, precedente) {
+  const t = String(r.testo || '').trim();
+  if (!t) return 'vuoto';
+  if (r.ripetuto) return 'ripetizione';
+  const ps = r.probSilenzio || 0;
+  const lp = r.logprobMedio || 0;
+  if (ps > 0.6 || (ps > 0.3 && lp < -0.6) || lp < -1.2) return 'silenzio';
+  const norma = (x) => x.toLowerCase().replace(/[^\p{L}\p{N} ]+/gu, '').replace(/\s+/g, ' ').trim();
+  if (precedente && norma(t) === norma(precedente)) return 'uguale al precedente';
+  const parole = norma(t).split(' ');
+  if (parole.length >= 8 && new Set(parole).size / parole.length < 0.4) return 'ripetizione';
+  return null;
 }
 
 async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
@@ -184,6 +204,7 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
     if (S !== sessione) return chiudiMicrofono();
     const seg = creaSegmentatore({
       inizio() {
+        S.ultimoParlato = Date.now();
         stato.fase = 'parlato';
         pubblica();
       },
@@ -226,6 +247,14 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
         picco = 0;
       }
     };
+    // a mani libere: dopo 20 secondi senza parlare la dettatura si ferma da sola
+    S.ultimoParlato = Date.now();
+    S.controlloSilenzio = setInterval(() => {
+      if (S !== sessione) return clearInterval(S.controlloSilenzio);
+      if (stato.fase === 'ascolto' && !stato.inCoda && Date.now() - S.ultimoParlato > SILENZIO_FINE_MS) {
+        ferma('Dettatura fermata dopo 20 secondi di silenzio');
+      }
+    }, 1000);
     stato.fase = 'ascolto';
     stato.prontaMs = Date.now() - S.t0;
     pubblica();
@@ -281,6 +310,14 @@ function consegna(S, promessa, info) {
     if (stato.latenze.length > 20) stato.latenze.shift();
     stato.latenzaMs = stato.latenzaMs === null ? latenza : Math.round(stato.latenzaMs * 0.7 + latenza * 0.3);
     if (r.annullato) return;
+    const scarto = daScartare(r, S.ultimoTesto);
+    if (scarto) {
+      (stato.scartati ||= []).push({ motivo: scarto, testo: String(r.testo || '').slice(0, 80) });
+      if (stato.scartati.length > 20) stato.scartati.shift();
+      pubblica();
+      return;
+    }
+    S.ultimoTesto = r.testo;
     if (r.testo) S.precedente = (S.precedente + ' ' + r.testo).slice(-400);
     pubblicaA({
       tipo: 'dettato',
@@ -299,10 +336,12 @@ function consegna(S, promessa, info) {
   return S.catena;
 }
 
-async function ferma() {
+async function ferma(motivo) {
   const S = sessione;
   if (!S) return;
   S.chiusura = true;
+  clearInterval(S.controlloSilenzio);
+  stato.avviso = motivo || null;
   if (S.webspeech) {
     try {
       S.webspeech.stop();

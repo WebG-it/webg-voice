@@ -14,12 +14,13 @@ export const PARAMETRI = {
   anticipo: 18, // blocchi di silenzio per la trascrizione in anticipo (360 ms)
   fine: 30, // blocchi di silenzio per chiudere il segmento (600 ms)
   coda: 10, // blocchi di silenzio tenuti in fondo al segmento (200 ms)
-  minimo: 10, // blocchi di parlato minimi perche' il segmento valga (200 ms)
+  minimo: 15, // blocchi di parlato minimi perche' il segmento valga (300 ms)
   massimo: 1000, // blocchi massimi per segmento (20 s): oltre si taglia nel punto piu' silenzioso
   lungo: 150, // blocchi (3 s) oltre cui il segmento si chiude anche a una pausa breve
   anticipoLungo: 10, // ... trascrizione in anticipo dopo 200 ms di silenzio
   fineLungo: 16, // ... e chiusura dopo 320 ms: le frasi lunghe arrivano a pezzi mentre si parla
-  sopraRumore: 10, // dB sopra il rumore di fondo per dire "parlato"
+  sopraRumore: 12, // dB sopra il rumore di fondo per dire "parlato"
+  piccoMinimo: 18, // dB sopra il rumore che il punto piu' forte del segmento deve raggiungere (la voce si', un fruscio no)
   sogliaMinima: -52, // dBFS sotto cui non e' mai parlato
 };
 
@@ -52,13 +53,15 @@ export function creaSegmentatore(cb, opz = {}) {
     const s = seg;
     seg = null;
     if (!s) return;
-    if (s.parlato < P.minimo) {
+    // picco del segmento rispetto al rumore di fondo: un rumore che supera appena la soglia non e' voce
+    const picco = Math.max(...s.energie) - rumore;
+    if (s.parlato < P.minimo || picco < P.piccoMinimo) {
       cb.scarto && cb.scarto(motivo);
       return;
     }
     const tieni = s.blocchi.length - Math.max(0, s.silenzio - P.coda);
     const audio = unisci(s.blocchi.slice(0, tieni));
-    const info = { pausa: s.pausa, durata: (tieni * MS) / 1000, fineParlato: s.fineParlato, motivo, anticipato: s.anticipato, silenzioMs: s.silenzio * MS };
+    const info = { pausa: s.pausa, durata: (tieni * MS) / 1000, fineParlato: s.fineParlato, motivo, anticipato: s.anticipato, silenzioMs: s.silenzio * MS, picco: +picco.toFixed(1), parlatoMs: s.parlato * MS };
     fineUltimo = s.fineParlato;
     cb.fine && cb.fine(audio, info);
   }

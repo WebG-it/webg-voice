@@ -176,7 +176,7 @@ chrome.runtime.onMessage.addListener((m) => {
     if (d && d.totale) {
       $('#barra').hidden = false;
       $('#barra').value = d.scaricati / d.totale;
-      $('#modelloStato').textContent = `Scarico il modello: ${mb(d.scaricati)} di ${mb(d.totale)}${d.fonte ? ` da ${d.fonte}` : ''}…`;
+      $('#modelloStato').textContent = `Scarico il modello: ${mb(d.scaricati)} di ${mb(d.totale)}…`;
     } else if (d && d.avvio) $('#modelloStato').textContent = 'Avvio il modello e misuro la velocità…';
     mostraProva(m.stato);
   }

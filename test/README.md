@@ -36,6 +36,12 @@ CHROME=<...> node test/dettatura/web-speech.mjs
 - `banco.mjs`: Whisper in ONNX Runtime Web (WebAssembly e WebGPU) su una pagina locale, senza
   estensione: tempi di mel, encoder e decoder per file, rapporto col tempo reale e testo.
 - `web-speech.mjs`: `SpeechRecognition.available` per l'italiano sul dispositivo.
+- `silenzio.mjs`: niente testo inventato. Silenzio, ventola e tastiera di 30 s non devono scrivere
+  niente; una frase seguita da 25 s di silenzio scrive solo la frase e la dettatura si ferma da sola
+  dopo 20 s. I wav si generano con lo script Python in fondo a questo file.
+- `download-vero.mjs`: download da internet (nessun server locale): i file devono arrivare dalla
+  release GitHub `dettatura-v1`, con l'encoder corto.
+- `riserva.mjs`: chi ha l'encoder originale (riserva) passa da solo a quello corto alla volta dopo.
 - `stato-salvato.mjs`: aggiornamento da una versione precedente. Mette in `chrome.storage.local` lo
   stato lasciato dalla 1.3.2-1.3.3 (quello letto nel profilo di Marco: misura vecchia, modello Leggero
   proposto e mai scaricato) e apre la pagina della dettatura: deve partire, rispondere sul microfono e
@@ -98,3 +104,27 @@ legge i file dell'offscreen dal disco quando lo apre.
 costo fisso e costo per fonema (`FILI=n` per provare un altro numero di thread, `OPZIONI=<json>`
 per opzioni di sessione di ONNX Runtime). `parallelo.mjs` prova più motori in parallelo
 (`PROVE=1x8,2x4,...`) con la memoria occupata.
+
+### Wav per `silenzio.mjs`
+
+```python
+import numpy as np, wave
+sr = 16000
+rng = np.random.default_rng(1)
+def scrivi(nome, x):
+    w = wave.open(nome, 'wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+    w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes()); w.close()
+def rosa(n, amp):
+    b = np.cumsum(rng.standard_normal(n)); b = b - np.convolve(b, np.ones(400) / 400, 'same')
+    return b / np.abs(b).max() * amp
+t = np.arange(30 * sr) / sr
+scrivi('silenzio30.wav', np.zeros(30 * sr))
+scrivi('ventola30.wav', rosa(30 * sr, 0.04) + 0.01 * np.sin(2 * np.pi * 120 * t))
+x = rosa(30 * sr, 0.005); pos = 0
+while pos < 30 * sr - 800:
+    pos += int(sr / rng.uniform(6, 9)); n = int(0.006 * sr)
+    c = rng.standard_normal(n) * np.exp(-np.arange(n) / (0.0015 * sr)) * rng.uniform(0.15, 0.35)
+    x[pos:pos + n] += c[:len(x[pos:pos + n])]
+scrivi('tastiera30.wav', x)
+# frase_silenzio.wav: 1 s di silenzio, una frase a 16 kHz, 25 s di silenzio con un filo di rumore
+```

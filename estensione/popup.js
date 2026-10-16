@@ -333,13 +333,26 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
 })();
 
 // ---- Dettatura ----
+let dettPronta = null; // modello della dettatura sul computer?
+let tastoDettatura = 'Ctrl+Spazio';
 async function mostraDettatura(s) {
   const attiva = s && ['preparazione', 'ascolto', 'parlato', 'trascrivo'].includes(s.fase);
+  const d = s && s.download;
+  const scarica = !!(d && d.totale > 1 && !d.avvio && d.scaricati < d.totale);
+  if (s && s.info && !d) dettPronta = true;
   $('detta').classList.toggle('attiva', !!attiva);
   $('detta').querySelector('span').textContent = attiva ? 'Ferma' : 'Detta';
-  if (s && s.fase === 'preparazione' && s.download && s.download.totale) $('dettaStato').textContent = `Scarico il modello: ${Math.floor((100 * s.download.scaricati) / s.download.totale)}%`;
-  else if (attiva) $('dettaStato').textContent = 'Ti ascolto…';
-  else if (s && s.fase === 'errore') $('dettaStato').textContent = s.errore || 'Errore nella dettatura';
+  // mentre il modello si scarica (fuori da una dettatura) il pulsante aspetta
+  $('detta').disabled = scarica && !attiva;
+  $('detta').title = scarica && !attiva ? 'Il modello della dettatura si sta scaricando' : 'Detta nel campo dove hai il cursore';
+  let t;
+  if (scarica) t = `Dettatura non ancora pronta: scarico il modello, ${Math.floor((100 * d.scaricati) / d.totale)}%`;
+  else if (s && s.fase === 'preparazione') t = 'Preparo la dettatura…';
+  else if (attiva) t = 'Ti ascolto…';
+  else if (s && s.fase === 'errore') t = s.errore || 'Errore nella dettatura';
+  else if (dettPronta) t = `Dettatura pronta: clicca in un campo e premi ${tastoDettatura}`;
+  else if (dettPronta === false) t = `Dettatura non ancora pronta: il modello si scarica da solo alla prima dettatura (${tastoDettatura})`;
+  if (t) $('dettaStato').textContent = t;
 }
 $('detta').addEventListener('click', async () => {
   const r = await comando('dettaturaAlterna');
@@ -356,9 +369,15 @@ chrome.runtime.onMessage.addListener((m) => {
 });
 (async () => {
   const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
-  if (c && c.shortcut) $('tastoDetta').textContent = c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio');
+  if (c && c.shortcut) {
+    tastoDettatura = c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio');
+    $('tastoDetta').textContent = tastoDettatura;
+  }
   try {
+    const { dettModello } = await chrome.storage.local.get('dettModello');
+    const p = await comando('dettaturaPronto', { modello: dettModello || 'normale' });
+    dettPronta = !!(p && p.completo);
     const r = await comando('dettaturaStato');
-    if (r && r.stato) mostraDettatura(r.stato);
+    mostraDettatura(r && r.stato);
   } catch {}
 })();
