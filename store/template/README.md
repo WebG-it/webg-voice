@@ -6,7 +6,7 @@ voci (Sara e Nicola, del modello Kokoro-82M) girano tutte sul tuo computer: nien
 abbonamenti, niente testo inviato a servizi esterni. Dopo il primo download funziona anche senza
 connessione.
 
-Dalla 1.3 scrive anche **sotto dettatura**: premi **Ctrl+Maiusc+X** in un campo di qualsiasi pagina, parli,
+Dalla 1.3 scrive anche **sotto dettatura**: premi **Ctrl+Spazio** in un campo di qualsiasi pagina, parli,
 e il testo arriva nel campo già pulito (punteggiatura, a capo, elenchi, niente «ehm»). Anche il
 riconoscimento (Whisper di OpenAI) gira sul tuo computer: l'audio non esce.
 
@@ -81,10 +81,14 @@ al primo uso compare un pulsante per scaricarlo.
 ## Dettatura
 
 - Clicca nel campo dove vuoi scrivere (casella di Gmail, chat di WhatsApp Web o Claude.ai, modulo,
-  editor di Joomla) e premi **Ctrl+Maiusc+X** (su Mac **Control+Maiusc+X**), oppure **Detta** nel popup. Mentre
-  ascolta, in basso a destra c'è un pallino rosso con **Ferma**; **Ctrl+Maiusc+X** di nuovo, o «fine
+  editor di Joomla) e premi **Ctrl+Spazio** (su Mac **Control+Maiusc+X**: Control+Spazio sul Mac cambia la
+  lingua di digitazione), oppure **Detta** nel popup. Mentre
+  ascolta, in basso a destra c'è un pallino rosso con **Ferma**; **Ctrl+Spazio** di nuovo, o «fine
   dettatura», finisce. Se cambi scheda la dettatura si ferma.
-- **Primo uso**: alla prima Ctrl+Maiusc+X si apre la pagina della dettatura. Lì consenti il microfono (una
+- Ctrl+Spazio, finché l'estensione è attiva, vale per la dettatura su tutte le pagine: negli editor
+  di codice nel browser (autocompletamento) e in Google Fogli (selezione della colonna) quella
+  scorciatoia della pagina non arriva più. Se ti serve, cambiala da `chrome://extensions/shortcuts`.
+- **Primo uso**: alla prima Ctrl+Spazio si apre la pagina della dettatura. Lì consenti il microfono (una
   volta sola: Chrome non lascia chiedere il permesso ai documenti nascosti delle estensioni) e
   scegli il modello: la pagina misura il computer e propone quello giusto. Il modello si scarica
   solo allora, non all'installazione, a pezzi con ripresa e controllo SHA-256, e alla fine si misura
@@ -177,7 +181,7 @@ Nicola) running entirely on your computer, and can save it as MP3. No account, n
 no text sent anywhere; on first start it downloads the voice model (about {{MB}} MB) once, in the
 background, then it works offline. Select text and press **Alt+Q** (with nothing selected it reads
 the whole article; again to pause or resume, **Alt+W** to stop), or right-click → *Leggi ad alta
-voce*. Since 1.3 it also types Italian dictation: press **Ctrl+Shift+X** in any text field and speak;
+voce*. Since 1.3 it also types Italian dictation: press **Ctrl+Space** in any text field and speak;
 recognition (OpenAI Whisper, small by default) runs locally and the audio never leaves your computer.
 Licensed under GPL-3.0-or-later (it bundles eSpeak NG); see `THIRD_PARTY.md` for the
 Kokoro, Readability and Whisper base/small (Apache-2.0), Whisper large-v3-turbo and ONNX Runtime

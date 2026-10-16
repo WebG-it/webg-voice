@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.3] - 2026-10-16
+
+- Scorciatoia della dettatura: Ctrl+Spazio, due tasti con la mano sinistra (Chrome la assegna davvero, verificato). Su Mac resta Control+Maiusc+X, perche' Control+Spazio sul Mac cambia la lingua di digitazione. Ctrl+Spazio prende il posto dell'autocompletamento negli editor di codice nel browser e della selezione di colonna in Google Fogli; si cambia da chrome://extensions/shortcuts.
+
 ## [1.3.2] - 2026-10-16
 
 - Licenze dei modelli Whisper allineate: base e small Apache-2.0 (LICENSE-APACHE-2.0.txt), large-v3-turbo MIT, Copyright OpenAI, esportazioni ONNX di onnx-community; encoder modificati da WebG con scripts/accorcia-encoder.py, modifica dichiarata in THIRD_PARTY.md come chiede Apache-2.0.

@@ -302,7 +302,7 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
   // scorciatoie lette da Chrome: restano giuste anche se l'utente le cambia
   const tasto = (nome) => {
     const c = comandi.find((x) => x.name === nome);
-    return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : 'non assegnata';
+    return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : 'non assegnata';
   };
   $('tasto').textContent = tasto('leggi-selezione');
   $('tastoStop').textContent = tasto('ferma-lettura');
@@ -356,7 +356,7 @@ chrome.runtime.onMessage.addListener((m) => {
 });
 (async () => {
   const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
-  if (c && c.shortcut) $('tastoDetta').textContent = c.shortcut.replace(/Shift/g, 'Maiusc');
+  if (c && c.shortcut) $('tastoDetta').textContent = c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio');
   try {
     const r = await comando('dettaturaStato');
     if (r && r.stato) mostraDettatura(r.stato);

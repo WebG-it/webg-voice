@@ -198,7 +198,7 @@ async function selezioneDellaScheda(tabId, frameId) {
 // e un avviso che il popup mostra se lo si apre subito dopo ----
 async function scorciatoia(nome) {
   const c = (await chrome.commands.getAll()).find((x) => x.name === nome);
-  return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : '';
+  return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : '';
 }
 async function avvisa(tabId, motivo) {
   const tasto = await scorciatoia('leggi-selezione');

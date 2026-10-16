@@ -1,5 +1,5 @@
 // Pagina della dettatura: primo uso (microfono, misura del computer, scelta e download del
-// modello), prova, dizionario e opzioni. Si apre da sola alla prima Ctrl+Maiusc+X.
+// modello), prova, dizionario e opzioni. Si apre da sola alla prima Ctrl+Spazio.
 
 import { MODELLI_DETTATURA, modelloDettaturaValido, byteModello } from './lib/modelli-dettatura.js';
 import { creaSessione } from './lib/pulizia.js';
@@ -233,8 +233,8 @@ chrome.runtime.onMessage.addListener((m, _mitt, rispondi) => {
 // scorciatoia
 async function scorciatoia() {
   const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
-  const tasto = c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : '';
-  for (const k of document.querySelectorAll('.tastoDetta')) k.textContent = tasto || 'Ctrl+Maiusc+X';
+  const tasto = c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : '';
+  for (const k of document.querySelectorAll('.tastoDetta')) k.textContent = tasto || 'Ctrl+Spazio';
   $('#tastoAvviso').hidden = !!tasto;
 }
 for (const a of document.querySelectorAll('.apriTasti')) {

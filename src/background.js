@@ -198,7 +198,7 @@ async function selezioneDellaScheda(tabId, frameId) {
 // e un avviso che il popup mostra se lo si apre subito dopo ----
 async function scorciatoia(nome) {
   const c = (await chrome.commands.getAll()).find((x) => x.name === nome);
-  return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : '';
+  return c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc').replace(/BARRA SPAZIATRICE|Space/gi, 'Spazio') : '';
 }
 async function avvisa(tabId, motivo) {
   const tasto = await scorciatoia('leggi-selezione');
@@ -523,7 +523,7 @@ globalThis.__testMenuArticolo = async () => {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   return leggiDaScheda(tab, '', false, undefined, 'articolo');
 };
-// Dettatura senza microfono: pagina preparata come con Ctrl+Maiusc+X, poi testo "dettato" a mano
+// Dettatura senza microfono: pagina preparata come con Ctrl+Spazio, poi testo "dettato" a mano
 globalThis.__testDettaturaPagina = async () => {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   const r = await dettatura.preparaScheda(tab, await impostazioniDettatura(), false);
@@ -531,7 +531,7 @@ globalThis.__testDettaturaPagina = async () => {
 };
 globalThis.__testDettato = (testo, pausa = 2) => dettatura.daOffscreen({ tipo: 'dettato', testo, pausa, probSilenzio: 0, logprob: -0.1 });
 globalThis.__testDettaturaFine = () => dettatura.daOffscreen({ tipo: 'dettaturaFinita' });
-// Come Ctrl+Maiusc+X sulla scheda attiva; i file dei modelli da un server locale
+// Come Ctrl+Spazio sulla scheda attiva; i file dei modelli da un server locale
 globalThis.__testAltD = async () => {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   return dettatura.alterna(tab);
