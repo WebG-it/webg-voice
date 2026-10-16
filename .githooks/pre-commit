@@ -3,7 +3,7 @@
 # 1. versione, CHANGELOG, build allineata e percorsi personali (scripts/controlla-versione.mjs)
 # 2. scansione dei segreti con gitleaks sulle modifiche in commit.
 #    gitleaks si cerca nel PATH o nella cartella indicata da GITLEAKS_DIR
-#    (es. export GITLEAKS_DIR=/percorso/gitleaks). Se manca: avviso, non blocco.
+#    (es. export GITLEAKS_DIR=/percorso/gitleaks), altrimenti Docker. Se manca tutto: commit bloccato.
 node scripts/controlla-versione.mjs || exit 1
 
 GL=""
@@ -11,9 +11,17 @@ if [ -n "$GITLEAKS_DIR" ] && [ -x "$GITLEAKS_DIR/gitleaks" ]; then GL="$GITLEAKS
 elif [ -n "$GITLEAKS_DIR" ] && [ -x "$GITLEAKS_DIR/gitleaks.exe" ]; then GL="$GITLEAKS_DIR/gitleaks.exe"
 elif command -v gitleaks >/dev/null 2>&1; then GL="gitleaks"
 fi
-if [ -z "$GL" ]; then
-  echo "Avviso: gitleaks non trovato (PATH o GITLEAKS_DIR), scansione dei segreti saltata." >&2
+if [ -z "$GL" ] && command -v docker >/dev/null 2>&1; then
+  R="$(pwd -W 2>/dev/null || pwd)"
+  MSYS_NO_PATHCONV=1 docker run --rm -v "$R:/repo" zricethezav/gitleaks:latest git --pre-commit --staged --redact --no-banner -v /repo || {
+    echo "Commit bloccato: possibili segreti (o Docker non avviato)." >&2
+    exit 1
+  }
   exit 0
+fi
+if [ -z "$GL" ]; then
+  echo "Commit bloccato: gitleaks non trovato (PATH, GITLEAKS_DIR o Docker). Regola assoluta: niente segreti nei repo pubblici." >&2
+  exit 1
 fi
 "$GL" git --pre-commit --staged --redact --no-banner -v || {
   echo "Commit bloccato: gitleaks ha trovato possibili segreti nelle modifiche." >&2
