@@ -24,7 +24,7 @@ nessun servizio esterno li riceve.
 ## Dettatura e microfono
 
 Il microfono si usa solo per la dettatura, solo dopo il permesso che l'utente dà una volta nella
-pagina della dettatura, e solo mentre la dettatura è attiva: si accende con Alt+S (o il pulsante
+pagina della dettatura, e solo mentre la dettatura è attiva: si accende con Ctrl+Maiusc+X (o il pulsante
 Detta) e si spegne quando l'utente la ferma, cambia scheda o chiude la pagina. Mentre ascolta, la
 pagina mostra un pallino rosso e Chrome il suo indicatore del microfono.
 
@@ -80,7 +80,7 @@ https://github.com/WebG-it/webg-voice/issues
 it) is turned into speech locally in your browser and never leaves your computer; MP3 files are
 also created locally. The only network requests download the voice files (about {{MB}} MB, plus
 half a MB for the Nicola voice if you pick it) from the project's GitHub release or, as a
-fallback, from Hugging Face. Dictation (Alt+S) uses the microphone only while it is active and
+fallback, from Hugging Face. Dictation (Ctrl+Shift+X) uses the microphone only while it is active and
 transcribes the audio locally with Whisper; the audio is never stored or sent anywhere, unless you
 explicitly choose the optional Chrome speech recognition that sends audio to Google. The dictation
 models (77 to 565 MB) are downloaded only the first time you dictate. Settings and

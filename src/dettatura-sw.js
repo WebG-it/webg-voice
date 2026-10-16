@@ -1,4 +1,4 @@
-// Dettatura, lato service worker: Alt+S, scelta del campo nella scheda, ponte fra l'offscreen
+// Dettatura, lato service worker: Ctrl+Maiusc+X, scelta del campo nella scheda, ponte fra l'offscreen
 // document (microfono e Whisper, ascolto.js) e la pagina (pulizia e inserimento, dettatura-pagina.js).
 // Una dettatura alla volta, legata alla scheda dove e' partita: se si cambia scheda si ferma.
 
@@ -162,7 +162,7 @@ export function creaDettatura(c) {
     }
   }
 
-  /** Alt+S: avvia o ferma. */
+  /** Ctrl+Maiusc+X: avvia o ferma. */
   async function alterna(tab) {
     if (await attiva()) {
       await ferma();

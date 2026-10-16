@@ -1,5 +1,5 @@
 // Pagina della dettatura: primo uso (microfono, misura del computer, scelta e download del
-// modello), prova, dizionario e opzioni. Si apre da sola alla prima Alt+S.
+// modello), prova, dizionario e opzioni. Si apre da sola alla prima Ctrl+Maiusc+X.
 
 import { MODELLI_DETTATURA, modelloDettaturaValido, byteModello } from './lib/modelli-dettatura.js';
 import { creaSessione } from './lib/pulizia.js';
@@ -234,7 +234,7 @@ chrome.runtime.onMessage.addListener((m, _mitt, rispondi) => {
 async function scorciatoia() {
   const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
   const tasto = c && c.shortcut ? c.shortcut.replace(/Shift/g, 'Maiusc') : '';
-  for (const k of document.querySelectorAll('.tastoDetta')) k.textContent = tasto || 'Alt+S';
+  for (const k of document.querySelectorAll('.tastoDetta')) k.textContent = tasto || 'Ctrl+Maiusc+X';
   $('#tastoAvviso').hidden = !!tasto;
 }
 for (const a of document.querySelectorAll('.apriTasti')) {

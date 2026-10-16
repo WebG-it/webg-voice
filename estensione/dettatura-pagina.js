@@ -1,4 +1,4 @@
-// Dettatura, lato pagina (content script iniettato con Alt+S, solo nella scheda dove si detta).
+// Dettatura, lato pagina (content script iniettato con Ctrl+Maiusc+X, solo nella scheda dove si detta).
 // Due ruoli, anche nello stesso frame:
 //  - indicatore (frame principale): pallino discreto in basso a destra mentre si ascolta, con il
 //    pulsante per fermare; diventa una casella con "Copia" e "Inserisci" dove non si puo' scrivere

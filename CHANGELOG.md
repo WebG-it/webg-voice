@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.1] - 2026-10-16
+
+- Scorciatoia della dettatura: Ctrl+Maiusc+X (su Mac Control+Maiusc+X), tutta con la mano sinistra. Chrome la assegna davvero all'estensione (verificato) e non collide con Chrome, Gmail, Google Docs, WhatsApp Web e Claude.ai; Ctrl+Maiusc+S in Google Docs apre la digitazione vocale, Ctrl+Maiusc+E centra il testo.
+
 ## [1.3.0] - 2026-10-16
 
 - Dettatura: Alt+S avvia e ferma la dettatura nel campo dove si scrive (campi di testo, textarea di React, editor come Gmail, Claude.ai e WhatsApp Web, riquadri come TinyMCE). Alt+D, chiesto all'inizio, e' una scorciatoia di Chrome (barra degli indirizzi) e Chrome non la assegna alle estensioni.

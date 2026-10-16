@@ -31,7 +31,7 @@ articolo intero. La voce è naturale ed espressiva e funziona interamente sul tu
 serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
 
 Novità della versione 1.3
-• Dettatura: premi Alt+S in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
+• Dettatura: premi Ctrl+Maiusc+X in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
   punteggiatura, a capo ed elenchi a voce, senza «ehm» e ripetizioni. Il riconoscimento gira sul tuo
   computer: l'audio non esce. Il modello si scarica solo la prima volta che detti.
 
