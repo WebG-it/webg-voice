@@ -134,7 +134,9 @@ function mostra(s) {
     statoTesto.textContent = s.titolo ? `Preparo l'articolo: ${s.titolo}` : 'Preparo la lettura…';
   } else if (s && s.fase === 'lettura') {
     const parte = s.totale > 1 ? `, parte ${Math.min(s.blocco + 1, s.totale)} di ${s.totale}` : '';
-    statoTesto.textContent = s.riserva
+    statoTesto.textContent = s.avvisoMotore
+      ? s.avvisoMotore
+      : s.riserva
       ? 'Il computer è occupato: preparo un po\' di voce in anticipo, riprendo fra poco.'
       : s.titolo
         ? `In lettura${parte}: ${s.titolo}`

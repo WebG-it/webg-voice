@@ -46,6 +46,7 @@ if (!/--headless(=new)?\b/.test(b.process().spawnargs.join(' '))) {
 const R = [];
 try {
   const sw = await (await b.waitForTarget((t) => t.type() === 'service_worker')).worker();
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
   const testo = readFileSync(join(QUI, '..', 'testo-lungo.txt'), 'utf8');
   let ultimoOff = null;
   // modello sul computer prima delle misure (in un profilo nuovo si scarica, una volta)

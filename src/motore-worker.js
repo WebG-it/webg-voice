@@ -14,7 +14,8 @@ import { applicaDizionario, creaFonemizzatoreMisto } from './lib/pronuncia.js';
 import { blocchi, pezzi } from './lib/testo.js';
 import { ritaglia, conPausa } from './lib/audio.js';
 import { ottieni, byteInCache } from './lib/scarica.js';
-import { FILE_REMOTI, VOCI, voceValida } from './lib/modelli.js';
+import { FILE_REMOTI, VOCI, voceValida, chiave } from './lib/modelli.js';
+import { esiste } from './lib/archivio.js';
 
 const DIM_STILE = 256;
 
@@ -30,6 +31,8 @@ const motore = () =>
     throw e;
   }));
 let sessione = null;
+// variante del modello: 'massima' (fp32) o 'bilanciata' (uint8), vedi lib/motore-lettura.js
+let variante = 'massima';
 let nomeIds = 'input_ids';
 const voci = {}; // id della voce -> Float32Array 510 x 256 (stile)
 let fonemizza = null; // default dell'estensione
@@ -73,7 +76,7 @@ async function caricaModello(qui, t0) {
   const avanz = (p) => invia({ tipo: 'progresso', fase: 'download', ...p });
   const byteVoce = await ottieni('voce', avanz, 0);
   voci.sara = comeStile(byteVoce);
-  const byteModello = await ottieni('modello', avanz, FILE_REMOTI.voce.byte);
+  const byteModello = variante === 'bilanciata' ? await ottieni('modelloU8', avanz, 0) : await ottieni('modello', avanz, FILE_REMOTI.voce.byte);
   const tLetto = performance.now();
 
   invia({ tipo: 'progresso', fase: 'avvio' });
@@ -197,7 +200,24 @@ async function gestisci(m) {
   if (m.tipo === 'avvia' && m.opzioni && typeof m.opzioni === 'object') opzioniProva = m.opzioni;
   // @@test-fine
   if (m.tipo === 'avvia') {
-    invia({ tipo: 'pronto', id: m.id, info: await motore() });
+    // cambio di variante: il modello caricato si libera e si carica l'altro
+    if ((m.variante === 'massima' || m.variante === 'bilanciata') && m.variante !== variante) {
+      variante = m.variante;
+      if (sessione) await sessione.release();
+      sessione = null;
+      pronto = null;
+    }
+    invia({ tipo: 'pronto', id: m.id, info: { ...(await motore()), variante } });
+    return;
+  }
+  if (m.tipo === 'variantePronta') {
+    invia({ tipo: 'variantePronta', id: m.id, pronta: await esiste(chiave('modelloU8')) });
+    return;
+  }
+  if (m.tipo === 'scaricaVariante') {
+    // in sottofondo, senza caricarla: servira' dalla prossima lettura
+    await ottieni('modelloU8', (p) => invia({ tipo: 'progressoVariante', ...p }), 0);
+    invia({ tipo: 'varianteScaricata', id: m.id });
     return;
   }
   // @@test-inizio

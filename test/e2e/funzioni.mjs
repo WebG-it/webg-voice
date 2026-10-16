@@ -80,6 +80,8 @@ try {
   const swT = await b.waitForTarget((t) => t.type() === 'service_worker', { timeout: 20000 });
   const extId = new URL(swT.url()).host;
   const sw = await swT.worker();
+  // la voce di Kokoro sempre (la scelta automatica potrebbe passare alla voce del sistema a PC carico)
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
   const ext = (await b.extensions()).get(extId);
   const cdp = await b.target().createCDPSession();
   const scaricati = [];

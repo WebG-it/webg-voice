@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.4.2
+# Scheda Chrome Web Store, WebG Voice 1.5.0
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.

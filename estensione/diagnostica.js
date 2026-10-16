@@ -51,6 +51,42 @@ chrome.runtime.onMessage.addListener((m) => {
     $('dettStato').textContent = '…';
   }
 })();
+// ---- Motore della lettura e voce del sistema ----
+import('./lib/voci-sistema.js').then(async ({ vociItaliane }) => {
+  const o = await chrome.storage.local.get(['motoreLettura', 'voceSistema']);
+  const pref = o.motoreLettura || 'auto';
+  for (const r of document.querySelectorAll('input[name="motoreLettura"]')) {
+    r.checked = r.value === pref;
+    r.addEventListener('change', () => r.checked && chrome.storage.local.set({ motoreLettura: r.value }));
+  }
+  const sel = $('voceSistema');
+  const nota = $('voceSistemaNota');
+  const riempi = () => {
+    const lista = vociItaliane(speechSynthesis.getVoices());
+    sel.textContent = '';
+    for (const v of lista) {
+      const op = document.createElement('option');
+      op.value = v.uri;
+      op.textContent = v.locale ? v.nome : `${v.nome} (in rete)`;
+      sel.append(op);
+    }
+    if (o.voceSistema && lista.some((v) => v.uri === o.voceSistema)) sel.value = o.voceSistema;
+    const scelta = lista.find((v) => v.uri === sel.value) || lista[0];
+    sel.disabled = !lista.length;
+    nota.textContent = !lista.length
+      ? 'Questo computer non ha una voce italiana adatta: resta la voce di WebG Voice.'
+      : scelta && !scelta.locale
+        ? 'Attenzione: questa voce non è sul computer. Il testo da leggere va al servizio in rete che la fornisce.'
+        : '';
+  };
+  riempi();
+  speechSynthesis.onvoiceschanged = riempi;
+  sel.addEventListener('change', () => {
+    chrome.storage.local.set({ voceSistema: sel.value });
+    o.voceSistema = sel.value;
+    riempi();
+  });
+});
 $('apriTasti').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
 $('apriDettatura').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('dettatura.html') }));
 chrome.storage.local.get(['dettModello', 'dettMotore', 'dettRiserva']).then((o) => {

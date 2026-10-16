@@ -97,6 +97,21 @@ al primo uso compare un pulsante per scaricarlo.
 - Nelle opzioni dell'estensione, sezione **Risoluzione problemi**: se senti pause, una prova misura
   la sintesi su quel computer e dà un risultato da mandarci.
 
+## Computer lenti o occupati
+
+La lettura misura in continuo quanto il computer ci mette a preparare la voce e si adatta:
+- **Riserva d'audio**: se la sintesi è più lenta della voce, la voce parte dopo una piccola riserva
+  (al massimo 4 secondi) e, se resta senza audio, riprende solo con qualche secondo pronto: poche
+  pause a fine frase invece di fermarsi di continuo.
+- **Scelta automatica della voce** (opzioni, «Voce per i computer lenti»): *Qualità massima* (Kokoro
+  fp32, 326 MB) sui computer veloci; *Bilanciata* (stesso Kokoro in uint8, 177 MB, scaricato solo se
+  serve, circa il 13% più leggero sui computer con pochi core) quando il computer è carico; *Leggera*,
+  la voce del sistema offerta da Chrome, quando nemmeno la Bilanciata regge. La voce del sistema si
+  sceglie fra quelle italiane installate (prima le locali e le migliori per nome, mai eSpeak); se non
+  ce n'è una adatta resta Kokoro. La misura vale un giorno, poi si rifà con la voce migliore.
+- Provati e scartati: Kokoro int8 e q8f16 (più lenti), fp16 (più lento e sbaglia parole), WebGPU
+  sulla scheda video integrata (audio vuoto). Il confronto è in `test/e2e/banco-kokoro.mjs`.
+
 ## Dettatura
 
 - Clicca nel campo dove vuoi scrivere (casella di Gmail, chat di WhatsApp Web o Claude.ai, modulo,

@@ -37,6 +37,7 @@ if (!/--headless(=new)?\b/.test(b.process().spawnargs.join(' '))) {
 const R = [];
 try {
   const sw = await (await b.waitForTarget((t) => t.type() === 'service_worker')).worker();
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
   await sw.evaluate(async () => {
     if (!(await chrome.offscreen.hasDocument()))
       await chrome.offscreen.createDocument({ url: 'offscreen.html', reasons: ['AUDIO_PLAYBACK', 'WORKERS'], justification: 'banco' });

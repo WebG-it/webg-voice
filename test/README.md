@@ -12,6 +12,18 @@
   dire», «scusa»), punteggiatura e a capo a voce, elenchi, maiuscole fra un segmento e l'altro,
   comandi, allucinazioni, dizionario. Deve dare tutto OK.
 
+## Computer lenti (1.5)
+
+- `npm run test:voci`: scelta della voce del sistema con elenchi simulati (Windows, macOS, Linux con
+  solo eSpeak, ChromeOS, nessuna voce italiana) e scelta automatica del motore della lettura.
+- `test/e2e/motore.mjs` (profilo con la voce): computer lento, voce del sistema con avviso, pausa e
+  ripresa; computer carico, Kokoro subito e Bilanciata scaricata in sottofondo per la lettura dopo;
+  computer veloce, qualità massima.
+- `test/e2e/banco-kokoro.mjs` (`KOKORO=<cartella con i model*.onnx>`): rapporto sintesi/tempo reale
+  delle varianti di Kokoro su WebAssembly e WebGPU, con o senza `test/e2e/stress-cpu.mjs`, e l'audio
+  dello stesso paragrafo per confrontarle a orecchio.
+- Le prove della lettura impostano «Qualità massima» (con `MOTORE_AUTO=1` restano in automatico).
+
 ## Dettatura
 
 ```

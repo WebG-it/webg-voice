@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.5.0] - 2026-10-16
+
+- Lettura fluida anche sui computer lenti o occupati: scelta automatica della voce in base alla velocita' misurata (rimisurata ogni giorno). Qualita' massima (Kokoro fp32) sui computer veloci; Bilanciata (stesso Kokoro in uint8, 177 MB, scaricato solo se serve, circa il 13% piu' leggero con pochi core) quando il computer e' carico; Leggera, la voce del sistema offerta da Chrome (solo voci italiane installate, scelte per qualita', mai eSpeak) quando nemmeno la Bilanciata regge, con avviso nel pannello. Scelta a mano nelle opzioni, sezione Voce per i computer lenti; una voce del sistema in rete si puo' scegliere solo a mano ed e' dichiarata. Misurati e scartati: Kokoro int8 e q8f16 (piu' lenti), fp16 (piu' lento e sbaglia parole), q4f16 (nessun guadagno), WebGPU sulla scheda video integrata (audio vuoto).
+
 ## [1.4.2] - 2026-10-16
 
 - Lettura con il computer carico: riserva d'audio adattiva. Si misura in continuo il rapporto fra sintesi e voce; quando la sintesi e' piu' lenta della voce, la voce parte dopo una piccola riserva (attesa iniziale al massimo 4 secondi) e, se resta senza audio, riprende solo con almeno 2-6 secondi pronti: poche pause a fine blocco invece di fermarsi a ogni blocco; il pannello dice che il computer e' occupato. Con il computer veloce non cambia niente. La lettura chiude il motore della dettatura inattivo. Misure sullo stesso articolo (940 parole, 5 min 24 s di voce) col Corridoio carico: 1.4.1 84 pause (somma 177 s, massima 6,1 s), 1.4.2 27 pause (somma 146 s, massima 11,5 s, primo suono 2,7 s). Non c'era una causa nuova dal merge: la 1.2.2 a carico simile faceva 43 pause; le pause dipendono dal carico del computer (sintesi da 1,1 a 2,2 volte il tempo reale durante le prove).

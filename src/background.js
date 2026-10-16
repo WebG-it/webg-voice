@@ -126,8 +126,16 @@ async function voceSalvata() {
 
 /** Tutto quello che serve all'offscreen per leggere o creare un MP3 con le impostazioni dell'utente. */
 async function impostazioni() {
-  const [velocita, rtf, diz, voce] = await Promise.all([velocitaSalvata(), rtfSalvato(), dizionario(), voceSalvata()]);
-  return { velocita, rtf, dizionario: diz, voce };
+  const [velocita, rtf, diz, voce, o] = await Promise.all([
+    velocitaSalvata(),
+    rtfSalvato(),
+    dizionario(),
+    voceSalvata(),
+    chrome.storage.local.get(['motoreLettura', 'voceSistema', 'rtfQuando']),
+  ]);
+  // la misura della velocita' vale un giorno: poi si torna a misurare con la voce migliore
+  const rtfRecente = !o.rtfQuando || Date.now() - o.rtfQuando < 24 * 3600 * 1000;
+  return { velocita, rtf, dizionario: diz, voce, motoreLettura: o.motoreLettura || 'auto', voceSistema: o.voceSistema || '', rtfRecente };
 }
 
 async function statoAttuale() {
@@ -417,7 +425,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     return;
   }
   if (msg.da === 'offscreen' && msg.tipo === 'rtf') {
-    if (numeroIn(msg.valore, 0.05, 20)) chrome.storage.local.set({ rtf: msg.valore });
+    if (numeroIn(msg.valore, 0.05, 20)) chrome.storage.local.set({ rtf: msg.valore, rtfQuando: Date.now() });
     return;
   }
   if (msg.da === 'offscreen' && ['statoDettatura', 'dettato', 'dettaturaFinita', 'livelloDettatura'].includes(msg.tipo)) {
@@ -621,7 +629,9 @@ globalThis.__testComando = async () => {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   return dettatura.comando(tab);
 };
-globalThis.__testStatoDettatura = () => aOffscreen({ tipo: 'dettStato' });
+// Come "Leggi" col testo incollato nel pannello (impostazioni comprese)
+globalThis.__testLeggiTesto = async (testo) => aOffscreen({ tipo: 'leggi', testo, ...(await impostazioni()), tabId: null, t0: Date.now() });
+globalThis.__testStatoDettatura =() => aOffscreen({ tipo: 'dettStato' });
 globalThis.__testFontiDettatura = async (mappa) => {
   await assicuraOffscreen();
   return aOffscreen({ tipo: 'dettFontiProva', mappa });

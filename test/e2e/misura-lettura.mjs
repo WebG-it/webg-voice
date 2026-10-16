@@ -45,6 +45,8 @@ log('istanza headless PID', pid);
 try {
   const swT = await b.waitForTarget((t) => t.type() === 'service_worker', { timeout: 20000 });
   const sw = await swT.worker();
+  // la voce di Kokoro sempre (la scelta automatica potrebbe passare alla voce del sistema a PC carico)
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
   const aOff = (tipo, extra = {}) => sw.evaluate((tipo, extra) => chrome.runtime.sendMessage({ a: 'offscreen', tipo, ...extra }), tipo, extra);
   const crea = () =>
     sw.evaluate(async () => {

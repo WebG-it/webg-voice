@@ -77,3 +77,5 @@ kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1p
 .tasti { border-collapse: collapse; margin: 4px 0 8px; }
 .tasti td { padding: 5px 16px 5px 0; }
 kbd.manca { color: var(--male); border-color: var(--male); }
+h3 { font-size: 14px; margin: 16px 0 4px; }
+.scelta + .nota select { margin-left: 4px; max-width: 100%; }

@@ -63,6 +63,18 @@
     <h2>Lettura</h2>
     <label class="scelta"><input type="checkbox" id="optEvidenzia"> Evidenzia nella pagina la frase che sto ascoltando e fai scorrere la pagina per tenerla in vista</label>
     <p class="nota">Funziona sul testo selezionato e sull'articolo intero. Se scorri tu la pagina, per qualche secondo non la sposta. Dentro aree di testo, riquadri ed editor la frase non si evidenzia.</p>
+    <h3>Voce per i computer lenti</h3>
+    <div class="scelteMotore" role="radiogroup" aria-label="Motore della lettura">
+      <label class="scelta"><input type="radio" name="motoreLettura" value="auto"> Automatica (consigliata)</label>
+      <p class="nota">Sceglie da sola in base a quanto è veloce il computer, e lo rimisura ogni giorno.</p>
+      <label class="scelta"><input type="radio" name="motoreLettura" value="massima"> Qualità massima</label>
+      <p class="nota">La voce più naturale. Sui computer lenti o molto occupati può fare delle pause.</p>
+      <label class="scelta"><input type="radio" name="motoreLettura" value="bilanciata"> Bilanciata</label>
+      <p class="nota">La stessa voce, un po' più leggera per il processore. Si scarica la prima volta che serve (177 MB).</p>
+      <label class="scelta"><input type="radio" name="motoreLettura" value="sistema"> Leggera: la voce del sistema</label>
+      <p class="nota">Parte subito e non pesa sul computer, ma è meno naturale. <select id="voceSistema" aria-label="Voce del sistema"></select></p>
+      <p class="nota" id="voceSistemaNota"></p>
+    </div>
     <label class="scelta"><input type="checkbox" id="optPronta"> Tieni la voce pronta mentre uso Chrome</label>
     <p class="nota">La voce resta caricata per 30 minuti dall'ultima lettura finché usi Chrome, così la lettura parte subito. Occupa circa 1,2 GB di memoria; spenta, si libera dopo 10 minuti e la prima lettura dopo una pausa parte con un paio di secondi in più.</p>
   </section>

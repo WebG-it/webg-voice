@@ -43,6 +43,19 @@ export const FILE_VOCI = {
   },
 };
 
+// Kokoro "Bilanciata" (uint8): stessa voce, circa il 13% piu' veloce sui computer con pochi core
+// (vedi lib/motore-lettura.js). Si scarica solo se serve: scelta nelle opzioni o computer lento.
+// Fonte: la stessa revisione fissata di Hugging Face (la copia nella release GitHub, se Marco lo
+// decide, va messa prima nell'elenco).
+export const FILE_VARIANTI = {
+  modelloU8: {
+    nome: 'modello Kokoro bilanciato',
+    byte: 177464632,
+    sha256: '6607a397d77b8514065420b7c1e7320117f7aabfdb45ce15f0050c5b0fe75aea',
+    fonti: [`${HF}onnx/model_uint8.onnx`],
+  },
+};
+
 /** Voci fra cui si sceglie: id salvato in chrome.storage.local ("voce") -> file e nome. */
 export const VOCI = {
   sara: { nome: 'Sara', file: 'voce', kokoro: 'if_sara' },
@@ -52,7 +65,7 @@ export const VOCE_PREDEFINITA = 'sara';
 export const voceValida = (v) => (typeof v === 'string' && Object.hasOwn(VOCI, v) ? v : VOCE_PREDEFINITA);
 
 /** Descrizione di un file da scaricare (modello, voce di base, voce in piu' o modello della dettatura). */
-export const fileRemoto = (nome) => FILE_REMOTI[nome] || FILE_VOCI[nome] || FILE_DETTATURA[nome];
+export const fileRemoto = (nome) => FILE_REMOTI[nome] || FILE_VOCI[nome] || FILE_VARIANTI[nome] || FILE_DETTATURA[nome];
 
 /** true se il file della voce scelta e' gia' sul computer. */
 export const voceInCache = (id) => esiste(chiave(VOCI[voceValida(id)].file));

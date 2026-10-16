@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.4.2.
+Ultimo aggiornamento: versione 1.5.0.
 
 WebG Voice è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente e scrive nei campi delle pagine sotto dettatura.
@@ -20,6 +20,14 @@ menu contestuale o pulsante del pannello) e solo nella scheda in cui lo chiede.
 
 Anche i file MP3 si creano sul computer dell'utente e si salvano nella sua cartella dei download:
 nessun servizio esterno li riceve.
+
+## Voce del sistema (computer lenti)
+
+Sui computer lenti la lettura può usare la voce del sistema offerta da Chrome invece di quella di
+WebG Voice. In automatico si usano solo voci installate sul computer, che leggono senza mandare il
+testo da nessuna parte. Se l'utente sceglie a mano una voce indicata come «in rete», il testo da
+leggere va al servizio che fornisce quella voce, secondo la sua informativa: le opzioni lo dicono
+accanto alla scelta.
 
 ## Dettatura e microfono
 

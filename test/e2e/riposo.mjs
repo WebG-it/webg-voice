@@ -47,6 +47,7 @@ log('istanza headless PID', pid);
 const R = { minuti: MINUTI, attivita: ATTIVITA, campioni: [] };
 try {
   const sw = await (await b.waitForTarget((t) => t.type() === 'service_worker')).worker();
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
   const aOff = (tipo, extra = {}) => sw.evaluate((tipo, extra) => chrome.runtime.sendMessage({ a: 'offscreen', tipo, ...extra }).catch(() => null), tipo, extra);
   const aperto = () => sw.evaluate(() => chrome.offscreen.hasDocument());
   const stato = async () => {

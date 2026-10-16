@@ -10,6 +10,8 @@ import { dividiSezioni, componiBlocco, pianoIniziale, regolaBlocco } from './lib
 import { VOCI, voceValida } from './lib/modelli.js';
 import { KBPS, nomeFile, tagId3 } from './lib/mp3.js';
 import { daLiberare } from './lib/riposo.js';
+import { scegliMotore, motoreLetturaValido } from './lib/motore-lettura.js';
+import { scegliVoceSistema } from './lib/voci-sistema.js';
 
 class Annullato extends Error {}
 
@@ -187,7 +189,7 @@ function motore() {
   caricamento ??= (async () => {
     for (let t = 0; ; t++) {
       try {
-        const r = await chiedi({ tipo: 'avvia' });
+        const r = await chiedi({ tipo: 'avvia', variante: varianteVoluta });
         stato.motorePronto = true;
         stato.info = r.info;
         stato.download = null;
@@ -371,12 +373,25 @@ function attendi(L, motivo) {
  * corto per partire presto, poi frasi intere quante ne permette l'audio gia' pronto.
  * L'audio gia' suonato non resta in memoria.
  */
-async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo, bozza = false }) {
+async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo, bozza = false, motoreLettura = 'auto', voceSistema = '', rtfRecente = true }) {
   ferma(false);
   // dettatura e lettura non insieme: il motore della dettatura (inattivo) si chiude, niente CPU ne' memoria
   if (globalThis.webgChiudiDettatura) globalThis.webgChiudiDettatura();
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
   if (voce) stato.voce = voceValida(voce);
+  // quale motore: Kokoro (qualita' massima o bilanciata) o la voce del sistema
+  const scelta = await decidiMotore(motoreLettura, rtfRecente ? rtfSalvato : undefined, voceSistema);
+  stato.motoreLettura = scelta.motore;
+  stato.avvisoMotore = scelta.avviso || null;
+  if (scelta.motore === 'sistema' && !bozza) {
+    leggiSistema({ testo, velocita, tabId, titolo, voce: scelta.voce, t0 });
+    return;
+  }
+  const v = scelta.motore === 'bilanciata' ? 'bilanciata' : 'massima';
+  if (v !== varianteVoluta) {
+    varianteVoluta = v;
+    stato.motorePronto = false; // al prossimo motore() il worker carica l'altra variante
+  }
   if (await serveConsenso()) {
     richiestaInAttesa = { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo, bozza };
     Object.assign(stato, { fase: 'consenso', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0 });
@@ -528,6 +543,118 @@ async function pompa(L) {
   } finally {
     L.pompaAttiva = false;
   }
+}
+
+// ---- Motore della lettura (dalla 1.5.0): Kokoro qualita' massima o bilanciata, o voce del sistema ----
+let varianteVoluta = 'massima';
+let scaricandoVariante = false;
+let vociSistema = null;
+function voci() {
+  if (vociSistema) return Promise.resolve(vociSistema);
+  return new Promise((ok) => {
+    if (!globalThis.speechSynthesis) return ok([]);
+    const prendi = () => {
+      const v = speechSynthesis.getVoices();
+      if (v.length) vociSistema = v;
+      ok(v);
+    };
+    if (speechSynthesis.getVoices().length) return prendi();
+    speechSynthesis.onvoiceschanged = prendi;
+    setTimeout(prendi, 1500);
+  });
+}
+async function decidiMotore(preferenza, rtfMisurato, voceScelta) {
+  const pref = motoreLetturaValido(preferenza);
+  const tutte = await voci();
+  // automatica: solo voci locali (niente testo in rete); scelta dall'utente: anche in rete, gia' dichiarato nelle opzioni
+  const vs = scegliVoceSistema(tutte, { soloLocali: pref !== 'sistema', preferita: voceScelta });
+  let bilanciataPronta = false;
+  try {
+    bilanciataPronta = (await chiedi({ tipo: 'variantePronta' })).pronta;
+  } catch {}
+  const s = scegliMotore({ preferenza: pref, rtf: rtfMisurato, voceSistema: vs, bilanciataPronta });
+  if (s.scaricaBilanciata && !scaricandoVariante) {
+    scaricandoVariante = true;
+    chiedi({ tipo: 'scaricaVariante' })
+      .catch(() => {})
+      .finally(() => (scaricandoVariante = false));
+  }
+  let avviso = null;
+  if (s.motore === 'sistema' && pref === 'auto') avviso = 'Il computer è lento: leggo con la voce del sistema, meno naturale ma senza attese. Puoi cambiarla nelle opzioni.';
+  else if (s.motore === 'bilanciata' && pref === 'auto') avviso = 'Il computer è carico: uso la versione bilanciata della voce.';
+  return { ...s, voce: vs, avviso };
+}
+
+// ---- Lettura con la voce del sistema (speechSynthesis): una frase alla volta ----
+let letturaSistema = null;
+function frasiDi(testo) {
+  const out = [];
+  for (const sez of dividiSezioni(testo)) {
+    for (const f of sez.replace(/\s+/g, ' ').split(/(?<=[.!?…:;])\s+/u)) if (f.trim()) out.push(f.trim());
+  }
+  return out;
+}
+function leggiSistema({ testo, velocita, tabId, titolo, voce, t0 }) {
+  const frasi = frasiDi(testo);
+  const tutte = vociSistema || speechSynthesis.getVoices();
+  const v = tutte.find((x) => (x.voiceURI || x.name) === voce.uri) || null;
+  const S = { frasi, i: 0, t0: t0 || Date.now(), v, velocita: typeof velocita === 'number' ? velocita : 1 };
+  if (typeof velocita === 'number') stato.velocita = velocita;
+  letturaSistema = S;
+  speechSynthesis.cancel();
+  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: frasi.length, titolo: titolo || null, impronta: impronta(testo) });
+  stato.metriche = { secondiAudio: 0, fonemi: [] };
+  pubblica();
+  const prossima = () => {
+    if (S !== letturaSistema) return;
+    if (S.i >= S.frasi.length) {
+      letturaSistema = null;
+      stato.fase = 'inattivo';
+      pubblica();
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(S.frasi[S.i]);
+    u.lang = (v && v.lang) || 'it-IT';
+    if (v) u.voice = v;
+    u.rate = Math.min(1.5, Math.max(0.7, stato.velocita || S.velocita));
+    u.onstart = () => {
+      if (S !== letturaSistema) return;
+      if (stato.metriche.primoSuonoMs === undefined) stato.metriche.primoSuonoMs = Date.now() - S.t0;
+      if (stato.fase === 'preparazione') stato.fase = 'lettura';
+      stato.blocco = S.i;
+      pubblica();
+    };
+    u.onend = () => {
+      if (S !== letturaSistema) return;
+      S.i++;
+      prossima();
+    };
+    u.onerror = (e) => {
+      if (S !== letturaSistema || e.error === 'interrupted' || e.error === 'canceled') return;
+      letturaSistema = null;
+      Object.assign(stato, { fase: 'inattivo', errore: `voce del sistema: ${e.error}` });
+      pubblica();
+    };
+    speechSynthesis.speak(u);
+  };
+  prossima();
+}
+function fermaSistema() {
+  if (!letturaSistema) return;
+  letturaSistema = null;
+  speechSynthesis.cancel();
+}
+function pausaSistema() {
+  if (stato.fase === 'pausa') return;
+  speechSynthesis.pause();
+  stato.fase = 'pausa';
+  pubblica();
+}
+function riprendiSistema() {
+  if (stato.fase !== 'pausa') return;
+  speechSynthesis.resume();
+  stato.fase = 'lettura';
+  pubblica();
 }
 
 // ---- Riserva d'audio (dalla 1.4.2) ----
@@ -682,6 +809,7 @@ function programma(L, i, audio) {
 function ferma(pubblicare = true) {
   const L = lettura;
   stato.riserva = false;
+  fermaSistema();
   if (L) {
     if (blocchiDaSalvare) salvaRtf();
     worker.postMessage({ tipo: 'annulla', sessione: L.id });
@@ -704,6 +832,7 @@ function ferma(pubblicare = true) {
 }
 
 async function pausa() {
+  if (letturaSistema) return pausaSistema();
   if (!lettura || stato.fase === 'pausa') return;
   stato.fase = 'pausa';
   pubblica();
@@ -711,6 +840,7 @@ async function pausa() {
 }
 
 async function riprendi() {
+  if (letturaSistema) return riprendiSistema();
   if (!lettura || stato.fase !== 'pausa') return;
   await contesto().resume();
   stato.fase = lettura.sorgenti.length ? 'lettura' : 'preparazione';
@@ -942,6 +1072,9 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         dizionario: dizionarioValido(msg.dizionario),
         voce: voceValida(msg.voce),
         titolo: titoloValido(msg.titolo),
+        motoreLettura: motoreLetturaValido(msg.motoreLettura),
+        voceSistema: typeof msg.voceSistema === 'string' ? msg.voceSistema.slice(0, 200) : '',
+        rtfRecente: msg.rtfRecente !== false,
       });
       break;
     case 'consenti':
