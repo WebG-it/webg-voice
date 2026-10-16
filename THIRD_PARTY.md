@@ -21,17 +21,23 @@ I percorsi indicati sotto sono quelli del pacchetto dell'estensione.
 
 ## Whisper (modelli della dettatura)
 
-- OpenAI, https://github.com/openai/whisper, licenza MIT (Copyright (c) 2022 OpenAI; testo della
-  licenza MIT nella sezione di ONNX Runtime Web, qui sotto).
+- Modelli Whisper di OpenAI (https://github.com/openai/whisper), Copyright (c) OpenAI.
+- `whisper-base` e `whisper-small` (modelli Leggero e Normale): licenza Apache License 2.0, testo
+  completo in `LICENSE-APACHE-2.0.txt`.
+- `whisper-large-v3-turbo` (modello Qualità): licenza MIT (testo della licenza MIT nella sezione
+  di ONNX Runtime Web, qui sotto, con "Copyright (c) OpenAI").
 - Esportazioni ONNX di onnx-community a revisione fissata: `whisper-base`
   (`1846881b6b3a3024392c1eea3ad983695bc23925`), `whisper-small`
   (`36050c46d777d46dc4b5f43f6d90574fc38f8732`), `whisper-large-v3-turbo`
   (`360ebcde2559d60bb474678be3c1de9ef347d01a`).
 - I modelli non sono nel pacchetto: si scaricano la prima volta che l'utente detta, solo quello
-  scelto. Decoder e vocabolari sono identici agli originali; gli encoder sono ritoccati da
-  `scripts/accorcia-encoder.py` (stessi pesi, grafo che accetta finestre piu' corte di 30 s) e
-  pubblicati nella release `dettatura-v1` del repository, con l'impronta SHA-256 controllata
-  dall'estensione (`lib/modelli-dettatura.js`). In riserva, l'encoder originale da Hugging Face.
+  scelto. Decoder e vocabolari sono identici agli originali.
+- Modifica dichiarata (come richiede la sezione 4 della licenza Apache 2.0): gli encoder sono
+  modificati da WebG con `scripts/accorcia-encoder.py`. I pesi restano identici; cambia solo il
+  grafo ONNX, perché accetti finestre più corte di 30 secondi (posizioni tagliate alla lunghezza
+  dell'ingresso, forme fisse a 1500 rese libere). Gli encoder modificati sono pubblicati nella
+  release `dettatura-v1` del repository, con l'impronta SHA-256 controllata dall'estensione
+  (`lib/modelli-dettatura.js`). In riserva, l'encoder originale da Hugging Face.
 
 ## Mozilla Readability 0.6.0
 

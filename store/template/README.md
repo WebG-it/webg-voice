@@ -162,8 +162,10 @@ WebG, https://www.webg.it, info@webg.it. Per segnalazioni e richieste usa le
 ## Licenza
 
 GPL-3.0-or-later (vedi `LICENSE`), perché l'estensione include eSpeak NG. Modello Kokoro-82M di
-hexgrad e Mozilla Readability con licenza Apache-2.0, ONNX Runtime Web e Whisper con licenza MIT,
-lamejs con licenza LGPL-3.0: dettagli in `THIRD_PARTY.md`.
+hexgrad, Mozilla Readability e i modelli Whisper base e small (OpenAI) con licenza Apache-2.0,
+Whisper large-v3-turbo (OpenAI) e ONNX Runtime Web con licenza MIT, lamejs con licenza LGPL-3.0.
+Gli encoder Whisper sono modificati da WebG (`scripts/accorcia-encoder.py`, stessi pesi): dettagli
+in `THIRD_PARTY.md`.
 
 ---
 
@@ -178,5 +180,7 @@ the whole article; again to pause or resume, **Alt+W** to stop), or right-click 
 voce*. Since 1.3 it also types Italian dictation: press **Ctrl+Shift+X** in any text field and speak;
 recognition (OpenAI Whisper, small by default) runs locally and the audio never leaves your computer.
 Licensed under GPL-3.0-or-later (it bundles eSpeak NG); see `THIRD_PARTY.md` for the
-Kokoro and Readability (Apache-2.0), ONNX Runtime (MIT) and lamejs (LGPL-3.0) notices. Contact:
+Kokoro, Readability and Whisper base/small (Apache-2.0), Whisper large-v3-turbo and ONNX Runtime
+(MIT) and lamejs (LGPL-3.0) notices; the Whisper encoders are modified by WebG (same weights,
+`scripts/accorcia-encoder.py`). Contact:
 info@webg.it or GitHub issues.

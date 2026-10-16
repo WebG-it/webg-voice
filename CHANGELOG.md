@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.2] - 2026-10-16
+
+- Licenze dei modelli Whisper allineate: base e small Apache-2.0 (LICENSE-APACHE-2.0.txt), large-v3-turbo MIT, Copyright OpenAI, esportazioni ONNX di onnx-community; encoder modificati da WebG con scripts/accorcia-encoder.py, modifica dichiarata in THIRD_PARTY.md come chiede Apache-2.0.
+
 ## [1.3.1] - 2026-10-16
 
 - Scorciatoia della dettatura: Ctrl+Maiusc+X (su Mac Control+Maiusc+X), tutta con la mano sinistra. Chrome la assegna davvero all'estensione (verificato) e non collide con Chrome, Gmail, Google Docs, WhatsApp Web e Claude.ai; Ctrl+Maiusc+S in Google Docs apre la digitazione vocale, Ctrl+Maiusc+E centra il testo.
