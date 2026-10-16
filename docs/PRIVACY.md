@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.3.7.
+Ultimo aggiornamento: versione 1.4.0.
 
 WebG Voice è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente e scrive nei campi delle pagine sotto dettatura.
@@ -44,8 +44,9 @@ l'informativa di Google: la pagina lo dice chiaramente prima della scelta.
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
 - i file della voce (circa 326 MB, più mezzo MB per la voce Nicola se la scegli), per
   funzionare offline;
-- la velocità di lettura e la voce scelte, l'ultimo testo incollato nel popup e una misura della
-  velocità di sintesi del computer;
+- la velocità di lettura e la voce scelte, l'ultimo testo incollato nel popup, una misura della
+  velocità di sintesi del computer e le scelte delle opzioni "Evidenzia nella pagina la frase"
+  e "Tieni la voce pronta";
 - i modelli della dettatura, solo se detti (77, 250 o 565 MB secondo il modello scelto), e le
   impostazioni della dettatura (modello, punteggiatura automatica, riserva, misura della velocità);
 - il dizionario della dettatura, se lo usi (sostituzioni e termini ricorrenti): come quello di

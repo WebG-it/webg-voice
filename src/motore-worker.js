@@ -42,11 +42,14 @@ async function carica() {
   const t0 = performance.now();
   const qui = (p) => new URL(p, import.meta.url).href;
   // eSpeak e modello si caricano insieme: la partenza a freddo non li paga uno dopo l'altro
-  const [, info] = await Promise.all([caricaEspeak(qui), caricaModello(qui, t0)]);
+  const [espeakMs, info] = await Promise.all([caricaEspeak(qui), caricaModello(qui, t0)]);
+  info.fasi.espeakMs = espeakMs;
+  info.caricamentoMs = Math.round(performance.now() - t0);
   return info;
 }
 
 async function caricaEspeak(qui) {
+  const t0 = performance.now();
   const [wasmE, indiceE, datiE] = await Promise.all([
     fetch(qui('./vendor/espeak/espeak-ng.wasm')).then((r) => r.arrayBuffer()),
     fetch(qui('./vendor/espeak/espeak-dati.json')).then((r) => r.json()),
@@ -63,6 +66,7 @@ async function caricaEspeak(qui) {
   const fonEn = creaFonemizzatore((t) => clausole(t, 'en-us'), { rimuoviMarcatori: true });
   fonemizza = creaFonemizzatoreMisto(fonIt, fonEn);
   fonemizzaFedele = creaFonemizzatore(clausole);
+  return Math.round(performance.now() - t0);
 }
 
 async function caricaModello(qui, t0) {
@@ -70,6 +74,7 @@ async function caricaModello(qui, t0) {
   const byteVoce = await ottieni('voce', avanz, 0);
   voci.sara = comeStile(byteVoce);
   const byteModello = await ottieni('modello', avanz, FILE_REMOTI.voce.byte);
+  const tLetto = performance.now();
 
   invia({ tipo: 'progresso', fase: 'avvio' });
   // misurato su 16 fili logici: 8 e' il punto migliore, oltre peggiora
@@ -88,6 +93,8 @@ async function caricaModello(qui, t0) {
   });
   nomeIds = sessione.inputNames.includes('input_ids') ? 'input_ids' : 'tokens';
   infoMotore = {
+    // fasi del caricamento: lettura di modello e voce dall'archivio locale, creazione della sessione
+    fasi: { letturaMs: Math.round(tLetto - t0), sessioneMs: Math.round(performance.now() - tLetto) },
     fili,
     isolato: self.crossOriginIsolated,
     caricamentoMs: Math.round(performance.now() - t0),
@@ -208,6 +215,14 @@ async function gestisci(m) {
     return;
   }
   // @@test-fine
+  if (m.tipo === 'libera') {
+    // la dettatura su un computer con poca memoria: la voce pronta si libera, si ricarica alla lettura dopo
+    if (sessione) await sessione.release();
+    sessione = null;
+    pronto = null;
+    invia({ tipo: 'liberato', id: m.id });
+    return;
+  }
   if (m.tipo === 'statoCache') {
     invia({ tipo: 'statoCache', id: m.id, ...(await byteInCache()) });
     return;

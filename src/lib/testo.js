@@ -3,6 +3,7 @@
 // i successivi piu' lunghi, perche' Kokoro suona piu' naturale su frasi intere.
 
 import { dividiFonemi, pausaDopo, MAX_FONEMI } from './fonemi.js';
+import { togliCitazioniRighe } from './normalizza.js';
 
 // Parole dopo cui il punto non chiude la frase (se non sono gia' state sciolte)
 const ABBR = new Set(['sig', 'sigg', 'dott', 'dr', 'prof', 'ing', 'avv', 'arch', 'geom', 'rag',
@@ -20,12 +21,13 @@ const PREFISSI_TRATTINO = new Set([
 ]);
 const ELENCO = /^([-•*–·▪◦]|\d+[.)]|[a-z][.)])\s/u;
 
-// Parole che non possono chiudere una frase ne' un titolo: una riga che finisce cosi' e' spezzata
+// Parole che non possono chiudere una frase ne' un titolo: una riga che finisce cosi' e' spezzata.
+// Non ci sono "piu'" e "come", che chiudono pulsanti e inviti ("Scopri di piu'", "Leggi di piu'").
 const NON_FINALI = new Set([
   'il', 'lo', 'la', 'i', 'gli', 'le', 'l', 'un', 'uno', 'una', 'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
   'e', 'ed', 'o', 'od', 'che', 'del', 'dello', 'della', 'dei', 'degli', 'delle', 'al', 'allo', 'alla', 'ai', 'agli',
   'alle', 'dal', 'dallo', 'dalla', 'dai', 'dagli', 'dalle', 'nel', 'nello', 'nella', 'nei', 'negli', 'nelle', 'sul',
-  'sullo', 'sulla', 'sui', 'sugli', 'sulle', 'col', 'coi', 'ma', 'se', 'come', 'non', 'piu', 'più', 'cui', 'quale',
+  'sullo', 'sulla', 'sui', 'sugli', 'sulle', 'col', 'coi', 'ma', 'se', 'non', 'cui', 'quale',
 ]);
 // parola finale che non chiude: solo in minuscolo (una sigla come TO o IL resta una sigla)
 const nonFinale = (riga) => {
@@ -89,12 +91,14 @@ function unisci(cur, r) {
  * la parola spezzata col trattino a fine riga. Il trattino morbido (U+00AD) si toglie.
  */
 export function paragrafi(testo) {
-  const righe = String(testo)
+  let righe = String(testo)
     .replace(/\r\n?/g, '\n')
-    .replace(/­[ \t]*\n[ \t]*/g, '')
-    .replace(/­/g, '')
+    .replace(/\u00AD[ \t]*\n[ \t]*/g, '')
+    .replace(/\u00AD/g, '')
     .split('\n')
-    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim().replace(/^(?:>\s?)+/, '')); // via i ">" delle mail citate
+    .map((r) => r.replace(/[ \t\f\v]+/g, ' ').trim());
+  // mail citata: via il ">" (stessa regola di normalizza, vedi togliCitazioniRighe)
+  righe = togliCitazioniRighe(righe);
   const larga = larghezzaRighe(righe);
   const out = [];
   let cur = '';
@@ -115,7 +119,9 @@ export function paragrafi(testo) {
     // in ogni testo: riga che finisce con una virgola o con una parola che non chiude una frase
     // ("fissata per il / 12 ottobre", "Torino, / Milano, / Roma"); la minuscola da sola non basta
     const forte = /,$/.test(ultima) || nonFinale(ultima);
-    if (!confine && (trattino || aRighe || forte)) cur = unisci(cur, r);
+    // riga lunga senza punto seguita da una minuscola: e' la stessa frase anche in un testo corto
+    const lungaSpezzata = ultima.length >= 50 && !FINE_PERIODO.test(ultima) && /^\p{Ll}/u.test(r);
+    if (!confine && (trattino || aRighe || forte || lungaSpezzata)) cur = unisci(cur, r);
     else {
       out.push(cur);
       cur = r;
@@ -344,8 +350,9 @@ export function pezzi(testo, fonemizza) {
         const ultimo = k === uniti.length - 1;
         const fineParagrafo = ultimo && i === fr.length - 1;
         // un titolo senza punto: il punto da' la pausa anche quando il titolo sta dentro un blocco
-        const f = fineParagrafo && titolo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
-        out.push({ fonemi: f, fineFrase: ultimo, fineParagrafo });
+        const fonemi = fineParagrafo && titolo && !/[.!?…:;,]["'»”’)\]]*$/u.test(x) ? `${x}.` : x;
+        // testo: la frase scritta, sul suo primo pezzo (serve a evidenziarla nella pagina)
+        out.push({ fonemi, fineFrase: ultimo, fineParagrafo, testo: k === 0 ? f : '' });
       });
     });
   }
@@ -364,7 +371,7 @@ const pausaBlocco = (fonemi, fineParagrafo) => pausaDopo(fonemi) + (fineParagraf
  * - il primo blocco non scavalca la fine del primo paragrafo; gli altri si'.
  * Restituisce { fonemi, a (pezzo dopo l'ultimo), pausa, dividi? }.
  */
-export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true } = {}) {
+export function componiBlocco(lista, da, limite, { primo = false, fineTesto = true, unaFrase = false, pausaFrase = 0 } = {}) {
   let fonemi = '';
   let a = da;
   let ultimaFrase = -1; // indice dopo l'ultima fine di frase raccolta
@@ -392,7 +399,8 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
           fonemi: testa,
           a: da + 1,
           pausa: 0.05,
-          dividi: [{ fonemi: testa, fineFrase: false, fineParagrafo: false }, { ...p, fonemi: coda }],
+          // la testa porta il testo della frase (serve a evidenziarla), la coda no
+          dividi: [{ fonemi: testa, fineFrase: false, fineParagrafo: false, testo: p.testo || '' }, { ...p, fonemi: coda, testo: '' }],
         };
       }
     }
@@ -406,6 +414,7 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
     // attraversare la fine di un paragrafo: con paragrafi brevi si pagano meno costi fissi
     if (primo && p.fineParagrafo) break;
     if (primo && lung(fonemi) >= limite * 0.6 && p.fineFrase) break;
+    if (unaFrase && p.fineFrase) break; // "Rileggi la bozza": una frase per blocco
   }
   // i blocchi dopo il primo si chiudono all'ultima fine di frase raccolta
   if (!primo && ultimaFrase > da && ultimaFrase < a) {
@@ -414,7 +423,8 @@ export function componiBlocco(lista, da, limite, { primo = false, fineTesto = tr
   }
   const ultimo = lista[a - 1];
   const finito = fineTesto && a >= lista.length;
-  return { fonemi, a, pausa: finito ? 0 : pausaBlocco(fonemi, ultimo && ultimo.fineParagrafo) };
+  const extra = ultimo && ultimo.fineFrase ? pausaFrase : 0; // pausa in piu' fra le frasi (bozza)
+  return { fonemi, a, pausa: finito ? 0 : pausaBlocco(fonemi, ultimo && ultimo.fineParagrafo) + extra };
 }
 
 /**

@@ -226,6 +226,176 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   prova('a capo: mail citata senza ">" dentro la frase', mail.length === 1 && !mail[0].includes('>'), mail[0].slice(0, 80));
 }
 
+// ---- 1.2.3: pulsanti, segno ">" e catture dello store ----
+{
+  const { paragrafi } = await import('../src/lib/testo.js');
+  prova('pulsanti: "Scopri di più / Leggi tutto" restano separati', paragrafi('Scopri di più\nLeggi tutto').length === 2);
+  prova('pulsanti: "Leggi di più / Accedi" restano separati', paragrafi('Leggi di più\nAccedi').length === 2);
+  prova('pulsanti: "Guarda come / Iscriviti" restano separati', paragrafi('Guarda come\nIscriviti').length === 2);
+  const isolata = paragrafi('Vietato ai minori\n> 18 anni');
+  prova('segno ">": una riga isolata lo tiene', isolata[1] === '> 18 anni', JSON.stringify(isolata));
+  prova('segno ">": anche un testo di una sola riga lo tiene', paragrafi('> 18 anni compiuti per partecipare.')[0].startsWith('>'));
+  const mail = paragrafi('Ciao,\n> ti scrivo per la riunione di\n> domani mattina in ufficio.\n> A presto');
+  prova('segno ">": in una mail citata si toglie', mail.every((p) => !p.startsWith('>')) && mail[0].includes('riunione di domani'), JSON.stringify(mail));
+  prova('segno ">": si legge "maggiore di"', fon(normalizza('> 18 anni')).startsWith('madʒːˈore dɪ') && normalizza('Temperatura ≥ 30 gradi') === 'Temperatura maggiore o uguale a 30 gradi' && normalizza('<5 euro').startsWith('minore di 5'), normalizza('> 18 anni'));
+  const requisiti = paragrafi('Requisiti:\n> 18 anni\n> 5 anni di esperienza');
+  prova('segno ">": elenco di requisiti con numeri non e\' una mail citata', requisiti[1] === '> 18 anni' && requisiti[2] === '> 5 anni di esperienza', JSON.stringify(requisiti));
+  const lunga = paragrafi('Gli ingredienti necessari per la preparazione sono molti: farina,\nuova, latte, burro, zucchero, sale e lievito e vanno raccolti con attenzione\nprima di iniziare.');
+  prova('a capo: riga lunga senza punto seguita da minuscola continua', lunga.length === 1, JSON.stringify(lunga).slice(0, 90));
+  prova('segno ">": frecce e confronti senza numero restano', normalizza('a -> b') === 'a -> b' && normalizza('x>y') === 'x>y');
+  const py = readFileSync(join(qui, '..', 'scripts', 'immagini-store.py'), 'utf8');
+  const e2e = readFileSync(join(qui, 'e2e', 'headless.mjs'), 'utf8');
+  prova('store: screenshot 2 da pagina e pannello della stessa lettura', /\("store-2-lettura\.png", "store-2-popup\.png"\)/.test(py) && e2e.includes("'store-2-lettura.png'") && e2e.includes("'store-2-popup.png'") && /prima\.blocco === dopo\.blocco/.test(e2e));
+  prova('store: ogni cattura usata dallo script la produce il test e2e', [...py.matchAll(/"(store-[^"]+\.png)"/g)].every((m) => e2e.includes(`'${m[1]}'`)), [...py.matchAll(/"(store-[^"]+\.png)"/g)].map((m) => m[1]).join(', '));
+}
+
+// ---- 1.3.0 ----
+{
+  const { accentiDaApostrofo } = await import('../src/lib/normalizza.js');
+  const { pezzi, componiBlocco, paragrafi } = await import('../src/lib/testo.js');
+  const { daLiberare, RIPOSO_BREVE_MS, RIPOSO_LUNGO_MS } = await import('../src/lib/riposo.js');
+  await import('../src/lib/ripetizioni.js');
+  const RIP = globalThis.webgRipetizioni;
+
+  // B. apostrofo al posto dell'accento
+  const acc = [
+    ["E' bello.", 'È bello.'],
+    ["perche' no?", 'perché no?'],
+    ["la citta' e' grande", 'la città è grande'],
+    ["piu' tardi, puo' darsi", 'più tardi, può darsi'],
+    ["cosi' com'e'", "così com'è"],
+    ["il caffe' e' caldo", 'il caffè è caldo'],
+    ["ne' l'uno ne' l'altro, se' stesso, ventitre'", "né l'uno né l'altro, sé stesso, ventitré"],
+    ['lunedi’ e venerdi’', 'lunedì e venerdì'],
+    ["PERCHE' NO", 'PERCHÉ NO'],
+    ["un po' di pane", "un po' di pane"],
+    ["l'albero e un'altra", "l'albero e un'altra"],
+    ["va' via e di' la verita'", "va' via e di' la verità"],
+    ["ha detto 'basta' e se n'e' andato", "ha detto 'basta' e se n'è andato"],
+    ["negli anni '90 era cosi'", "negli anni '90 era così"],
+  ];
+  const sbagliati = acc.filter(([a, b]) => accentiDaApostrofo(a) !== b).map(([a]) => `${a} -> ${accentiDaApostrofo(a)}`);
+  prova('accenti: apostrofo al posto dell\'accento, elisioni e citazioni intatte', !sbagliati.length, sbagliati.join(' | ') || `${acc.length} casi`);
+  const fAcc = (t) => fon(normalizza(t));
+  prova('accenti: "perche\'" si legge come "perché"', fAcc("perche' no") === fAcc('perché no') && fAcc("citta'") === fAcc('città') && fAcc("com'e'") === fAcc("com'è"), fAcc("perche' no"));
+
+  // D. ripetizioni vicine
+  const bozza = "Il progetto è partito a gennaio. Il progetto ha coinvolto molte persone e la progettazione ha richiesto tempo. Le persone erano contente.\nPoi abbiamo festeggiato. Alla fine il risultato era buono e i risultati si vedono.\nUn altro paragrafo parla di tutt'altro: mare, sole, vento.\nMolto più tardi il progetto è stato chiuso.";
+  const g = RIP.trova(bozza);
+  const chiavi = g.map((x) => x.parole.join('/'));
+  prova('ripetizioni: stessa parola e stessa radice entro poche frasi', chiavi.includes('progetto/progettazione') && chiavi.includes('persone') && chiavi.includes('risultato/risultati'), JSON.stringify(g.map((x) => [x.parole.join('/'), x.volte])));
+  prova('ripetizioni: un\'occorrenza lontana non conta', g.find((x) => x.parole.includes('progetto')).volte === 3);
+  prova('ripetizioni: niente parole funzione', !RIP.trova('Il cane e il gatto. Il cane e il topo. Il gatto e il topo con il cane.').some((x) => RIP.FUNZIONE.has(x.parole[0])));
+  prova('ripetizioni: l\'articolo eliso non conta ("l\'albero" = "albero")', RIP.trova("L'albero è alto. Sotto l'albero c'è ombra.").some((x) => x.parole.includes('albero')));
+  prova('ripetizioni: niente se non ci sono', RIP.trova('Il sole splende sul mare calmo. Domani partiremo verso le montagne.').length === 0);
+  const pos = g[0].posizioni[0];
+  prova('ripetizioni: le posizioni puntano alla parola nel testo', bozza.slice(pos.inizio, pos.fine).toLowerCase() === pos.parola.toLowerCase(), JSON.stringify(pos));
+
+  // revisione 1.3.0
+  // 1. mail citata breve con una riga che comincia con un numero
+  const mailBreve = "Ciao Marco,\n> Ti scrivo per l'evento.\n> 2024 e' stato un anno difficile\n> e speriamo nel prossimo.\n\nRisposta mia.";
+  const nb = normalizza(mailBreve);
+  const pb = paragrafi(nb);
+  prova('citazione: blocco di righe col ">" anche con un numero dopo il segno', !nb.includes('>') && !nb.includes('maggiore') && nb.includes('2024 è stato') && pb[pb.length - 1] === 'Risposta mia.', JSON.stringify(pb));
+  prova('citazione: un elenco fatto solo di "> numero" resta un confronto', normalizza('Requisiti:\n> 18 anni\n> 2 anni di esperienza') === 'Requisiti:\nmaggiore di 18 anni\nmaggiore di 2 anni di esperienza');
+  prova('citazione: un elenco per lo piu\' di "> numero" resta un confronto', normalizza('Requisiti:\n> 18 anni\n> 5 anni di esperienza\n> patente B') === 'Requisiti:\nmaggiore di 18 anni\nmaggiore di 5 anni di esperienza\n> patente B');
+  prova('citazione: due righe, una con un numero, sono una citazione', normalizza('> Ti scrivo oggi.\n> 2024 e\' stato duro.') === 'Ti scrivo oggi.\n2024 è stato duro.');
+  prova('citazione: una riga sola col ">" resta com\'e\'', paragrafi('Vietato ai minori\n> 18 anni')[1] === '> 18 anni');
+  // 3. citazioni fra apici che finiscono con una consonante, a fine frase, dopo un apostrofo
+  const acc2 = [
+    ["disse 'ok' e perche' no", "disse 'ok' e perché no"],
+    ["il 'film' e perche'", "il 'film' e perché"],
+    ["si chiama 'sport' ma perche'?", "si chiama 'sport' ma perché?"],
+    ["l'‘albero’ e' alto", "l'‘albero’ è alto"],
+    ["'Basta!' disse, e' finita", "'Basta!' disse, è finita"],
+    ["Lui disse 'ciao.\nPoi perche'", "Lui disse 'ciao.\nPoi perché"],
+    ["Disse 'vado. Poi perche' no", "Disse 'vado. Poi perché no"],
+    ["'l'albero' e' alto", "'l'albero' è alto"],
+    ["ne' te' o' tre'", 'né tè ò tré'],
+    ["'perche'' dice e ‘perche’’ ok", "'perché' dice e ‘perché’ ok"],
+  ];
+  const sb2 = acc2.filter(([a, b]) => accentiDaApostrofo(a) !== b).map(([a]) => `${a} -> ${accentiDaApostrofo(a)}`);
+  prova('accenti: citazioni chiuse da consonante, segno, fine frase o a capo', !sb2.length, sb2.join(' | ') || `${acc2.length} casi`);
+  // 4. "<3" e' un cuore
+  const cuori = [
+    ['Ti amo <3 tanto', 'Ti amo tanto'],
+    ['Ti amo <3', 'Ti amo'],
+    ['Ciao <3.', 'Ciao.'],
+    ['Grazie! <3 <3', 'Grazie!'],
+    ['bimbi <3 anni', 'bimbi minore di 3 anni'],
+    ['valore <3%', 'valore minore di 3%'],
+    ['febbre <30 gradi', 'febbre minore di 30 gradi'],
+    ['costo <3,5 euro', 'costo minore di 3,5 euro'],
+    ['peso < 3 kg', 'peso minore di 3 chili'],
+    ['(<3 mesi)', '(minore di 3 mesi)'],
+  ];
+  const sb3 = cuori.filter(([a, b]) => normalizza(a) !== b).map(([a]) => `${a} -> ${normalizza(a)}`);
+  prova('"<3": cuore tolto, confronto con unita\' o altre cifre letto', !sb3.length, sb3.join(' | ') || `${cuori.length} casi`);
+  // elisione davanti a un numero (prova di Marco sulla 1.3.0)
+  const { inLettere } = await import('../src/lib/normalizza.js');
+  const elisioni = [
+    ["aggiornata l'8 settembre", "aggiornata l'otto settembre"],
+    ["l'11 settembre 2001", "l'undici settembre 2001"],
+    ["l'1", "l'uno"],
+    ["l'1 gennaio", 'il primo gennaio'],
+    ["dall'1 gennaio", 'dal primo gennaio'],
+    ["dall'1", "dall'uno"],
+    ["l'80%", "l'ottanta%"],
+    ["dell'8", "dell'otto"],
+    ["all'11", "all'undici"],
+    ["nell'800", "nell'ottocento"],
+    ["sull'8", "sull'otto"],
+    ["un'8", 'un otto'],
+    ["l'8 e mezzo", "l'otto e mezzo"],
+    ["L'8 marzo", "L'otto marzo"],
+    ["dell'1,5", "dell'uno virgola 5"],
+    ["l'8.000", "l'ottomila"],
+    ["l'8 kg", "l'otto chili"],
+    ["Nell'81", "Nell'ottantuno"],
+    ["l'2", "l'2"],
+    ["l'18", "l'18"],
+    ["negli anni '90", "negli anni '90"],
+    ["sono le 5' e 30''", "sono le 5' e 30''"],
+    ["rock 'n' roll", "rock 'n' roll"],
+  ];
+  const sbE = elisioni.filter(([a, b]) => normalizza(a) !== b).map(([a]) => `${a} -> ${normalizza(a)}`);
+  prova('elisione davanti a un numero: solo se il numero comincia per vocale', !sbE.length, sbE.join(' | ') || `${elisioni.length} casi`);
+  const numeri = [[1, 'uno'], [8, 'otto'], [11, 'undici'], [21, 'ventuno'], [23, 'ventitré'], [28, 'ventotto'], [80, 'ottanta'], [188, 'centottantotto'], [800, 'ottocento'], [1000, 'mille'], [1981, 'millenovecentottantuno'], [8000, 'ottomila'], [11500, 'undicimilacinquecento'], [1000000, 'un milione'], [2300000, 'due milioni trecentomila']];
+  const sbN = numeri.filter(([n, w]) => inLettere(n) !== w).map(([n]) => `${n} -> ${inLettere(n)}`);
+  prova('numeri in lettere', !sbN.length, sbN.join(' | ') || `${numeri.length} numeri`);
+  const fl = fon(normalizza("aggiornata l'8 settembre"));
+  prova('fonemi: "l\'8" si legge "l\'otto", non "elle otto"', fl.includes('lˈɔtːo') && !fl.includes('ˈɛlle') && fon(normalizza("dell'11")) === fon("dell'undici") && fon(normalizza("dell'11")).startsWith('dell'), `${fl} | ${fon(normalizza("dell'11"))}`);
+
+  // 5. radici troppo corte
+  const diverse = [['porta', 'portare'], ['porta', 'portato'], ['parte', 'partire'], ['parte', 'partita'], ['venti', 'vento'], ['banco', 'banca'], ['pesca', 'pescare'], ['capitale', 'capito']];
+  const uguali = [['lavoro', 'lavorare'], ['viaggio', 'viaggiare'], ['lavoro', 'lavorato'], ['progetto', 'progettazione'], ['risultato', 'risultati'], ['veloce', 'velocemente']];
+  const sb5 = [...diverse.filter(([a, b]) => RIP.radice(a) === RIP.radice(b)).map(([a, b]) => `${a}=${b}`), ...uguali.filter(([a, b]) => RIP.radice(a) !== RIP.radice(b)).map(([a, b]) => `${a}!=${b}`)];
+  prova('ripetizioni: radice di almeno 5 lettere, niente falsi parenti', !sb5.length, sb5.join(' | ') || `${diverse.length + uguali.length} coppie`);
+  prova('ripetizioni: "porta" e "portato" vicine non sono una ripetizione', RIP.trova('Apri la porta. Hai portato il pane? Il vento soffia, sono le venti.').length === 0);
+  // 6. fine lettura: indice e foglio di stile
+  const barraSrc = readFileSync(join(qui, '..', 'src', 'barra.js'), 'utf8');
+  const pul = barraSrc.slice(barraSrc.indexOf('pulisci() {'), barraSrc.indexOf('pulisci() {') + 300);
+  prova('evidenziazione: a fine lettura via indice e foglio di stile', /indice = null/.test(pul) && /togliStile\(\)/.test(pul) && /adoptedStyleSheets\.filter\(/.test(barraSrc));
+  // 8. il commento non dice piu' che il file entra nella pagina
+  prova('ripetizioni: non entra nella pagina', !/si inietta nella pagina/.test(readFileSync(join(qui, '..', 'src', 'lib', 'ripetizioni.js'), 'utf8')));
+
+  // pezzi col testo scritto della frase (serve all'evidenziazione)
+  const pz = pezzi(normalizza('Prima frase, con un inciso lungo abbastanza da dividersi in due pezzi distinti. Seconda frase.'), fon);
+  prova('pezzi: il primo pezzo di ogni frase porta il testo della frase', pz[0].testo.startsWith('Prima frase') && pz.filter((p) => p.testo).length === 2, JSON.stringify(pz.map((p) => p.testo)));
+
+  // "Rileggi la bozza": una frase per blocco e pausa piu' lunga
+  const lista = pezzi(normalizza('Uno due tre quattro cinque. Sei sette otto nove dieci. Undici dodici tredici.'), fon);
+  const b1 = componiBlocco(lista, 0, 400, { unaFrase: true, pausaFrase: 0.35, fineTesto: true });
+  const b0 = componiBlocco(lista, 0, 400, { fineTesto: true });
+  prova('bozza: una frase per blocco e pausa piu\' lunga', b1.a === 1 && b0.a === 3 && b1.pausa >= 0.35, `bozza ${b1.a} pezzi e pausa ${b1.pausa.toFixed(2)}, normale ${b0.a} pezzi`);
+
+  // A. riposo del motore
+  const m = 60 * 1000;
+  prova('riposo: con l\'opzione e Chrome in uso resta pronta fino a 30 minuti', !daLiberare({ fermoMs: 20 * m, chromeFermoMs: 1 * m, tienePronta: true }) && daLiberare({ fermoMs: 31 * m, chromeFermoMs: 0, tienePronta: true }));
+  prova('riposo: Chrome fermo 10 minuti la libera prima', daLiberare({ fermoMs: 12 * m, chromeFermoMs: 11 * m, tienePronta: true }));
+  prova('riposo: opzione spenta = 10 minuti come nella 1.2', daLiberare({ fermoMs: 10 * m, chromeFermoMs: 0, tienePronta: false }) && !daLiberare({ fermoMs: 9 * m, chromeFermoMs: 20 * m, tienePronta: false }) && RIPOSO_BREVE_MS === 10 * m && RIPOSO_LUNGO_MS === 30 * m);
+}
+
 // ---- nome del file ----
 prova('nome: dal titolo', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x') === 'Sito vetrina nel 2026 a cosa serve e quando basta.mp3', nomeFile('Sito vetrina nel 2026: a cosa serve e quando basta', 'x'));
 prova('nome: dall\'inizio del testo', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.') === 'Per cominciare conviene puntare su piante facili basilico.mp3', nomeFile(null, 'Per cominciare conviene puntare su piante facili: basilico, prezzemolo, lattuga da taglio e ravanelli.'));

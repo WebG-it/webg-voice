@@ -52,7 +52,10 @@ textarea {
 textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
 .comandi { display: flex; gap: 8px; margin: 10px 0; }
 .comandi + .comandi { margin-top: -2px; }
-.comandi #articolo, .comandi #mp3 { flex: 1; justify-content: center; }
+.comandi #articolo, .comandi #mp3, .comandi #rileggi { flex: 1; justify-content: center; }
+.ripetizioni { margin: 6px 0 0; padding: 0 0 0 18px; max-height: 150px; overflow: auto; }
+.ripetizioni li { margin: 2px 0; }
+.ripetizioni .volte { color: var(--tenue); font-variant-numeric: tabular-nums; }
 button {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;

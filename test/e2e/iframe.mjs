@@ -138,6 +138,31 @@ try {
   R.tinymce = await leggiConPopup();
   console.log('TinyMCE:', JSON.stringify(R.tinymce));
 
+  // 1b) "Rileggi la bozza" dentro TinyMCE (1.3.0): il testo dell'editor, con le ripetizioni
+  await pulisci();
+  await page.evaluate(() => {
+    const ed = tinymce.activeEditor;
+    ed.setContent('<p>Il progetto del sito è partito a gennaio. Il progetto ha coinvolto molte persone, e le persone hanno lavorato bene.</p>');
+    ed.focus();
+    ed.selection.select(ed.getBody().firstChild, true);
+  });
+  {
+    for (const t of b.targets()) if (t.url().endsWith('/popup.html')) { try { await (await t.asPage()).close(); } catch {} }
+    await page.bringToFront();
+    await page.triggerExtensionAction(ext);
+    const t = await b.waitForTarget((t) => t.url().endsWith('/popup.html'), { timeout: 10000 });
+    const p = await t.asPage();
+    await p.waitForSelector('#rileggi');
+    await dorme(300);
+    await p.$eval('#testo', (e) => { e.value = ''; });
+    await p.click('#rileggi');
+    await p.waitForFunction(() => document.querySelector('#bozzaTesto').textContent.startsWith('Rileggo'), { timeout: 30000 }).catch(() => {});
+    R.tinymceBozza = { pannello: await p.$eval('#bozzaTesto', (e) => e.textContent), ripetizioni: await p.$$eval('#bozzaLista li', (l) => l.map((x) => x.textContent)) };
+    await dorme(1500);
+    await sw.evaluate(() => chrome.runtime.sendMessage({ a: 'offscreen', tipo: 'stop' }));
+    console.log('TinyMCE bozza:', JSON.stringify(R.tinymceBozza));
+  }
+
   // 2) textarea normale
   await pulisci();
   await page.evaluate(() => { const t = document.getElementById('ta'); t.focus(); t.setSelectionRange(12, 40); });

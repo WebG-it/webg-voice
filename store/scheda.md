@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.3.7
+# Scheda Chrome Web Store, WebG Voice 1.4.0
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -30,19 +30,22 @@ WebG Voice legge ad alta voce, in italiano, il testo che selezioni in una pagina
 articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
 serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
 
-Novità della versione 1.3
+Novità della versione 1.4
 • Dettatura: premi Ctrl+Spazio in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
   punteggiatura, a capo ed elenchi a voce, senza «ehm» e ripetizioni. Il riconoscimento gira sul tuo
   computer: l'audio non esce. Il modello si scarica solo la prima volta che detti.
+• Segui con gli occhi: la frase che stai ascoltando si evidenzia nella pagina, e la pagina scorre
+  per tenerla in vista. Si spegne dalle opzioni.
+• Rileggi la bozza: per chi scrive. Legge più lenta, con pause fra le frasi, e ti segnala le parole
+  ripetute a poca distanza, nel pannello e colorate nel testo. Funziona anche dentro gli editor.
+• Parte prima: mentre usi Chrome la voce resta pronta fino a 30 minuti dall'ultima lettura, e la lettura comincia in un paio di secondi. Tenerla pronta occupa circa 1,2 GB di memoria; si spegne nelle opzioni.
+• Accenti giusti anche quando il testo usa l'apostrofo: "perche'", "citta'", "e'" si leggono
+  perché, città, è.
 
-Novità della versione 1.2
-• Più fluida: parte in un paio di secondi e non si ferma più a ogni riga dei testi copiati da PDF
-  o mail.
-• Legge tutto l'articolo: premi Alt+Q senza selezionare niente e ascolti titolo e testo, senza
-  menu, pubblicità e commenti.
-• Salva in MP3: un clic e il testo diventa un file audio da ascoltare dove vuoi, creato sul tuo
-  computer.
-• Due voci: Sara o Nicola, scegli tu chi legge.
+Cosa fa
+• Legge tutto l'articolo, senza menu, pubblicità e commenti.
+• Salva in MP3, creato sul tuo computer.
+• Due voci: Sara o Nicola.
 
 Come si usa
 • Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma (su Mac Control+Q e Control+W).
@@ -50,6 +53,7 @@ Come si usa
 • Durante la lettura compare una piccola barra con pausa, stop e velocità.
 • Dal pulsante dell'estensione puoi incollare un testo, scegliere la voce e regolare la velocità, da 0,7 a 1,5.
 • "Scarica MP3" nel pannello crea un file audio del testo incollato, della selezione o dell'articolo. Puoi chiudere il pannello mentre lavora: il file si salva nella cartella dei download.
+• "Rileggi la bozza" nel pannello rilegge il testo selezionato o incollato più lentamente e mostra le parole ripetute vicine.
 
 Gratis, offline dopo il primo download
 Al primo avvio scarica il modello vocale (circa 326 MB) una volta sola, in sottofondo, con
@@ -92,7 +96,15 @@ WebG Voice reads the text you select on a web page, or a whole article, aloud in
 voice is natural and expressive and runs entirely on your computer: no account, no subscription,
 and your text is never sent to any external service.
 
-New in version 1.2
+New in version 1.3
+• Follow along: the sentence being read is highlighted on the page, which scrolls to keep it in
+  view. It can be turned off in the options.
+• Proofread your draft: reads more slowly, with pauses between sentences, and points out words
+  repeated close together, in the panel and highlighted in the text. Works inside editors too.
+• Starts faster: while you use Chrome the voice stays ready for up to 30 minutes after the last reading. Keeping it ready uses about 1.2 GB of memory; you can turn it off in the options.
+• Correct stress when Italian text uses an apostrophe instead of an accent ("perche'", "citta'").
+
+Also in 1.2
 • Smoother: starts within a couple of seconds and no longer stops at every line of text copied
   from PDFs or emails.
 • Reads the whole article: press Alt+Q with nothing selected to hear the title and text, without
@@ -142,7 +154,8 @@ Made by WebG, https://www.webg.it
 
 Leggere ad alta voce, con una voce sintetica che funziona sul computer dell'utente, il testo che
 l'utente seleziona in una pagina, incolla nel popup o l'articolo della pagina che chiede di
-ascoltare, anche salvando la lettura in un file MP3 creato sul computer.
+ascoltare, anche salvando la lettura in un file MP3 creato sul computer. Mentre legge può
+evidenziare la frase in lettura e, nella rilettura di una bozza, le parole ripetute vicine.
 
 ## Giustificazione dei permessi
 
@@ -152,8 +165,10 @@ menu o premuto un pulsante del pannello, e solo in quel momento. L'estensione no
 alle pagine in nessun altro caso.
 
 **scripting**: serve, sempre e solo nella scheda autorizzata da activeTab, a ricavare il testo
-selezionato o il testo dell'articolo (titolo e corpo, senza menu e pubblicità) e a mostrare la
-barretta con pausa, stop e velocità durante la lettura.
+selezionato o il testo dell'articolo (titolo e corpo, senza menu e pubblicità), a mostrare la
+barretta con pausa, stop e velocità durante la lettura e, durante quella stessa lettura, a
+evidenziare nella pagina la frase che si sta ascoltando e le parole ripetute di una bozza (con la
+CSS Custom Highlight API, senza modificare il testo della pagina).
 
 **contextMenus**: aggiunge al menu del tasto destro "Leggi ad alta voce" quando c'è del testo
 selezionato e "Leggi tutto l'articolo" sulla pagina.
@@ -165,7 +180,8 @@ documento offscreen, così continuano anche dopo la chiusura del popup.
 dell'estensione.)
 
 **storage**: le impostazioni (velocità e voce scelte, testo incollato nel popup, misura della
-velocità del computer usata per evitare pause) restano in locale, nel browser dell'utente. Il dizionario di
+velocità del computer usata per evitare pause, scelte delle opzioni "Evidenzia nella pagina la frase" e "Tieni la
+voce pronta") restano in locale, nel browser dell'utente. Il dizionario di
 pronuncia, cioè le coppie di parole che l'utente scrive nelle opzioni, usa chrome.storage.sync:
 se l'utente ha attiva la sincronizzazione di Chrome, viaggia con essa sui suoi dispositivi tramite
 il suo account Google. Lo sviluppatore non riceve nulla.

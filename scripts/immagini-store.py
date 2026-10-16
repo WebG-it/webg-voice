@@ -67,10 +67,11 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     scatti = [
         ("store-1-lettura.png", None),
-        ("store-1-lettura.png", "store-popup.png"),
+        # pagina e pannello catturati durante la stessa lettura (test/e2e/headless.mjs, punto 2)
+        ("store-2-lettura.png", "store-2-popup.png"),
         ("download.png", None),
         ("store-4-scuro.png", None),
-        ("store-5-opzioni.png", None),
+        ("store-5-diagnostica.png", None),
     ]
     for i, (pag, pop) in enumerate(scatti, 1):
         p = os.path.join(src, pag)

@@ -181,6 +181,8 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
   Object.assign(stato, { fase: 'preparazione', errore: null, motore: quale === 'webspeech' ? 'webspeech' : 'whisper', inCoda: 0 });
   pubblica();
   try {
+    // computer con meno di 8 GB: la voce della lettura tenuta pronta lascia il posto alla dettatura
+    if ((navigator.deviceMemory || 8) < 8 && globalThis.webgLiberaVoce) await globalThis.webgLiberaVoce().catch(() => {});
     if (stato.motore === 'webspeech') {
       await avviaWebSpeech(S);
       return;
