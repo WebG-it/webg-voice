@@ -29,7 +29,7 @@ CHROME=<...> node test/dettatura/web-speech.mjs
   a capo, elenchi, «cancella l'ultima frase» e «annulla».
 - `e2e.mjs`, parte 2 (con `MODELLI` e `AUDIO`): microfono finto di Chrome che suona il wav,
   modello servito da un server locale con richieste a pezzi (stessi byte e impronte dei file
-  pubblicati), misura del computer, download e misura del modello, Alt+S simulato, testo nel campo,
+  pubblicati), misura del computer, download e misura del modello, Ctrl+Maiusc+X simulato, testo nel campo,
   latenze dalla fine del parlato al testo. `MODELLI` è una cartella con `small/`, `base/`, `turbo/`
   come su Hugging Face (`tokenizer.json`, `onnx/...`), con gli encoder ritoccati da
   `scripts/accorcia-encoder.py` (`encoder_model_int8_corto.onnx`, `encoder_model_q4f16_corto.onnx`).

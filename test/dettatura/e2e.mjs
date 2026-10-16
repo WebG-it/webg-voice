@@ -5,7 +5,7 @@
 // Parte 1: pagine locali (input, textarea alla React, editor che gestisce beforeinput, contenteditable,
 // riquadro, nessun campo): il testo "dettato" passa dal service worker alla pagina come nell'uso vero.
 // Parte 2 (con MODELLI e AUDIO): microfono finto di Chrome che suona AUDIO, modello Whisper servito
-// da un server locale (stessi byte e impronte dei file pubblicati), Alt+S simulato, testo nel campo.
+// da un server locale (stessi byte e impronte dei file pubblicati), Ctrl+Maiusc+X simulato, testo nel campo.
 import puppeteer from 'puppeteer';
 import http from 'node:http';
 import { createReadStream, existsSync, statSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -221,7 +221,7 @@ try {
     await pd.screenshot({ path: join(tmpdir(), 'dettatura-pagina.png'), fullPage: true });
     await pd.close();
     if (MODELLO !== 'normale') await sw.evaluate((m) => chrome.storage.local.set({ dettModello: m }), MODELLO);
-    // Alt+S sul campo
+    // Ctrl+Maiusc+X sul campo
     await page.goto(`${BASE}/react`);
     await page.click('#campo');
     await page.triggerExtensionAction(ext);
@@ -231,7 +231,7 @@ try {
     await page.bringToFront();
     await page.focus('#campo');
     const av = await sw.evaluate(() => globalThis.__testAltD());
-    controlla('Alt+S: dettatura avviata', av && av.avviata, JSON.stringify(av));
+    controlla('Ctrl+Maiusc+X: dettatura avviata', av && av.avviata, JSON.stringify(av));
     const t1 = Date.now();
     let v = '';
     while (Date.now() - t1 < 45000) {
