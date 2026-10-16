@@ -246,8 +246,9 @@ try {
     await dorme(600);
     const p1 = (await stato()).fase;
     await sw.evaluate(() => __testScorciatoia());
-    await dorme(600);
-    const p2 = (await stato()).fase;
+    // alla ripresa, se non c'e' ancora audio pronto (PC carico), lo stato passa da "preparazione"
+    // a "lettura" appena arriva il blocco: si aspetta fino a 10 secondi
+    const p2 = (await attendi((s) => s.fase === 'lettura' || s.errore, 10000).catch(() => stato())).fase;
     ok('Alt+Q durante l\'articolo: pausa e ripresa', p1 === 'pausa' && p2 === 'lettura', { p1, p2 });
     await ferma();
     // selezione presente: vince la selezione
