@@ -38,9 +38,25 @@ export function costruisci({ test = false, uscita = null } = {}) {
   cpSync(join(RADICE, 'src'), out, { recursive: true });
 
   mkdirSync(join(out, 'vendor', 'ort'), { recursive: true });
-  for (const f of ['ort.wasm.min.mjs', 'ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm']) {
+  // processore (lettura e dettatura) e scheda video (dettatura, modello Qualita')
+  for (const f of [
+    'ort.wasm.min.mjs',
+    'ort-wasm-simd-threaded.mjs',
+    'ort-wasm-simd-threaded.wasm',
+    'ort.webgpu.min.mjs',
+    'ort-wasm-simd-threaded.asyncify.mjs',
+    'ort-wasm-simd-threaded.asyncify.wasm',
+  ]) {
     cpSync(join(ort, 'dist', f), join(out, 'vendor', 'ort', f));
   }
+  // pulizia del testo dettato anche come script per la pagina (content script, niente moduli):
+  // stesso codice di lib/pulizia.js, chiuso in una funzione che espone globalThis.webgPulizia
+  const pulizia = readFileSync(join(RADICE, 'src', 'lib', 'pulizia.js'), 'utf8');
+  const esportati = [...pulizia.matchAll(/^export (?:function|const) (\w+)/gm)].map((m) => m[1]);
+  writeFileSync(
+    join(out, 'pulizia-pagina.js'),
+    `// Generato da scripts/build.mjs a partire da lib/pulizia.js: non modificare qui.\n(() => {\n${pulizia.replace(/^export /gm, '')}\nglobalThis.webgPulizia = { ${esportati.join(', ')} };\n})();\n`
+  );
   mkdirSync(join(out, 'vendor', 'espeak'), { recursive: true });
   for (const f of ['espeak-ng.mjs', 'espeak-ng.wasm', 'espeak-dati.bin', 'espeak-dati.json', 'COPYING']) {
     cpSync(join(RADICE, 'vendor', 'espeak', f), join(out, 'vendor', 'espeak', f));

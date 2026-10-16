@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>banco dettatura</title>
+<script type="module">
+  const w = new Worker('/test/dettatura/banco-worker.js', { type: 'module' });
+  let n = 0;
+  const att = new Map();
+  w.onmessage = (e) => {
+    const a = att.get(e.data.id);
+    att.delete(e.data.id);
+    a(e.data);
+  };
+  window.chiedi = (m) =>
+    new Promise((r) => {
+      const id = ++n;
+      att.set(id, r);
+      w.postMessage({ ...m, id });
+    });
+  window.pronto = true;
+</script>

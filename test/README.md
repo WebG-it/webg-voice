@@ -7,6 +7,36 @@
   sezioni (stessi fonemi della preparazione in una volta), blocchi dell'MP3, nome del file e tag
   ID3, catalogo delle voci. Deve dare tutto OK.
 
+- `npm run test:pulizia`: pulizia italiana del testo dettato (`src/lib/pulizia.js`) su casi veri,
+  scritti come li scrive Whisper: esitazioni, ripetizioni, autocorrezioni («no anzi», «cioè volevo
+  dire», «scusa»), punteggiatura e a capo a voce, elenchi, maiuscole fra un segmento e l'altro,
+  comandi, allucinazioni, dizionario. Deve dare tutto OK.
+
+## Dettatura
+
+```
+npm run build:test && npm i --no-save puppeteer
+CHROME=<chrome for testing> node test/dettatura/e2e.mjs
+CHROME=<...> MODELLI=<cartella modelli> AUDIO=<wav 16 kHz> [MODELLO=normale|leggero|qualita] node test/dettatura/e2e.mjs
+CHROME=<...> MODELLI=<...> AUDIO=<cartella wav> PROVE=... node test/dettatura/banco.mjs
+CHROME=<...> node test/dettatura/web-speech.mjs
+```
+
+- `e2e.mjs`, parte 1 (senza modelli): pagine locali con input, textarea alla React (con il
+  tracciatore del valore di React), editor che gestisce da sé `beforeinput` (come ProseMirror e
+  Lexical), contenteditable semplice, campo in un riquadro e pagina senza campi (casella). Il testo
+  "dettato" passa dal service worker alla pagina come nell'uso vero; controlla pulizia, maiuscole,
+  a capo, elenchi, «cancella l'ultima frase» e «annulla».
+- `e2e.mjs`, parte 2 (con `MODELLI` e `AUDIO`): microfono finto di Chrome che suona il wav,
+  modello servito da un server locale con richieste a pezzi (stessi byte e impronte dei file
+  pubblicati), misura del computer, download e misura del modello, Alt+S simulato, testo nel campo,
+  latenze dalla fine del parlato al testo. `MODELLI` è una cartella con `small/`, `base/`, `turbo/`
+  come su Hugging Face (`tokenizer.json`, `onnx/...`), con gli encoder ritoccati da
+  `scripts/accorcia-encoder.py` (`encoder_model_int8_corto.onnx`, `encoder_model_q4f16_corto.onnx`).
+- `banco.mjs`: Whisper in ONNX Runtime Web (WebAssembly e WebGPU) su una pagina locale, senza
+  estensione: tempi di mel, encoder e decoder per file, rapporto col tempo reale e testo.
+- `web-speech.mjs`: `SpeechRecognition.available` per l'italiano sul dispositivo.
+
 ## Test end-to-end (solo Chrome headless)
 
 Gli hook usati dai test (`globalThis.__test` nell'offscreen, richieste a URL arbitrari e

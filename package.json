@@ -1,7 +1,7 @@
 {
   "name": "webg-voice",
   "private": true,
-  "description": "Estensione Chrome di WebG: lettura ad alta voce in italiano con Kokoro (voce Sara), locale e offline",
+  "description": "Estensione Chrome di WebG: lettura ad alta voce in italiano con Kokoro (voci Sara e Nicola) e dettatura con Whisper, locali e offline",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "test:testo": "node test/prova-testo.mjs",
     "build:test": "node scripts/build.mjs --test",
     "test:pronuncia": "node test/pronuncia.mjs",
-    "test:funzioni": "node test/funzioni.mjs"
+    "test:funzioni": "node test/funzioni.mjs",
+    "test:pulizia": "node test/pulizia.mjs"
   },
   "dependencies": {
     "onnxruntime-web": "1.30.0"
