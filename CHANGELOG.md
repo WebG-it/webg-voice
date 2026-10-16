@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.6] - 2026-10-16
+
+- Il modello della dettatura si scarica da solo: alla prima pressione della scorciatoia (o di Detta) l'estensione sceglie il modello adatto al computer, lo scarica con l'avanzamento nella pillola in pagina e parte da sola; se il download si interrompe, la pressione successiva riprende da dove era arrivato. La pagina della dettatura si apre solo se manca il permesso del microfono, e da li' il modello si scarica da solo; il pulsante Scarica compare solo come Riprova. ONNX Runtime per WebGPU si carica solo se si sceglie il modello Qualita' (niente piu' avviso powerPreference con Normale): la scheda video si controlla senza caricarlo.
+
 ## [1.3.5] - 2026-10-16
 
 - Correzione urgente della 1.3.4: la pagina della dettatura non partiva (errore di sintassi in dettatura.js, un apostrofo dentro una stringa), quindi microfono fermo su Controllo il permesso, nessun modello scelto, Detta qui senza effetto. Ora la build controlla la sintassi di ogni script; la pagina ha una guardia che avvisa se lo script non parte, ogni passo dell'avvio ha un tempo massimo con messaggio visibile, il modello consigliato e' sempre preselezionato, lo stato salvato incoerente delle versioni precedenti (misura vecchia, Leggero proposto e mai scaricato) si azzera da solo. Tocco breve misurato al rilascio del tasto anche se l'avvio e' lento.

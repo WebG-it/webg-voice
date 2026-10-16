@@ -27,8 +27,11 @@ try {
     stato: document.querySelector('#modelloStato').textContent,
     consigliato: [...document.querySelectorAll('.consigliato')].map((x) => x.closest('label').querySelector('input').value),
   }));
+  // la build WebGPU di ONNX Runtime (asyncify) non deve partire se non si sceglie Qualita'
+  const motori = b.targets().map((x) => x.url()).filter((u) => u.includes('dettatura-worker.js'));
+  r.motori = motori.map((u) => u.replace(/^.*\//, ''));
   console.log(JSON.stringify(r, null, 1));
-  esito = r.mic.startsWith('Controllo') || !r.scelto.length ? 1 : 0;
+  esito = r.mic.startsWith('Controllo') || !r.scelto.length || motori.some((u) => u.includes('ep=webgpu')) ? 1 : 0;
 } finally {
   await b.close();
   try {

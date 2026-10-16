@@ -203,6 +203,9 @@ try {
   // ---- 8. primo uso con la scorciatoia tenuta giu' (ripetizione automatica della tastiera):
   // indicatore subito, UNA sola pagina della dettatura, e se e' gia' aperta si riusa ----
   {
+    // microfono negato all'estensione (con il microfono finto di Chrome sarebbe concesso da solo)
+    const cdpP = await b.target().createCDPSession();
+    await cdpP.send('Browser.setPermission', { origin: `chrome-extension://${extId}`, permission: { name: 'microphone' }, setting: 'denied' });
     await preparaScheda('input', '#campo');
     await sw.evaluate(() => globalThis.__testDettaturaFine());
     const contaPagine = () => b.targets().filter((x) => x.url().includes('/dettatura.html')).length;
@@ -243,21 +246,11 @@ try {
     await sw.evaluate((m) => globalThis.__testFontiDettatura(m), mappa);
     // permesso del microfono all'estensione (come dopo il clic su "Consenti")
     const cdp = await b.target().createCDPSession();
-    await cdp.send('Browser.grantPermissions', { origin: `chrome-extension://${extId}`, permissions: ['audioCapture'] });
-    // download e misura dalla pagina della dettatura
-    const pd = await b.newPage();
-    await pd.goto(`chrome-extension://${extId}/dettatura.html`);
-    const mpc = await pd.evaluate(() => chrome.runtime.sendMessage({ a: 'background', tipo: 'dettaturaMisuraPC' }));
-    log('misura del computer:', JSON.stringify(mpc));
-    esiti.push({ nome: 'misura del computer', misura: mpc });
-    const t0 = Date.now();
-    const sc = await pd.evaluate((m) => chrome.runtime.sendMessage({ a: 'background', tipo: 'dettaturaScarica', modello: m }), MODELLO);
-    controlla(`modello ${MODELLO} scaricato e misurato`, sc && sc.ok, JSON.stringify(sc).slice(0, 300));
-    log('download + caricamento + misura:', Date.now() - t0, 'ms');
-    await pd.screenshot({ path: join(tmpdir(), 'dettatura-pagina.png'), fullPage: true });
-    await pd.close();
-    if (MODELLO !== 'normale') await sw.evaluate((m) => chrome.storage.local.set({ dettModello: m }), MODELLO);
-    // Ctrl+Spazio sul campo
+    await cdp.send('Browser.setPermission', { origin: `chrome-extension://${extId}`, permission: { name: 'microphone' }, setting: 'granted' });
+    if (MODELLO !== 'normale') await sw.evaluate((m) => chrome.storage.local.set({ dettModello: m, dettModelloUtente: true }), MODELLO);
+    const contaPagine = () => b.targets().filter((x) => x.url().includes('/dettatura.html')).length;
+    // PRIMO USO SENZA MODELLO, permesso gia' concesso: una sola pressione scarica il modello da solo
+    // (avanzamento nella pillola), nessuna scheda nuova, e la dettatura parte da sola
     await page.goto(`${BASE}/react`);
     await page.click('#campo');
     await page.triggerExtensionAction(ext);
@@ -265,6 +258,32 @@ try {
     await dorme(300);
     await (await pt.asPage()).close();
     await page.bringToFront();
+    await page.focus('#campo');
+    const pagineIniziali = contaPagine();
+    const t0 = Date.now();
+    await page.keyboard.down('Control');
+    const pp = sw.evaluate(() => globalThis.__testComando());
+    await dorme(150);
+    await page.keyboard.up('Control');
+    const p1 = await pp;
+    controlla('primo uso: una pressione avvia e scarica da sola', p1 && p1.avviata && p1.scarica === true, JSON.stringify(p1));
+    let v1 = '';
+    let percentuali = 0;
+    while (Date.now() - t0 < 240000) {
+      v1 = await page.$eval('#campo', (e) => e.value);
+      if (v1.split(/\s+/).length >= 6) break;
+      const s = await sw.evaluate(() => globalThis.__testStatoDettatura());
+      if (s && s.stato && s.stato.download && s.stato.download.totale > 1) percentuali++;
+      await dorme(1000);
+    }
+    log('primo uso: testo dopo', Date.now() - t0, 'ms');
+    controlla('primo uso: avanzamento del download visto', percentuali > 0, `${percentuali} letture`);
+    controlla('primo uso: nessuna scheda aperta', contaPagine() === pagineIniziali, `${contaPagine()} pagine`);
+    controlla('primo uso: dettatura funzionante dopo il download', v1.length > 10, JSON.stringify(v1));
+    const fp = await sw.evaluate(() => globalThis.__testComando());
+    await dorme(1500);
+    controlla('primo uso: nuova pressione ferma', fp && fp.fermata === true, JSON.stringify(fp));
+    await page.$eval('#campo', (e) => (e.value = ''));
     await page.focus('#campo');
     // TOCCO BREVE (mani libere): pressione e rilascio subito, la dettatura resta attiva
     await dorme(800);

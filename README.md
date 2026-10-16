@@ -90,11 +90,13 @@ al primo uso compare un pulsante per scaricarlo.
 - Ctrl+Spazio, finché l'estensione è attiva, vale per la dettatura su tutte le pagine: negli editor
   di codice nel browser (autocompletamento) e in Google Fogli (selezione della colonna) quella
   scorciatoia della pagina non arriva più. Se ti serve, cambiala da `chrome://extensions/shortcuts`.
-- **Primo uso**: alla prima Ctrl+Spazio si apre la pagina della dettatura. Lì consenti il microfono (una
-  volta sola: Chrome non lascia chiedere il permesso ai documenti nascosti delle estensioni) e
-  scegli il modello: la pagina misura il computer e propone quello giusto. Il modello si scarica
-  solo allora, non all'installazione, a pezzi con ripresa e controllo SHA-256, e alla fine si misura
-  il tempo vero (quanto passa dalla fine della frase al testo).
+- **Primo uso**: alla prima Ctrl+Spazio l'estensione scarica da sola il modello adatto al computer
+  (misura il processore in un attimo: Normale, o Leggero se è davvero lento), con l'avanzamento nella
+  pillola in pagina, e poi parte da sola. Il download avviene solo allora, non all'installazione, a
+  pezzi con ripresa e controllo SHA-256; se si interrompe, la pressione successiva riparte da dove si
+  era fermato. Si apre la pagina della dettatura solo se manca il permesso del microfono (una volta
+  sola: Chrome non lascia chiederlo ai documenti nascosti delle estensioni), e da lì il modello si
+  scarica da solo. Il modello si può cambiare quando si vuole nella pagina della dettatura.
 - **Modelli** (Whisper, esportazioni ONNX di onnx-community): **Normale** (small, 250 MB, sul
   processore, il predefinito), **Leggero** (base, 77 MB, per computer lenti), **Qualità**
   (large-v3-turbo, 565 MB, sulla scheda video con WebGPU). Gli encoder sono ritoccati

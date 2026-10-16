@@ -339,7 +339,11 @@
     const fase = s.fase === 'ascolto' && s.inCoda > 0 ? 'trascrivo' : s.fase;
     p.className = `pillola ${fase}`;
     let t = TESTI[fase] || '';
-    if (s.fase === 'preparazione' && s.download && s.download.totale) t = `Scarico il modello: ${Math.floor((100 * s.download.scaricati) / s.download.totale)}%`;
+    if (s.fase === 'preparazione' && s.download && s.download.totale) {
+      t = s.download.avvio
+        ? 'Preparo la dettatura…'
+        : `Preparo la dettatura, ${Math.floor((100 * s.download.scaricati) / s.download.totale)}% (solo la prima volta)`;
+    }
     if (s.fase === 'errore') t = s.errore || 'Errore nella dettatura';
     if ((fase === 'ascolto' || fase === 'parlato') && D.scorciatoia) t += ` · ${D.scorciatoia} per finire`;
     p.querySelector('.testo').textContent = t;

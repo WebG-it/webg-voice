@@ -98,25 +98,51 @@ export function creaDettatura(c) {
     if (!r.d) return { avviata: false, motivo: r.motivo };
     await c.assicuraOffscreen();
     const perm = await c.aOffscreen({ tipo: 'dettPermesso' });
-    const pronto = imp.motore === 'webspeech' ? { completo: true } : await c.aOffscreen({ tipo: 'dettPronto', modello: imp.modello });
-    if (perm.permesso !== 'granted' || !pronto.completo) {
-      // primo uso: lo si dice nella pagina, poi microfono e modello si preparano nella pagina della dettatura
-      const errore =
-        perm.permesso !== 'granted'
-          ? 'Serve il permesso del microfono: apro la pagina della dettatura.'
-          : 'Prima va scaricato il modello di riconoscimento: apro la pagina della dettatura.';
-      await aPagina(r.d, 0, { dett: 'stato', stato: { fase: 'errore', errore } });
+    if (perm.permesso !== 'granted') {
+      // il solo passo che chiede qualcosa all'utente: il permesso del microfono, nella pagina della
+      // dettatura (Chrome non lo chiede da un documento nascosto). Da li' anche il modello si scarica da solo.
+      await aPagina(r.d, 0, { dett: 'stato', stato: { fase: 'errore', errore: 'Serve il permesso del microfono: apro la pagina della dettatura.' } });
       await aPagina(r.d, r.d.frameCampo, { dett: 'fine' });
       await salva(null);
       if (!pagina) {
         await new Promise((ok) => setTimeout(ok, 1200));
-        await apriPagina(perm.permesso !== 'granted' ? 'microfono' : 'modello');
+        await apriPagina('microfono');
       }
-      return { avviata: false, motivo: 'primoUso', permesso: perm.permesso, modelloPronto: pronto.completo };
+      return { avviata: false, motivo: 'primoUso', permesso: perm.permesso };
+    }
+    // modello mancante: si scarica da solo (quello consigliato per il computer), con l'avanzamento
+    // nella pillola, e la dettatura parte appena e' pronto
+    let modello = imp.modello;
+    let scarica = false;
+    if (imp.motore !== 'webspeech') {
+      const pronto = await c.aOffscreen({ tipo: 'dettPronto', modello });
+      scarica = !pronto.completo;
+      if (scarica) modello = await modelloConsigliato(modello);
     }
     await c.fermaLettura();
-    await c.aOffscreen({ tipo: 'dettAvvia', modello: imp.modello, termini: imp.termini, motore: imp.motore, t0: Date.now() });
-    return { avviata: true, campo: r.haCampo };
+    await c.aOffscreen({ tipo: 'dettAvvia', modello, termini: imp.termini, motore: imp.motore, t0: Date.now() });
+    return { avviata: true, campo: r.haCampo, scarica, modello };
+  }
+
+  /**
+   * Modello da scaricare al primo uso: quello scelto a mano se c'e', altrimenti il consigliato per
+   * il computer (Normale, Leggero solo se il processore e' davvero lento). La misura dura un attimo.
+   */
+  async function modelloConsigliato(salvato) {
+    const o = await chrome.storage.local.get(['dettModelloUtente', 'dettModello', 'dettMisuraPC2']);
+    if (o.dettModelloUtente && o.dettModello) return salvato;
+    let cpu = o.dettMisuraPC2 && o.dettMisuraPC2.cpu;
+    if (!cpu) {
+      try {
+        const m = await c.aOffscreen({ tipo: 'dettMisuraPC' });
+        cpu = m && m.wasm && m.wasm.gflops;
+        const gpu = m && m.webgpu && m.webgpu.disponibile && m.webgpu.f16 ? 1 : null;
+        if (cpu) await chrome.storage.local.set({ dettMisuraPC2: { cpu, gpu, quando: Date.now() } });
+      } catch {}
+    }
+    const modello = cpu && cpu < 15 ? 'leggero' : 'normale';
+    await chrome.storage.local.set({ dettModello: modello });
+    return modello;
   }
 
   /** Inietta lo script nella scheda (frame principale e frame del campo) e lo avvia. */

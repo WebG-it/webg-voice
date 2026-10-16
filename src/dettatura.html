@@ -28,7 +28,7 @@
 
   <section class="scheda" id="modello">
     <h2><span class="passo">2</span> Modello di riconoscimento</h2>
-    <p>Si scarica una volta sola e resta sul computer. Ti consiglio quello adatto a questo computer.</p>
+    <p>Si scarica da solo la prima volta che detti e resta sul computer. È già scelto quello adatto a questo computer: puoi cambiarlo quando vuoi.</p>
     <div class="scelteModello" role="radiogroup" aria-label="Modello">
       <label class="sceltaModello"><input type="radio" name="modello" value="leggero"><span><strong>Leggero</strong> <span class="dim">77 MB</span><br><span class="nota">Per computer lenti: più veloce, sbaglia di più.</span></span></label>
       <label class="sceltaModello"><input type="radio" name="modello" value="normale"><span><strong>Normale</strong> <span class="dim">250 MB</span><br><span class="nota">Gira sul processore, buono con nomi e termini del dizionario.</span></span></label>
@@ -36,7 +36,7 @@
     </div>
     <p id="proposta" class="verdetto" hidden></p>
     <div class="azioni">
-      <button id="scarica" class="primario">Scarica e prova</button>
+      <button id="scarica" class="primario" hidden>Riprova</button>
       <button id="cancella" hidden>Elimina dal computer</button>
     </div>
     <progress id="barra" max="1" value="0" hidden></progress>

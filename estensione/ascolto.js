@@ -165,12 +165,21 @@ async function avvia({ modello, termini = [], motore: quale = 'whisper', t0 }) {
       await avviaWebSpeech(S);
       return;
     }
-    // il microfono si apre subito e ascolta mentre il modello si carica: i primi segmenti aspettano
-    // il modello in coda, ma niente di quello che si dice va perso (serve al "premi per parlare")
     stato.modello = modelloDettaturaValido(modello);
-    caricaModello(modello).catch((e) => {
-      if (S === sessione) errore(e);
-    });
+    const pronto = await chiedi('wasm', { tipo: 'statoCache', modello: stato.modello });
+    if (!pronto.completo) {
+      // primo uso: il modello si scarica qui (a pezzi, con ripresa), poi il microfono si apre da solo
+      stato.download = { scaricati: 0, totale: 1 };
+      pubblica();
+      await caricaModello(modello);
+      if (S !== sessione) return;
+    } else {
+      // il microfono si apre subito e ascolta mentre il modello si carica: i primi segmenti aspettano
+      // il modello in coda, ma niente di quello che si dice va perso (serve al "premi per parlare")
+      caricaModello(modello).catch((e) => {
+        if (S === sessione) errore(e);
+      });
+    }
     const w = await apriMicrofono();
     if (S !== sessione) return chiudiMicrofono();
     const seg = creaSegmentatore({
@@ -320,7 +329,7 @@ function errore(e) {
   let testo = msg;
   if (/Permission|NotAllowed|denied/i.test(msg)) testo = 'Il microfono non è consentito: apri la pagina della dettatura dal pannello di WebG Voice e premi "Consenti il microfono".';
   else if (/NotFound|Requested device/i.test(msg)) testo = 'Non trovo un microfono collegato.';
-  else if (e && e.download) testo = `Download del modello non riuscito: ${msg}. Controlla la connessione e riprova, riparte da dove si era fermato.`;
+  else if (e && e.download) testo = 'Download del modello interrotto. Controlla la connessione e premi di nuovo la scorciatoia: riparte da dove si era fermato.';
   Object.assign(stato, { fase: 'errore', errore: testo });
   pubblica();
   if (S) pubblicaA({ tipo: 'dettaturaFinita', sessione: S.id, errore: testo });
@@ -398,7 +407,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       case 'dettPronto': {
         // modello sul computer? (senza scaricare niente)
         const mid = modelloDettaturaValido(msg.modello);
-        const r = await chiedi(epDi(mid), { tipo: 'statoCache', modello: mid });
+        const r = await chiedi('wasm', { tipo: 'statoCache', modello: mid });
         return { completo: r.completo, modello: mid };
       }
       case 'dettScarica':
@@ -420,23 +429,25 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
           return { ok: false, errore: stato.errore };
         }
       case 'dettMisuraPC': {
+        // processore: la misura vera, nel motore WebAssembly (quello di Normale e Leggero)
         const out = {};
-        for (const ep of ['wasm', 'webgpu']) {
-          try {
-            out[ep] = await chiedi(ep, { tipo: 'misuraPC' });
-          } catch (e) {
-            out[ep] = { disponibile: false, errore: String(e.message || e) };
-          }
+        try {
+          out.wasm = await chiedi('wasm', { tipo: 'misuraPC' });
+        } catch (e) {
+          out.wasm = { disponibile: false, errore: String(e.message || e) };
         }
-        // il motore WebGPU della misura non serve piu'
-        if (motori.webgpu && epDi(stato.modello || 'normale') !== 'webgpu') {
-          motori.webgpu.terminate();
-          delete motori.webgpu;
+        // scheda video: solo se c'e' (WebGPU con mezza precisione, che serve a Qualita'). Senza
+        // caricare ONNX Runtime per WebGPU: quello si carica solo se si sceglie Qualita'
+        try {
+          const a = navigator.gpu ? await Promise.race([navigator.gpu.requestAdapter(), new Promise((ok) => setTimeout(() => ok(null), 3000))]) : null;
+          out.webgpu = { ep: 'webgpu', disponibile: !!a, f16: !!(a && a.features && a.features.has('shader-f16')) };
+        } catch (e) {
+          out.webgpu = { ep: 'webgpu', disponibile: false, errore: String(e.message || e) };
         }
         return out;
       }
       case 'dettCancella':
-        await chiedi(epDi(msg.modello), { tipo: 'cancella', modello: modelloDettaturaValido(msg.modello) });
+        await chiedi('wasm', { tipo: 'cancella', modello: modelloDettaturaValido(msg.modello) });
         return { ok: true };
       default:
         return { errore: 'comando sconosciuto' };

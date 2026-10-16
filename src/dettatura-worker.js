@@ -43,10 +43,19 @@ async function carica(id) {
   const t0 = performance.now();
   const totale = byteModello(mid);
   const avanz = (p) => invia({ tipo: 'progresso', modello: mid, ...p, totale });
-  const ort = await caricaOrt();
   if (EP === 'webgpu') {
-    const a = navigator.gpu && (await navigator.gpu.requestAdapter());
-    if (!a) throw new Error('Questo computer non ha la scheda video adatta per il modello Qualità. Scegli Normale.');
+    // prima la scheda video, poi (solo se c'e') ONNX Runtime per WebGPU
+    let a = null;
+    try {
+      a = navigator.gpu && (await navigator.gpu.requestAdapter());
+    } catch {}
+    if (!a || !a.features.has('shader-f16')) throw new Error('Questo computer non ha la scheda video adatta per il modello Qualità. Scegli Normale.');
+  }
+  let ort;
+  try {
+    ort = await caricaOrt();
+  } catch (e) {
+    throw new Error(EP === 'webgpu' ? `La scheda video non riesce ad avviare il modello Qualità (${(e && e.message) || e}). Scegli Normale.` : `Il motore non parte: ${(e && e.message) || e}`);
   }
   // tokenizzatore e decoder prima, poi l'encoder ritoccato; se l'encoder ritoccato non si scarica
   // da nessuna fonte, la riserva e' l'originale (finestra intera di 30 s, piu' lento)

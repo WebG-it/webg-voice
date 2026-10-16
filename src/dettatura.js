@@ -18,6 +18,7 @@ async function controllaMicrofono() {
     p.onchange = () => {
       permesso = p.state;
       mostraMicrofono();
+      scaricaDaSolo();
     };
   } catch {}
   mostraMicrofono();
@@ -38,6 +39,7 @@ $('#micConsenti').addEventListener('click', async () => {
     const s = await navigator.mediaDevices.getUserMedia({ audio: true });
     for (const t of s.getTracks()) t.stop();
     permesso = 'granted';
+    scaricaDaSolo();
   } catch (e) {
     permesso = /NotAllowed|Permission/i.test(String(e && e.name)) ? 'denied' : permesso;
     if (/NotFound/i.test(String(e && e.name))) $('#micStato').textContent = 'Non trovo un microfono collegato.';
@@ -68,16 +70,16 @@ function mostraModello() {
     const etichetta = r.closest('label').querySelector('.dim');
     etichetta.textContent = pronti[r.value] ? 'sul computer' : mb(byteModello(r.value));
   }
-  $('#scarica').textContent = pronti[scelto] ? 'Usa questo e prova' : `Scarica (${mb(byteModello(scelto))}) e prova`;
-  $('#cancella').hidden = !pronti[scelto];
+  $('#cancella').hidden = !pronti[scelto] || scaricando;
 }
 
 for (const r of radio()) {
   r.addEventListener('change', async () => {
     scelto = r.value;
-    // scelta a mano: resta anche se il modello non e' ancora scaricato
+    // scelta a mano: resta anche se il modello non e' ancora scaricato, e si scarica da solo
     await chrome.storage.local.set({ dettModello: scelto, dettModelloUtente: true });
     mostraModello();
+    scaricaDaSolo();
   });
 }
 
@@ -95,7 +97,7 @@ async function misuraComputer() {
     try {
       const m = await conTempo(manda('dettaturaMisuraPC'), 25000, 'misura del computer');
       cpu = m && m.wasm && m.wasm.gflops;
-      gpu = m && m.webgpu && m.webgpu.disponibile ? m.webgpu.gflops : null;
+      gpu = m && m.webgpu && m.webgpu.disponibile && m.webgpu.f16 ? 1 : null;
       if (cpu) await chrome.storage.local.set({ dettMisuraPC2: { cpu, gpu, quando: Date.now() } });
     } catch {}
   }
@@ -124,9 +126,16 @@ async function misuraComputer() {
 // sotto questa misura il modello Normale supera i 3 secondi per frase
 const SOGLIA_CPU = 15;
 
+// Il modello si scarica da solo: appena c'e' il permesso del microfono, o quando si cambia modello.
+// Il pulsante compare solo se il download non riesce ("Riprova").
 let scaricando = false;
-$('#scarica').addEventListener('click', async () => {
+function scaricaDaSolo() {
+  if (permesso === 'granted' && !pronti[scelto] && !scaricando) avviaDownload();
+}
+$('#scarica').addEventListener('click', () => avviaDownload());
+async function avviaDownload() {
   if (scaricando) return;
+  $('#scarica').hidden = true;
   scaricando = true;
   $('#scarica').disabled = true;
   $('#barra').hidden = false;
@@ -137,7 +146,9 @@ $('#scarica').addEventListener('click', async () => {
   $('#scarica').disabled = false;
   $('#barra').hidden = true;
   if (!r || !r.ok) {
-    $('#modelloStato').textContent = `Non riuscito: ${(r && r.errore) || 'errore sconosciuto'}. Premi di nuovo: il download riparte da dove si era fermato.`;
+    $('#modelloStato').textContent = `Download non riuscito: ${(r && r.errore) || 'errore sconosciuto'}. Riprova: riparte da dove si era fermato.`;
+    $('#scarica').textContent = 'Riprova';
+    $('#scarica').hidden = false;
     return;
   }
   pronti[scelto] = true;
@@ -149,7 +160,7 @@ $('#scarica').addEventListener('click', async () => {
   if (r.info && r.info.finestraVariabile === false) testo += ' (La versione veloce del modello non è raggiungibile: uso quella completa, più lenta.)';
   if (stima > 2500 && scelto !== 'leggero') testo += ' È lento su questo computer: prova il modello Leggero.';
   $('#modelloStato').textContent = testo;
-});
+}
 
 $('#cancella').addEventListener('click', async () => {
   await manda('dettaturaCancella', { modello: scelto });
@@ -402,6 +413,7 @@ async function sistemaStatoSalvato() {
     if (dettModello) scelto = modelloDettaturaValido(dettModello);
     mostraModello();
     await conTempo(misuraComputer(), 30000, 'misura del computer');
+    scaricaDaSolo();
   } catch (e) {
     avvisoAvvio(e);
     mostraModello();
