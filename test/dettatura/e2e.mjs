@@ -269,8 +269,11 @@ try {
     // TOCCO BREVE (mani libere): pressione e rilascio subito, la dettatura resta attiva
     await dorme(800);
     await page.keyboard.down('Control');
-    const av = await sw.evaluate(() => globalThis.__testComando());
+    const pav = sw.evaluate(() => globalThis.__testComando());
+    // rilascio dopo 150 ms, mentre l'avvio puo' essere ancora in corso (come nell'uso vero)
+    await dorme(150);
     await page.keyboard.up('Control');
+    const av = await pav;
     controlla('tocco: dettatura avviata', av && av.avviata, JSON.stringify(av));
     await dorme(1500);
     const ancora = await sw.evaluate(() => globalThis.__testStatoDettatura());

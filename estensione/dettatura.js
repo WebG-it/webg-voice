@@ -28,7 +28,7 @@ function mostraMicrofono() {
   $('#micAiuto').hidden = permesso !== 'denied';
   stato.textContent =
     permesso === 'granted'
-      ? 'Consentito. Il microfono si accende solo mentre detti (lo vedi dall'indicatore rosso in alto nella pagina) e si spegne quando finisci.'
+      ? "Consentito. Il microfono si accende solo mentre detti (lo vedi dall'indicatore rosso in alto nella pagina) e si spegne quando finisci."
       : permesso === 'denied'
         ? 'Bloccato.'
         : 'Serve il permesso di usare il microfono: Chrome lo chiede una volta sola.';
@@ -75,7 +75,8 @@ function mostraModello() {
 for (const r of radio()) {
   r.addEventListener('change', async () => {
     scelto = r.value;
-    await chrome.storage.local.set({ dettModello: scelto });
+    // scelta a mano: resta anche se il modello non e' ancora scaricato
+    await chrome.storage.local.set({ dettModello: scelto, dettModelloUtente: true });
     mostraModello();
   });
 }
@@ -92,7 +93,7 @@ async function misuraComputer() {
   if (salvata && salvata.cpu && Date.now() - salvata.quando < 30 * 86400000) ({ cpu, gpu } = salvata);
   else {
     try {
-      const m = await manda('dettaturaMisuraPC');
+      const m = await conTempo(manda('dettaturaMisuraPC'), 25000, 'misura del computer');
       cpu = m && m.wasm && m.wasm.gflops;
       gpu = m && m.webgpu && m.webgpu.disponibile ? m.webgpu.gflops : null;
       if (cpu) await chrome.storage.local.set({ dettMisuraPC2: { cpu, gpu, quando: Date.now() } });
@@ -106,6 +107,7 @@ async function misuraComputer() {
   const proposta = cpu && cpu < SOGLIA_CPU ? 'leggero' : 'normale';
   const { dettModello } = await chrome.storage.local.get('dettModello');
   scelto = dettModello ? modelloDettaturaValido(dettModello) : proposta;
+  // la proposta si salva (serve anche alla scorciatoia), ma non come scelta dell'utente
   if (!dettModello) await chrome.storage.local.set({ dettModello: scelto });
   for (const r of radio()) {
     const b = r.closest('label').querySelector('.consigliato');
@@ -130,7 +132,7 @@ $('#scarica').addEventListener('click', async () => {
   $('#barra').hidden = false;
   $('#modelloStato').textContent = pronti[scelto] ? 'Carico il modello…' : 'Scarico il modello…';
   await chrome.storage.local.set({ dettModello: scelto });
-  const r = await manda('dettaturaScarica', { modello: scelto });
+  const r = await manda('dettaturaScarica', { modello: scelto }).catch((e) => ({ ok: false, errore: String((e && e.message) || e) }));
   scaricando = false;
   $('#scarica').disabled = false;
   $('#barra').hidden = true;
@@ -354,16 +356,58 @@ for (const r of document.querySelectorAll('input[name="motore"]')) {
 }
 
 // ---------- avvio ----------
+// Ogni passo ha un tempo massimo: se qualcosa non risponde la pagina lo dice e va avanti,
+// invece di restare ferma su "Controllo il permesso…".
+function conTempo(promessa, ms, nome) {
+  return Promise.race([
+    Promise.resolve(promessa),
+    new Promise((_, ko) => setTimeout(() => ko(new Error(`${nome}: nessuna risposta in ${ms / 1000} s`)), ms)),
+  ]);
+}
+function avvisoAvvio(e) {
+  console.error(e);
+  const p = $('#modelloStato');
+  p.textContent = `Qualcosa non è partito (${e.message || e}). Ricarica la pagina; se resta così, disattiva e riattiva WebG Voice in chrome://extensions.`;
+}
+/** Stato salvato dalle versioni precedenti: si tiene solo quello coerente. */
+async function sistemaStatoSalvato() {
+  const o = await chrome.storage.local.get(['dettModello', 'dettModelloUtente', 'dettMisuraPC']);
+  // la misura della 1.3.0-1.3.3 (una sola serie, falsata dal carico) proponeva Leggero a torto
+  if (o.dettMisuraPC) await chrome.storage.local.remove('dettMisuraPC');
+  // un modello salvato ma mai scaricato ne' scelto a mano era solo una proposta: si ricalcola
+  if (o.dettModello && !o.dettModelloUtente && !pronti[modelloDettaturaValido(o.dettModello)]) await chrome.storage.local.remove('dettModello');
+  if (o.dettModello && !Object.hasOwn(MODELLI_DETTATURA, o.dettModello)) await chrome.storage.local.remove('dettModello');
+}
 (async () => {
-  const { dettModello } = await chrome.storage.local.get('dettModello');
-  scelto = modelloDettaturaValido(dettModello);
-  await controllaMicrofono();
-  scorciatoia();
-  leggiDiz();
-  leggiOpzioni();
-  await aggiornaPronti();
-  misuraComputer();
-  const s = await manda('dettaturaStato').catch(() => null);
+  globalThis.dettaturaPaginaPronta = true; // lo script e' partito: la guardia non serve
+  // subito una scelta visibile: il consigliato di base finche' la misura non dice altro
+  scelto = 'normale';
+  mostraModello();
+  for (const [passo, ms] of [
+    [controllaMicrofono, 5000],
+    [scorciatoia, 5000],
+    [leggiDiz, 5000],
+    [leggiOpzioni, 8000],
+  ]) {
+    conTempo(passo(), ms, passo.name).catch(avvisoAvvio);
+  }
+  try {
+    await conTempo(aggiornaPronti(), 20000, 'stato dei modelli');
+  } catch (e) {
+    avvisoAvvio(e);
+  }
+  try {
+    await conTempo(sistemaStatoSalvato(), 5000, 'stato salvato');
+    const { dettModello } = await chrome.storage.local.get('dettModello');
+    if (dettModello) scelto = modelloDettaturaValido(dettModello);
+    mostraModello();
+    await conTempo(misuraComputer(), 30000, 'misura del computer');
+  } catch (e) {
+    avvisoAvvio(e);
+    mostraModello();
+  }
+  const s = await conTempo(manda('dettaturaStato'), 5000, 'stato').catch(() => null);
   if (s && s.stato && s.stato.download && s.stato.download.totale) $('#barra').hidden = false;
   if (location.hash === '#modello') $('#modello').scrollIntoView();
+
 })();

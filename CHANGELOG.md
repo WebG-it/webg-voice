@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.5] - 2026-10-16
+
+- Correzione urgente della 1.3.4: la pagina della dettatura non partiva (errore di sintassi in dettatura.js, un apostrofo dentro una stringa), quindi microfono fermo su Controllo il permesso, nessun modello scelto, Detta qui senza effetto. Ora la build controlla la sintassi di ogni script; la pagina ha una guardia che avvisa se lo script non parte, ogni passo dell'avvio ha un tempo massimo con messaggio visibile, il modello consigliato e' sempre preselezionato, lo stato salvato incoerente delle versioni precedenti (misura vecchia, Leggero proposto e mai scaricato) si azzera da solo. Tocco breve misurato al rilascio del tasto anche se l'avvio e' lento.
+
 ## [1.3.4] - 2026-10-16
 
 - Prima prova di Marco: premi per parlare (Ctrl+Spazio tenuto registra, al rilascio scrive; tocco breve sotto 300 ms resta a mani libere; ripetizione automatica della tastiera ignorata; rilascio visto dalla pagina con keyup o perdita del fuoco). Pagina della dettatura aperta una volta sola e riportata in primo piano se c'e' gia'. Indicatore subito alla pressione, in alto e ben visibile, con livello del microfono; se manca il microfono o il modello lo dice nella pagina e apre la pagina della dettatura; il microfono ascolta mentre il modello si carica. Proposta del modello robusta (misura ripetuta, migliore valore, Normale salvo computer davvero lenti, niente numeri). Testi per l'utente senza nomi tecnici, esempi del dizionario neutri. Opzioni: sezioni Scorciatoie (tasto attuale, non assegnata con spiegazione, pulsante per cambiarle) e Dettatura.

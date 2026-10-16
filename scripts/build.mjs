@@ -6,6 +6,7 @@
 import { cpSync, rmSync, mkdirSync, existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { RADICE } from './versione.mjs';
 
 // I blocchi fra "@@test-inizio" e "@@test-fine" servono solo ai test automatici
@@ -25,6 +26,25 @@ function ripulisci(dir) {
       if (r !== t) writeFileSync(p, r);
     }
   }
+}
+
+// Ogni .js del pacchetto deve almeno compilare: un errore di sintassi in uno script di una pagina
+// la blocca senza messaggi (successo nella 1.3.4 con un apostrofo in una stringa).
+function controllaSintassi(dir) {
+  const errori = [];
+  const giro = (d) => {
+    for (const n of readdirSync(d)) {
+      const p = join(d, n);
+      if (n === 'vendor') continue;
+      if (statSync(p).isDirectory()) giro(p);
+      else if (n.endsWith('.js')) {
+        const r = spawnSync(process.execPath, ['--check', p], { encoding: 'utf8' });
+        if (r.status !== 0) errori.push(`${p}: ${(r.stderr.match(/SyntaxError[^\n]*/) || [r.stderr.trim().split('\n').pop()])[0]}`);
+      }
+    }
+  };
+  giro(dir);
+  if (errori.length) throw new Error('errori di sintassi:\n' + errori.join('\n'));
 }
 
 export function costruisci({ test = false, uscita = null } = {}) {
@@ -78,6 +98,7 @@ export function costruisci({ test = false, uscita = null } = {}) {
       writeFileSync(f, JSON.stringify(m, null, 2));
     }
   } else ripulisci(out);
+  controllaSintassi(out);
 
   let totale = 0;
   const giro = (d) => {

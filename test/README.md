@@ -36,6 +36,11 @@ CHROME=<...> node test/dettatura/web-speech.mjs
 - `banco.mjs`: Whisper in ONNX Runtime Web (WebAssembly e WebGPU) su una pagina locale, senza
   estensione: tempi di mel, encoder e decoder per file, rapporto col tempo reale e testo.
 - `web-speech.mjs`: `SpeechRecognition.available` per l'italiano sul dispositivo.
+- `stato-salvato.mjs`: aggiornamento da una versione precedente. Mette in `chrome.storage.local` lo
+  stato lasciato dalla 1.3.2-1.3.3 (quello letto nel profilo di Marco: misura vecchia, modello Leggero
+  proposto e mai scaricato) e apre la pagina della dettatura: deve partire, rispondere sul microfono e
+  preselezionare il modello consigliato. Gira anche con Chrome stabile (`CHROME=.../chrome.exe`).
+  Con la 1.3.4 dava KO (errore di sintassi in dettatura.js); la build ora controlla la sintassi di ogni script.
 
 ## Test end-to-end (solo Chrome headless)
 

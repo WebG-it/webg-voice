@@ -226,11 +226,13 @@ export function creaDettatura(c) {
     }
   }
   async function rilascio() {
+    // il tempo si misura quando il tasto si alza, non quando l'avvio (che puo' durare) e' finito
+    const ora = Date.now();
     while (occupato) await new Promise((ok) => setTimeout(ok, 30));
     const p = premuto;
     premuto = null;
     if (!p) return { niente: true };
-    if (Date.now() - p.t0 < TOCCO_MS) return { maniLibere: true };
+    if (ora - p.t0 < TOCCO_MS) return { maniLibere: true };
     if (await attiva()) await ferma();
     return { fermata: true };
   }
