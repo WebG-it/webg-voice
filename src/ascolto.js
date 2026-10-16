@@ -89,6 +89,16 @@ function rimandaChiusura() {
   }, 5 * 60 * 1000);
 }
 
+// la lettura parte: i motori della dettatura si chiudono (si ricaricano in un paio di secondi)
+globalThis.webgChiudiDettatura = () => {
+  if (globalThis.dettaturaAttiva) return;
+  for (const ep of Object.keys(motori)) {
+    motori[ep].terminate();
+    delete motori[ep];
+  }
+  stato.info = null;
+};
+
 let invioRinviato = null;
 function pubblicaRitardato() {
   if (invioRinviato) return;

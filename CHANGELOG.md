@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.4.2] - 2026-10-16
+
+- Lettura con il computer carico: riserva d'audio adattiva. Si misura in continuo il rapporto fra sintesi e voce; quando la sintesi e' piu' lenta della voce, la voce parte dopo una piccola riserva (attesa iniziale al massimo 4 secondi) e, se resta senza audio, riprende solo con almeno 2-6 secondi pronti: poche pause a fine blocco invece di fermarsi a ogni blocco; il pannello dice che il computer e' occupato. Con il computer veloce non cambia niente. La lettura chiude il motore della dettatura inattivo. Misure sullo stesso articolo (940 parole, 5 min 24 s di voce) col Corridoio carico: 1.4.1 84 pause (somma 177 s, massima 6,1 s), 1.4.2 27 pause (somma 146 s, massima 11,5 s, primo suono 2,7 s). Non c'era una causa nuova dal merge: la 1.2.2 a carico simile faceva 43 pause; le pause dipendono dal carico del computer (sintesi da 1,1 a 2,2 volte il tempo reale durante le prove).
+
 ## [1.4.1] - 2026-10-16
 
 - Pannello ridisegnato: due azioni grandi in alto, Leggi (selezione o articolo; Pausa e Riprendi durante la lettura, con Ferma accanto solo quando serve) e Detta (pronta, scarico 62%, ti ascolto); sotto ciascuna le scorciatoie vere come tasti, o «non impostata · Sistema»; voce e velocita' in una riga; una riga di stato; testo incollato in una sezione richiudibile che resta come la lasci; Rileggi la bozza e Crea MP3 piccoli in fondo; Impostazioni come ingranaggio in alto. Catture di controllo con test/e2e/popup-catture.mjs.

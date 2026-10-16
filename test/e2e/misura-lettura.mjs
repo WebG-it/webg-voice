@@ -74,6 +74,7 @@ try {
 
   // 0. modello sul computer (in un profilo nuovo si scarica, una volta)
   await crea();
+  await stato(); // l'offscreen deve aver caricato i suoi script prima del primo comando
   await aOff('preparaMotore');
   await attendi((s) => s.motorePronto || (s.download && s.download.interrotto), 900000);
   const off = await (await b.waitForTarget((t) => t.url().endsWith('/offscreen.html'))).asPage();

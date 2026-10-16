@@ -373,6 +373,8 @@ function attendi(L, motivo) {
  */
 async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, voce, titolo, bozza = false }) {
   ferma(false);
+  // dettatura e lettura non insieme: il motore della dettatura (inattivo) si chiude, niente CPU ne' memoria
+  if (globalThis.webgChiudiDettatura) globalThis.webgChiudiDettatura();
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
   if (voce) stato.voce = voceValida(voce);
   if (await serveConsenso()) {
@@ -395,6 +397,9 @@ async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, 
     daPreparare: null,
     preparato: false,
     registrazione: [],
+    trattenuti: [], // blocchi pronti ma non ancora in riproduzione (riserva d'audio, vedi accoda)
+    trattenendo: false,
+    avviato: false,
     richiesta: { testo, velocita, tabId, rtf: rtfSalvato, dizionario, voce, titolo, bozza },
     bozza, // "Rileggi la bozza": una frase per blocco e pause piu' lunghe fra le frasi
   };
@@ -456,7 +461,7 @@ function avviaResto(L) {
 }
 
 function forseFinita(L) {
-  if (L !== lettura || !L.preparato || L.cursore < L.pezzi.length || L.sorgenti.length) return false;
+  if (L !== lettura || !L.preparato || L.cursore < L.pezzi.length || L.sorgenti.length || L.trattenuti.length) return false;
   lettura = null;
   stato.fase = 'inattivo';
   if (!L.partito) stato.errore = 'Nel testo non c\'e\' niente da leggere.';
@@ -472,13 +477,17 @@ async function pompa(L) {
   try {
     while (L === lettura) {
       if (L.cursore >= L.pezzi.length) {
-        if (L.preparato) break;
+        if (L.preparato) {
+          rilascia(L); // fine del testo: quello che e' in riserva suona
+          break;
+        }
         avviaResto(L);
         await attendi(L, 'resto');
         continue;
       }
       const c = contesto();
-      const margine = L.partito ? Math.max(0, L.finePrevista - c.currentTime) : 0;
+      // audio pronto davanti: quello in riproduzione piu' quello tenuto in riserva
+      const margine = L.partito ? Math.max(0, L.finePrevista - c.currentTime) + secondiTrattenuti(L) : 0;
       if (L.partito && margine >= ANTICIPO_S) {
         await attendi(L, 'anticipo');
         continue;
@@ -509,8 +518,8 @@ async function pompa(L) {
       // testo scritto delle frasi del blocco, per evidenziarle nella pagina mentre suonano
       L.blocchi.push({ da, a: b.a, testo: L.pezzi.slice(da, b.a).map((p) => p.testo).filter(Boolean).join(' ') });
       L.cursore = b.a;
-      programma(L, L.blocchi.length - 1, r.audio);
       L.partito = true;
+      accoda(L, L.blocchi.length - 1, r.audio);
       // le sezioni successive si preparano solo dopo il primo suono, per non ritardarlo
       avviaResto(L);
     }
@@ -519,6 +528,84 @@ async function pompa(L) {
   } finally {
     L.pompaAttiva = false;
   }
+}
+
+// ---- Riserva d'audio (dalla 1.4.2) ----
+// Quando la sintesi e' piu' lenta della voce (computer carico: misurata fino a 1,6 volte il tempo
+// reale) la riproduzione non parte, e dopo un vuoto non riparte, finche' l'audio pronto non basta a
+// coprire il resto al ritmo misurato, entro un tetto: all'inizio al massimo 4 secondi di attesa in
+// piu' (contati dall'inizio della lettura), dopo un vuoto 6 secondi di riserva al massimo. Meglio un'attesa in piu' all'inizio (o una sola
+// pausa piu' lunga a fine frase) che fermarsi a ogni blocco. Con il computer veloce non cambia niente.
+const RISERVA_INIZIO_MAX_S = 4;
+const RISERVA_VUOTO_MAX_S = 6;
+const secondiTrattenuti = (L) => L.trattenuti.reduce((s, t) => s + t.audio.length / FREQUENZA, 0);
+
+/** Rapporto sintesi/voce stimato su un blocco tipico (200 fonemi), con il costo misurato. */
+function rapportoSintesi() {
+  const k = stimaCosto();
+  return (k.fisso + k.perFonema * 200) / (k.audio * 200);
+}
+
+/** Secondi di audio ancora da sintetizzare (stima: fonemi dei pezzi preparati, caratteri del resto). */
+function secondiRestanti(L) {
+  const k = stimaCosto();
+  let fonemi = 0;
+  for (let i = L.cursore; i < L.pezzi.length; i++) fonemi += (L.pezzi[i].fonemi || '').length + 1;
+  for (const s of L.daPreparare || []) fonemi += s.length * 1.1;
+  return (fonemi * k.audio) / 1000;
+}
+
+/** Quanta riserva aspettare (secondi di audio pronto) prima di far partire o ripartire la voce. */
+function sogliaRiserva(L, iniziale) {
+  // all'inizio ci sono poche misure: vale anche il rapporto salvato dalle letture precedenti
+  const r = Math.max(rapportoSintesi(), iniziale ? rtfUsato() * 1.05 : 0);
+  // stimaCosto tiene gia' un 10% di margine: fino a 1,0 la sintesi sta davanti alla voce
+  if (r <= 1.0) return iniziale ? 0 : 1.5;
+  const serve = (r - 0.95) * secondiRestanti(L);
+  if (iniziale) {
+    // attesa iniziale al massimo 4 secondi dall'inizio della lettura: la riserva che si fa in tempo ad accumulare
+    const restaS = Math.max(0, RISERVA_INIZIO_MAX_S - (Date.now() - L.t0) / 1000);
+    return Math.min(serve, restaS / r);
+  }
+  return Math.min(RISERVA_VUOTO_MAX_S, Math.max(2, serve));
+}
+
+/** Un blocco sintetizzato: suona subito, oppure resta in riserva finche' la riserva basta. */
+function accoda(L, i, audio) {
+  const c = contesto();
+  const vuoto = L.avviato && !L.trattenendo && c.state === 'running' && c.currentTime + 0.03 > L.finePrevista;
+  if (!L.avviato && !L.trattenendo) {
+    L.soglia = sogliaRiserva(L, true);
+    L.trattenendo = L.soglia > 0;
+  } else if (vuoto) {
+    // la voce e' rimasta senza audio: si riparte solo con una riserva sufficiente
+    L.soglia = sogliaRiserva(L, false);
+    L.trattenendo = true;
+    stato.metriche.riprese = (stato.metriche.riprese || 0) + 1;
+  }
+  if (!L.trattenendo) {
+    programma(L, i, audio);
+    L.avviato = true;
+    return;
+  }
+  L.trattenuti.push({ i, audio });
+  // il pannello lo dice: la voce riprende appena c'e' abbastanza audio pronto
+  if (L.avviato && !stato.riserva) {
+    stato.riserva = true;
+    pubblica();
+  }
+  const fineTesto = L.preparato && L.cursore >= L.pezzi.length;
+  if (secondiTrattenuti(L) >= L.soglia || fineTesto) rilascia(L);
+}
+
+function rilascia(L) {
+  if (!L.trattenuti.length) return;
+  const lista = L.trattenuti;
+  L.trattenuti = [];
+  L.trattenendo = false;
+  stato.riserva = false;
+  for (const t of lista) programma(L, t.i, t.audio);
+  L.avviato = true;
 }
 
 // Pausa in piu' fra le frasi in "Rileggi la bozza" (secondi)
@@ -594,6 +681,7 @@ function programma(L, i, audio) {
 
 function ferma(pubblicare = true) {
   const L = lettura;
+  stato.riserva = false;
   if (L) {
     if (blocchiDaSalvare) salvaRtf();
     worker.postMessage({ tipo: 'annulla', sessione: L.id });
@@ -646,6 +734,10 @@ function rifaiNonPartiti(L) {
     } else tenute.push(s);
   }
   L.sorgenti = tenute;
+  // anche i blocchi in riserva si rifanno
+  for (const t of L.trattenuti) primoScartato = Math.min(primoScartato, t.i);
+  L.trattenuti = [];
+  L.trattenendo = false;
   if (primoScartato < L.blocchi.length) {
     L.cursore = L.blocchi[primoScartato].da;
     L.blocchi.length = primoScartato;
