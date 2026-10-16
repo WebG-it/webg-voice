@@ -1,5 +1,6 @@
 // File del modello scaricati al primo avvio e tenuti in IndexedDB (lib/archivio.js).
 import { esiste } from './archivio.js';
+import { FILE_DETTATURA } from './modelli-dettatura.js';
 //
 // Sorgente primaria: gli asset della release "model-v1" del repository WebG
 // su GitHub (scripts/pubblica-modello.sh). Riserva automatica: la stessa
@@ -50,8 +51,8 @@ export const VOCI = {
 export const VOCE_PREDEFINITA = 'sara';
 export const voceValida = (v) => (typeof v === 'string' && Object.hasOwn(VOCI, v) ? v : VOCE_PREDEFINITA);
 
-/** Descrizione di un file da scaricare (modello, voce di base o voce in piu'). */
-export const fileRemoto = (nome) => FILE_REMOTI[nome] || FILE_VOCI[nome];
+/** Descrizione di un file da scaricare (modello, voce di base, voce in piu' o modello della dettatura). */
+export const fileRemoto = (nome) => FILE_REMOTI[nome] || FILE_VOCI[nome] || FILE_DETTATURA[nome];
 
 /** true se il file della voce scelta e' gia' sul computer. */
 export const voceInCache = (id) => esiste(chiave(VOCI[voceValida(id)].file));

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>WebG Voice, dettatura</title>
+<link rel="stylesheet" href="diagnostica.css">
+<link rel="stylesheet" href="dettatura.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="icone/icona-48.png" alt="" width="40" height="40">
+    <div>
+      <h1>Dettatura</h1>
+      <p class="sotto">Parli, e il testo si scrive nel campo dove hai il cursore. Il riconoscimento gira sul tuo computer: l'audio non esce.</p>
+    </div>
+  </header>
+
+  <section class="scheda" id="microfono">
+    <h2><span class="passo">1</span> Microfono</h2>
+    <p id="micStato">Controllo il permesso…</p>
+    <div class="azioni"><button id="micConsenti" class="primario" hidden>Consenti il microfono</button></div>
+    <p class="nota" id="micAiuto" hidden>Il microfono è bloccato per WebG Voice. Apri <code>chrome://settings/content/microphone</code>,
+      togli WebG Voice dai siti bloccati, poi ricarica questa pagina.</p>
+  </section>
+
+  <section class="scheda" id="modello">
+    <h2><span class="passo">2</span> Modello di riconoscimento</h2>
+    <p>Si scarica una volta sola e resta sul computer. Ho misurato questo computer per proporti quello giusto.</p>
+    <p id="misuraPC" class="nota">Misuro questo computer…</p>
+    <div class="scelteModello" role="radiogroup" aria-label="Modello">
+      <label class="sceltaModello"><input type="radio" name="modello" value="leggero"><span><strong>Leggero</strong> <span class="dim">77 MB</span><br><span class="nota">Per computer lenti: più veloce, sbaglia di più.</span></span></label>
+      <label class="sceltaModello"><input type="radio" name="modello" value="normale"><span><strong>Normale</strong> <span class="dim">250 MB</span><br><span class="nota">Il consigliato: gira sul processore, buono con nomi e termini del dizionario.</span></span></label>
+      <label class="sceltaModello"><input type="radio" name="modello" value="qualita"><span><strong>Qualità</strong> <span class="dim">565 MB</span><br><span class="nota">Il più preciso. Gira sulla scheda video (WebGPU) e lascia libero il processore.</span></span></label>
+    </div>
+    <p id="proposta" class="verdetto" hidden></p>
+    <div class="azioni">
+      <button id="scarica" class="primario">Scarica e prova</button>
+      <button id="cancella" hidden>Elimina dal computer</button>
+    </div>
+    <progress id="barra" max="1" value="0" hidden></progress>
+    <p id="modelloStato" aria-live="polite"></p>
+  </section>
+
+  <section class="scheda" id="prova">
+    <h2><span class="passo">3</span> Prova</h2>
+    <p>Premi <strong>Detta qui</strong> e parla. Nelle altre pagine: clicca nel campo e premi <kbd class="tastoDetta">Alt+S</kbd>, di nuovo per finire.</p>
+    <textarea id="provaTesto" rows="5" placeholder="Il testo dettato arriva qui…"></textarea>
+    <div class="azioni"><button id="dettaQui" class="primario">Detta qui</button> <span id="provaStato" class="nota" aria-live="polite"></span></div>
+    <p class="nota" id="tastoAvviso" hidden>La scorciatoia della dettatura non è assegnata (forse la usa già un'altra estensione). <a href="#" class="apriTasti">Imposta la scorciatoia</a></p>
+  </section>
+
+  <section class="scheda">
+    <h2>Cosa puoi dire</h2>
+    <dl class="comandi">
+      <dt>Punteggiatura</dt><dd>«virgola», «punto», «punto e virgola», «due punti», «punto interrogativo», «punto esclamativo», «apri parentesi» e «chiudi parentesi», «apri virgolette» e «chiudi virgolette»</dd>
+      <dt>Righe</dt><dd>«a capo», «nuovo paragrafo»</dd>
+      <dt>Elenchi</dt><dd>«elenco puntato» … «fine elenco»; oppure «primo, …», «secondo, …» per un elenco numerato</dd>
+      <dt>Correggere</dt><dd>«cancella l'ultima frase», «cancella l'ultima parola», «annulla» (toglie l'ultimo pezzo scritto); mentre parli, «no anzi …» o «cioè volevo dire …» sostituiscono quello appena detto</dd>
+      <dt>Finire</dt><dd>«fine dettatura», oppure di nuovo <kbd class="tastoDetta">Alt+S</kbd></dd>
+    </dl>
+    <p class="nota">Esitazioni («ehm», «cioè,», «diciamo,») e parole ripetute si tolgono da sole. La punteggiatura la mette anche Whisper: puoi dettarla o lasciarla fare.</p>
+  </section>
+
+  <section class="scheda" id="dizionario">
+    <h2>Dizionario della dettatura</h2>
+    <p>Nomi e termini che usi spesso: Whisper li riconosce meglio, e le sostituzioni correggono quello che sbaglia.
+      Esempio: <em>recensioni di Marco</em> → <em>recensionidimarco</em>.</p>
+    <table class="diz">
+      <thead><tr><th>Quando senti</th><th>Scrivi</th><th></th></tr></thead>
+      <tbody id="sostRighe"></tbody>
+      <tfoot><tr>
+        <td><input id="sostDetto" placeholder="recensioni di Marco" maxlength="100" aria-label="Quando senti"></td>
+        <td><input id="sostScritto" placeholder="recensionidimarco" maxlength="100" aria-label="Scrivi"></td>
+        <td class="az"><button id="sostAggiungi" class="primario">Aggiungi</button></td>
+      </tr></tfoot>
+    </table>
+    <label class="campo">Termini ricorrenti, separati da virgola
+      <textarea id="termini" rows="2" placeholder="WebG, Joomla, YOOtheme, Home Assistant" spellcheck="false"></textarea></label>
+    <div class="azioni"><button id="salvaTermini">Salva i termini</button> <span id="dizStato" class="nota" aria-live="polite"></span></div>
+  </section>
+
+  <section class="scheda" id="opzioni">
+    <h2>Opzioni</h2>
+    <label class="spunta"><input type="checkbox" id="punteggiatura" checked> Punteggiatura automatica (virgole e punti messi da Whisper)</label>
+    <h3>Riconoscimento di riserva</h3>
+    <p class="nota">Spento di default. Usa il riconoscimento vocale di Chrome invece di Whisper: utile se questo computer è troppo lento.
+      Se Chrome ha l'italiano sul dispositivo l'audio resta qui; <strong>altrimenti l'audio va ai server di Google</strong>, e lo fa solo se lo scegli qui sotto.</p>
+    <div class="scelte" role="radiogroup" aria-label="Riconoscimento">
+      <label class="spunta"><input type="radio" name="motore" value="whisper" checked> Whisper sul computer (consigliato)</label>
+      <label class="spunta"><input type="radio" name="motore" value="locale"> Chrome, solo se l'italiano è sul dispositivo</label>
+      <label class="spunta"><input type="radio" name="motore" value="google"> Chrome, anche mandando l'audio a Google</label>
+    </div>
+    <p id="webSpeechStato" class="nota"></p>
+  </section>
+</main>
+<script type="module" src="dettatura.js"></script>
+</body>
+</html>

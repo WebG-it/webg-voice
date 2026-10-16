@@ -30,6 +30,11 @@ Leggi ad alta voce in italiano, offline dopo il primo download.
 articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
 serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
 
+Novità della versione 1.3
+• Dettatura: premi Alt+S in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
+  punteggiatura, a capo ed elenchi a voce, senza «ehm» e ripetizioni. Il riconoscimento gira sul tuo
+  computer: l'audio non esce. Il modello si scarica solo la prima volta che detti.
+
 Novità della versione 1.2
 • Più fluida: parte in un paio di secondi e non si ferma più a ogni riga dei testi copiati da PDF
   o mail.

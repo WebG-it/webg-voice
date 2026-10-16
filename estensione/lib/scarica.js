@@ -80,19 +80,22 @@ async function svuotaParti(nome, f) {
  * @param {number} base byte gia' contati prima di questo file (per il totale)
  */
 const inCorso = new Map();
-export function ottieni(nome, avanzamento, base = 0) {
+export function ottieni(nome, avanzamento, base = 0, totale = undefined) {
   // due richieste dello stesso file condividono lo stesso download
   if (!inCorso.has(nome)) {
-    inCorso.set(nome, ottieniDavvero(nome, avanzamento, base).finally(() => inCorso.delete(nome)));
+    inCorso.set(nome, ottieniDavvero(nome, avanzamento, base, totale).finally(() => inCorso.delete(nome)));
   }
   return inCorso.get(nome);
 }
 
-async function ottieniDavvero(nome, avanzamento, base) {
+
+async function ottieniDavvero(nome, avanzamento, base, totale) {
   const f = fileRemoto(nome);
   if (!f) throw new Error(`file sconosciuto: ${nome}`);
-  // il modello e la voce di base contano sul totale del primo download; una voce in piu' su se stessa
-  const TOT = FILE_REMOTI[nome] ? BYTE_TOTALI : f.byte;
+  // il modello e la voce di base contano sul totale del primo download; una voce in piu' su se stessa;
+  // i file della dettatura sul totale del modello scelto (passato da chi chiede)
+  const TOT = totale ?? (FILE_REMOTI[nome] ? BYTE_TOTALI : f.byte);
+  let fonti = f.fonti;
   const pronto = await archivio.leggi(chiave(nome));
   if (pronto) {
     const b = new Uint8Array(await pronto.arrayBuffer());
@@ -101,7 +104,7 @@ async function ottieniDavvero(nome, avanzamento, base) {
   }
 
   const errori = [];
-  for (const url of f.fonti) {
+  for (const url of fonti) {
     const fonte = new URL(url).host;
     try {
       const n = nParti(f);

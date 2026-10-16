@@ -4,7 +4,7 @@
     "description": "Nome dell'estensione: marchio, non tradurre"
   },
   "descrizione": {
-    "message": "Reads text and whole articles aloud in Italian, with the Sara and Nicola voices on your computer. Saves MP3 too. Free."
+    "message": "Reads Italian text aloud and types Italian dictation, with models that run on your computer. MP3 too. Free."
   },
   "titoloAzione": {
     "message": "WebG Voice, read aloud"
@@ -20,5 +20,8 @@
   },
   "comandoFerma": {
     "message": "Stop reading"
+  },
+  "comandoDetta": {
+    "message": "Start or stop dictation in the field you are typing in"
   }
 }

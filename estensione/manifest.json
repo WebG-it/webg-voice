@@ -3,7 +3,7 @@
   "name": "__MSG_nomeEstensione__",
   "short_name": "__MSG_nomeEstensione__",
   "default_locale": "it",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "__MSG_descrizione__",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",
@@ -31,6 +31,10 @@
     "ferma-lettura": {
       "suggested_key": { "default": "Alt+W", "mac": "MacCtrl+W" },
       "description": "__MSG_comandoFerma__"
+    },
+    "dettatura": {
+      "suggested_key": { "default": "Alt+S", "mac": "MacCtrl+S" },
+      "description": "__MSG_comandoDetta__"
     }
   },
   "cross_origin_embedder_policy": { "value": "require-corp" },

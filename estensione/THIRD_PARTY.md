@@ -19,6 +19,20 @@ I percorsi indicati sotto sono quelli del pacchetto dell'estensione.
 - `lib/vocab.js` contiene il vocabolario dei fonemi tratto dalla configurazione di Kokoro
   (Apache-2.0, `LICENSE-APACHE-2.0.txt`).
 
+## Whisper (modelli della dettatura)
+
+- OpenAI, https://github.com/openai/whisper, licenza MIT (Copyright (c) 2022 OpenAI; testo della
+  licenza MIT nella sezione di ONNX Runtime Web, qui sotto).
+- Esportazioni ONNX di onnx-community a revisione fissata: `whisper-base`
+  (`1846881b6b3a3024392c1eea3ad983695bc23925`), `whisper-small`
+  (`36050c46d777d46dc4b5f43f6d90574fc38f8732`), `whisper-large-v3-turbo`
+  (`360ebcde2559d60bb474678be3c1de9ef347d01a`).
+- I modelli non sono nel pacchetto: si scaricano la prima volta che l'utente detta, solo quello
+  scelto. Decoder e vocabolari sono identici agli originali; gli encoder sono ritoccati da
+  `scripts/accorcia-encoder.py` (stessi pesi, grafo che accetta finestre piu' corte di 30 s) e
+  pubblicati nella release `dettatura-v1` del repository, con l'impronta SHA-256 controllata
+  dall'estensione (`lib/modelli-dettatura.js`). In riserva, l'encoder originale da Hugging Face.
+
 ## Mozilla Readability 0.6.0
 
 - Mozilla Foundation (originariamente Arc90), https://github.com/mozilla/readability
@@ -43,7 +57,9 @@ I percorsi indicati sotto sono quelli del pacchetto dell'estensione.
 
 - Microsoft, https://github.com/microsoft/onnxruntime
 - Licenza: MIT. File: `vendor/ort/ort.wasm.min.mjs`, `vendor/ort/ort-wasm-simd-threaded.mjs`,
-  `vendor/ort/ort-wasm-simd-threaded.wasm` (dal pacchetto npm `onnxruntime-web`).
+  `vendor/ort/ort-wasm-simd-threaded.wasm` e, per la dettatura sulla scheda video (WebGPU),
+  `vendor/ort/ort.webgpu.min.mjs`, `vendor/ort/ort-wasm-simd-threaded.asyncify.mjs`,
+  `vendor/ort/ort-wasm-simd-threaded.asyncify.wasm` (dal pacchetto npm `onnxruntime-web`).
 
 ```
 MIT License

@@ -1,9 +1,9 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: versione 1.2.2.
+Ultimo aggiornamento: versione 1.3.0.
 
 WebG Voice è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
-voce il testo scelto dall'utente.
+voce il testo scelto dall'utente e scrive nei campi delle pagine sotto dettatura.
 
 ## Dati raccolti
 
@@ -21,6 +21,24 @@ menu contestuale o pulsante del pannello) e solo nella scheda in cui lo chiede.
 Anche i file MP3 si creano sul computer dell'utente e si salvano nella sua cartella dei download:
 nessun servizio esterno li riceve.
 
+## Dettatura e microfono
+
+Il microfono si usa solo per la dettatura, solo dopo il permesso che l'utente dà una volta nella
+pagina della dettatura, e solo mentre la dettatura è attiva: si accende con Alt+S (o il pulsante
+Detta) e si spegne quando l'utente la ferma, cambia scheda o chiude la pagina. Mentre ascolta, la
+pagina mostra un pallino rosso e Chrome il suo indicatore del microfono.
+
+L'audio si trascrive interamente sul computer dell'utente, con il modello Whisper dentro il browser:
+non viene registrato su disco, non viene inviato a WebG né a terzi, e resta in memoria solo il tempo
+di trascrivere una frase. Il testo trascritto va solo nel campo scelto dall'utente (o nella casella
+della dettatura, per copiarlo).
+
+Riserva facoltativa, spenta di default: nella pagina della dettatura l'utente può scegliere il
+riconoscimento vocale di Chrome. Se Chrome ha l'italiano sul dispositivo, anche in quel caso l'audio
+resta sul computer. Solo se l'utente sceglie esplicitamente l'opzione «anche mandando l'audio a
+Google», l'audio della dettatura viene inviato ai server di Google per il riconoscimento, secondo
+l'informativa di Google: la pagina lo dice chiaramente prima della scelta.
+
 ## Dati salvati sul computer
 
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
@@ -28,6 +46,10 @@ Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
   funzionare offline;
 - la velocità di lettura e la voce scelte, l'ultimo testo incollato nel popup e una misura della
   velocità di sintesi del computer;
+- i modelli della dettatura, solo se detti (77, 250 o 565 MB secondo il modello scelto), e le
+  impostazioni della dettatura (modello, punteggiatura automatica, riserva, misura della velocità);
+- il dizionario della dettatura, se lo usi (sostituzioni e termini ricorrenti): come quello di
+  pronuncia, si salva nello spazio di sincronizzazione di Chrome;
 - il dizionario di pronuncia, se lo usi: le coppie di parole che scrivi nelle opzioni. Si salva
   nello spazio di sincronizzazione di Chrome, quindi se hai la sincronizzazione attiva Chrome lo
   copia sui tuoi altri dispositivi tramite il tuo account Google; WebG non lo riceve.
@@ -36,7 +58,9 @@ Si cancellano disinstallando l'estensione.
 
 ## Connessioni di rete
 
-Le uniche connessioni servono a scaricare i file della voce, una volta sola al primo avvio
+Le uniche connessioni servono a scaricare i file della voce e, se si usa la dettatura, quelli del
+modello di riconoscimento (alla prima dettatura, dalla release del progetto su GitHub e da Hugging
+Face, con controllo SHA-256). I file della voce si scaricano una volta sola al primo avvio
 (sulle connessioni a consumo solo dopo un clic dell'utente) e, per la voce Nicola, la prima volta
 che l'utente la sceglie: dalla release del progetto su GitHub (github.com e
 release-assets.githubusercontent.com) o, in alternativa, da Hugging Face (huggingface.co e il suo CDN *.hf.co). Come
@@ -56,5 +80,8 @@ WebG Voice collects no data. Text (including the article of the page, when you a
 it) is turned into speech locally in your browser and never leaves your computer; MP3 files are
 also created locally. The only network requests download the voice files (about 326 MB, plus
 half a MB for the Nicola voice if you pick it) from the project's GitHub release or, as a
-fallback, from Hugging Face. Settings and
+fallback, from Hugging Face. Dictation (Alt+S) uses the microphone only while it is active and
+transcribes the audio locally with Whisper; the audio is never stored or sent anywhere, unless you
+explicitly choose the optional Chrome speech recognition that sends audio to Google. The dictation
+models (77 to 565 MB) are downloaded only the first time you dictate. Settings and
 the voice files are stored locally and removed when you uninstall the extension.

@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.2.2
+# Scheda Chrome Web Store, WebG Voice 1.3.0
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -14,13 +14,13 @@ WebG Voice
 Rendi tuo Chrome → Accessibilità (in inglese: Make Chrome Yours → Accessibility).
 Lingua principale: italiano.
 
-## Descrizione breve (italiano, 127 caratteri su 132)
+## Descrizione breve (italiano, 116 caratteri su 132)
 
-Legge ad alta voce in italiano testi e articoli interi, con le voci Sara e Nicola sul tuo computer. Salva anche in MP3. Gratis.
+Legge ad alta voce in italiano e scrive sotto dettatura, con modelli che girano sul tuo computer. Anche MP3. Gratis.
 
-## Descrizione breve (inglese, 118 caratteri su 132)
+## Descrizione breve (inglese, 107 caratteri su 132)
 
-Reads text and whole articles aloud in Italian, with the Sara and Nicola voices on your computer. Saves MP3 too. Free.
+Reads Italian text aloud and types Italian dictation, with models that run on your computer. MP3 too. Free.
 
 ## Descrizione lunga (italiano)
 
@@ -29,6 +29,11 @@ Leggi ad alta voce in italiano, offline dopo il primo download.
 WebG Voice legge ad alta voce, in italiano, il testo che selezioni in una pagina web o un
 articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
 serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
+
+Novità della versione 1.3
+• Dettatura: premi Alt+S in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
+  punteggiatura, a capo ed elenchi a voce, senza «ehm» e ripetizioni. Il riconoscimento gira sul tuo
+  computer: l'audio non esce. Il modello si scarica solo la prima volta che detti.
 
 Novità della versione 1.2
 • Più fluida: parte in un paio di secondi e non si ferma più a ogni riga dei testi copiati da PDF

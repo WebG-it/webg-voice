@@ -4,6 +4,14 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.3.0] - 2026-10-16
+
+- Dettatura: Alt+S avvia e ferma la dettatura nel campo dove si scrive (campi di testo, textarea di React, editor come Gmail, Claude.ai e WhatsApp Web, riquadri come TinyMCE). Alt+D, chiesto all'inizio, e' una scorciatoia di Chrome (barra degli indirizzi) e Chrome non la assegna alle estensioni.
+- Riconoscimento sul computer con Whisper in ONNX Runtime Web: Normale (small int8, 250 MB, predefinito, sul processore), Leggero (base, 77 MB), Qualita' (large-v3-turbo q4f16, 565 MB, su WebGPU). Encoder ritoccati per finestre corte, trascrizione in anticipo durante le pause, frasi lunghe a pezzi mentre si parla. Misure sul Corridoio: frase di 3-5 s in 0,9-1,4 s dalla fine del parlato (Normale), pezzi di 4 s in circa 2 s.
+- Primo uso nella pagina della dettatura: permesso del microfono, misura del computer con proposta del modello, download a richiesta (non all'installazione) con avanzamento, ripresa, SHA-256 e fonte di riserva, misura del tempo reale. Indicatore discreto nella pagina, casella con Copia e Inserisci dove non si puo' scrivere (Google Docs, nessun campo).
+- Pulizia italiana deterministica: esitazioni, ripetizioni, autocorrezioni (no anzi, cioe' volevo dire, scusa), punteggiatura, a capo ed elenchi a voce, maiuscole fra i segmenti, comandi (cancella l'ultima frase, annulla, fine dettatura), niente trattini come incisi, dizionario della dettatura passato anche a Whisper.
+- Riserva facoltativa con il riconoscimento di Chrome, spenta di default; l'invio dell'audio a Google solo se scelto esplicitamente. Dettatura e lettura non girano insieme sul processore.
+
 ## [1.2.2] - 2026-10-15
 
 - A capo, correzione di una regressione della 1.2.1: righe di larghezza simile che non sono un testo a righe fisse venivano unite in un paragrafo solo (cinque titoli di giornale incollati uno per riga, voci lunghe senza punto, citazioni che chiudono con «»). Ora un testo è "a righe fisse" solo se, oltre alla larghezza simile, almeno metà dei passaggi fra righe lunghe mostra una frase spezzata: la riga dopo comincia in minuscolo o con una cifra, oppure la riga prima finisce con una virgola, un trattino o una parola che non chiude una frase (di, il, negli, e, che…). Restano unite le righe dei PDF e "il collega / Mario Rossi … negli / Stati Uniti".

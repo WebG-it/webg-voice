@@ -1,0 +1,21 @@
+.passo { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accento); color: var(--accento-testo); font-size: 12px; margin-right: 6px; }
+h3 { font-size: 14px; margin: 16px 0 4px; }
+.scelteModello { display: grid; gap: 8px; margin: 10px 0; }
+.sceltaModello { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--bordo); border-radius: 10px; cursor: pointer; }
+.sceltaModello:has(input:checked) { border-color: var(--accento); box-shadow: 0 0 0 1px var(--accento); }
+.sceltaModello:has(input:disabled) { opacity: 0.5; cursor: default; }
+.sceltaModello input { accent-color: var(--accento); margin-top: 3px; }
+.sceltaModello .nota { font-size: 13px; }
+.dim { color: var(--tenue); font-size: 12px; margin-left: 4px; }
+.consigliato { font-size: 11px; font-weight: 600; color: var(--ok); margin-left: 6px; }
+#provaTesto, #termini { width: 100%; padding: 8px 10px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--sfondo); color: var(--testo); font: 15px/1.5 system-ui, sans-serif; resize: vertical; }
+.campo { display: block; margin-top: 10px; color: var(--tenue); font-size: 13px; }
+.campo textarea { margin-top: 4px; }
+.spunta { display: flex; gap: 8px; align-items: center; margin: 6px 0; cursor: pointer; }
+.spunta input { accent-color: var(--accento); }
+.comandi { grid-template-columns: 110px 1fr; }
+.comandi dd { font-variant-numeric: normal; }
+@media (max-width: 520px) {
+  .comandi { grid-template-columns: 1fr; }
+  .comandi dd { margin-bottom: 6px; }
+}

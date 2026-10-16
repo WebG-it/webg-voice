@@ -71,6 +71,8 @@ function controllaRiposo() {
     if (lavoroMp3) return controllaRiposo();
     if (m && m.fase === 'pronto' && !m.salvato && Date.now() - m.quando < MP3_TENUTO_MS) return controllaRiposo();
     // non durante il download in sottofondo
+    // non durante la dettatura (ascolto.js), che ha il suo motore
+    if (globalThis.dettaturaAttiva) return controllaRiposo();
     if (stato.fase === 'inattivo' && !caricamento) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'riposo' }).catch(() => {});
   }, RIPOSO_MS);
 }
@@ -656,7 +658,8 @@ async function cediAllaLettura(J) {
     // la lettura ha la precedenza finche' ha meno di 20 secondi di audio pronto davanti
     const margine = L && ctx ? L.finePrevista - ctx.currentTime : 0;
     const serve = L && L.pompaAttiva && L.inAttesa !== 'anticipo' && stato.fase !== 'pausa' && !(L.partito && margine >= 20);
-    if (!serve) return;
+    // durante la dettatura il processore serve a Whisper: l'MP3 aspetta
+    if (!serve && !globalThis.dettaturaAttiva) return;
     await dorme(150);
   }
 }

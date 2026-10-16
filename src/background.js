@@ -4,6 +4,7 @@
 import { modelliInCache, VOCI, voceValida } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
 import { leggiDizionario } from './lib/dizionario.js';
+import { creaDettatura, impostazioniDettatura } from './dettatura-sw.js';
 
 const OFFSCREEN = 'offscreen.html';
 const VEL_DEFAULT = 1;
@@ -74,8 +75,8 @@ async function assicuraOffscreen() {
   creazione ??= chrome.offscreen
     .createDocument({
       url: OFFSCREEN,
-      reasons: ['AUDIO_PLAYBACK', 'WORKERS'],
-      justification: 'Sintesi vocale locale (Web Worker con ONNX Runtime) e riproduzione audio della lettura ad alta voce',
+      reasons: ['AUDIO_PLAYBACK', 'WORKERS', 'USER_MEDIA'],
+      justification: 'Sintesi vocale locale e riproduzione audio della lettura ad alta voce; microfono per la dettatura, trascritta sul computer (Web Worker con ONNX Runtime)',
     })
     .finally(() => {
       creazione = null;
@@ -204,6 +205,7 @@ async function avvisa(tabId, motivo) {
   const testi = {
     protetta: 'Chrome non permette la lettura su questa pagina: apri il pulsante di WebG Voice e incolla il testo.',
     vuoto: tasto ? `Seleziona un testo e premi ${tasto}.` : 'Seleziona un testo e usa la scorciatoia o il tasto destro.',
+    dettaturaProtetta: 'Chrome non permette di dettare in questa pagina: apri la pagina della dettatura dal pulsante di WebG Voice.',
     articolo: tasto
       ? `Non trovo un articolo da leggere in questa pagina: seleziona il testo e premi ${tasto}.`
       : 'Non trovo un articolo da leggere in questa pagina: seleziona il testo e usa la scorciatoia o il tasto destro.',
@@ -310,6 +312,7 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
       return true;
     }
   }
+  await fermaDettatura();
   const conBarra = await iniettaBarra(tab.id);
   await aOffscreen({ tipo: 'leggi', testo, titolo: scelto.titolo, ...(await impostazioni()), tabId: conBarra ? tab.id : null, t0 });
   return true;
@@ -320,7 +323,30 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   else if (info.menuItemId === 'leggi-articolo') leggiDaScheda(tab, '', false, undefined, 'articolo');
 });
 
+// ---- Dettatura (dettatura-sw.js) ----
+const dettatura = creaDettatura({
+  aOffscreen,
+  assicuraOffscreen,
+  scorciatoia,
+  // dettatura e lettura non girano insieme sul processore
+  fermaLettura: async () => {
+    if (!(await chrome.offscreen.hasDocument())) return;
+    const s = await statoAttuale();
+    if (s && IN_CORSO.includes(s.fase)) await aOffscreen({ tipo: 'stop' });
+  },
+});
+/** Prima di leggere: una dettatura in corso si ferma. */
+async function fermaDettatura() {
+  if (await dettatura.attiva()) await dettatura.ferma();
+}
+
 chrome.commands.onCommand.addListener(async (comando, tab) => {
+  if (comando === 'dettatura') {
+    const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+    const r = await dettatura.alterna(t);
+    if (r && r.motivo === 'protetta' && t) await avvisa(t.id, 'dettaturaProtetta');
+    return;
+  }
   if (comando === 'leggi-selezione') {
     const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
     leggiDaScheda(t);
@@ -334,7 +360,7 @@ const BASE_ESTENSIONE = chrome.runtime.getURL('');
 const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
-const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta']);
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'dettaturaFerma']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
 
@@ -354,6 +380,10 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     if (numeroIn(msg.valore, 0.05, 20)) chrome.storage.local.set({ rtf: msg.valore });
     return;
   }
+  if (msg.da === 'offscreen' && ['statoDettatura', 'dettato', 'dettaturaFinita'].includes(msg.tipo)) {
+    dettatura.daOffscreen(msg);
+    return;
+  }
   if (msg.da === 'offscreen' && msg.tipo === 'riposo') {
     chrome.offscreen.closeDocument().catch(() => {});
     return;
@@ -365,6 +395,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.tipo === 'velocita' && !numeroIn(msg.valore, 0.7, 1.5)) return;
   if (msg.tipo === 'leggiTesto' && (typeof msg.testo !== 'string' || !msg.testo.trim() || msg.testo.length > MAX_TESTO)) return;
   if (msg.tipo === 'voce' && !Object.hasOwn(VOCI, msg.valore)) return;
+  if (/^dettatura(Scarica|Cancella)$/.test(msg.tipo) && !Object.hasOwn(dettatura.MODELLI_DETTATURA, msg.modello)) return;
   if (msg.tipo === 'mp3' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
   (async () => {
     switch (msg.tipo) {
@@ -377,6 +408,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         if (!(await modelliInCache())) return { ok: false };
         return aOffscreen({ tipo: 'prerisc' });
       case 'leggiTesto':
+        await fermaDettatura();
         return aOffscreen({ tipo: 'leggi', testo: msg.testo, ...(await impostazioni()), tabId: null, t0: Date.now() });
       case 'voce':
         // scelta dal popup o dalle opzioni: si ricorda e, se serve, la voce si scarica subito
@@ -429,6 +461,39 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         } catch {}
         return { letto: false, riquadri, nessunArticolo: esito === 'articolo' };
       }
+      // ---- dettatura ----
+      case 'dettaturaAlterna': {
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        return dettatura.alterna(tab);
+      }
+      case 'dettaturaAvviaQui':
+        // dalla pagina della dettatura (prova nel suo riquadro)
+        if (!mittente.tab) return { avviata: false };
+        if (await dettatura.attiva()) {
+          await dettatura.ferma();
+          return { fermata: true };
+        }
+        return dettatura.avvia(mittente.tab, { pagina: true });
+      case 'dettaturaFerma':
+        await dettatura.ferma();
+        return { ok: true };
+      case 'dettaturaStato': {
+        if (!(await chrome.offscreen.hasDocument())) return { stato: null, attiva: false };
+        return aOffscreen({ tipo: 'dettStato' });
+      }
+      case 'dettaturaPermesso':
+        return aOffscreen({ tipo: 'dettPermesso' });
+      case 'dettaturaPronto':
+        return aOffscreen({ tipo: 'dettPronto', modello: msg.modello });
+      case 'dettaturaScarica':
+        return aOffscreen({ tipo: 'dettScarica', modello: msg.modello });
+      case 'dettaturaMisuraPC':
+        return aOffscreen({ tipo: 'dettMisuraPC' });
+      case 'dettaturaCancella':
+        return aOffscreen({ tipo: 'dettCancella', modello: msg.modello });
+      case 'dettaturaApri':
+        await dettatura.apriPagina('');
+        return { ok: true };
       case 'consenti':
         return aOffscreen({ tipo: 'consenti' });
       case 'rifiuta':
@@ -457,6 +522,24 @@ globalThis.__testScorciatoia = async () => {
 globalThis.__testMenuArticolo = async () => {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   return leggiDaScheda(tab, '', false, undefined, 'articolo');
+};
+// Dettatura senza microfono: pagina preparata come con Alt+S, poi testo "dettato" a mano
+globalThis.__testDettaturaPagina = async () => {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  const r = await dettatura.preparaScheda(tab, await impostazioniDettatura(), false);
+  return { haCampo: r.haCampo, motivo: r.motivo, frameCampo: r.d && r.d.frameCampo };
+};
+globalThis.__testDettato = (testo, pausa = 2) => dettatura.daOffscreen({ tipo: 'dettato', testo, pausa, probSilenzio: 0, logprob: -0.1 });
+globalThis.__testDettaturaFine = () => dettatura.daOffscreen({ tipo: 'dettaturaFinita' });
+// Come Alt+S sulla scheda attiva; i file dei modelli da un server locale
+globalThis.__testAltD = async () => {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  return dettatura.alterna(tab);
+};
+globalThis.__testStatoDettatura = () => aOffscreen({ tipo: 'dettStato' });
+globalThis.__testFontiDettatura = async (mappa) => {
+  await assicuraOffscreen();
+  return aOffscreen({ tipo: 'dettFontiProva', mappa });
 };
 // Solo l'estrazione, per misurarla sulle pagine vere
 globalThis.__testArticolo = async () => {

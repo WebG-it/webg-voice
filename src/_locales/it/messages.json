@@ -4,7 +4,7 @@
     "description": "Nome dell'estensione: marchio, non tradurre"
   },
   "descrizione": {
-    "message": "Legge ad alta voce in italiano testi e articoli interi, con le voci Sara e Nicola sul tuo computer. Salva anche in MP3. Gratis."
+    "message": "Legge ad alta voce in italiano e scrive sotto dettatura, con modelli che girano sul tuo computer. Anche MP3. Gratis."
   },
   "titoloAzione": {
     "message": "WebG Voice, leggi ad alta voce"
@@ -20,5 +20,8 @@
   },
   "comandoFerma": {
     "message": "Ferma la lettura"
+  },
+  "comandoDetta": {
+    "message": "Avvia o ferma la dettatura nel campo dove scrivi"
   }
 }

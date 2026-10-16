@@ -331,3 +331,34 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
     }
   } catch {}
 })();
+
+// ---- Dettatura ----
+async function mostraDettatura(s) {
+  const attiva = s && ['preparazione', 'ascolto', 'parlato', 'trascrivo'].includes(s.fase);
+  $('detta').classList.toggle('attiva', !!attiva);
+  $('detta').querySelector('span').textContent = attiva ? 'Ferma' : 'Detta';
+  if (s && s.fase === 'preparazione' && s.download && s.download.totale) $('dettaStato').textContent = `Scarico il modello: ${Math.floor((100 * s.download.scaricati) / s.download.totale)}%`;
+  else if (attiva) $('dettaStato').textContent = 'Ti ascolto…';
+  else if (s && s.fase === 'errore') $('dettaStato').textContent = s.errore || 'Errore nella dettatura';
+}
+$('detta').addEventListener('click', async () => {
+  const r = await comando('dettaturaAlterna');
+  if (r && r.motivo === 'protetta') $('dettaStato').textContent = 'Chrome non permette di dettare su questa pagina.';
+  else if (r && r.avviata) window.close();
+});
+$('dettaOpzioni').addEventListener('click', (e) => {
+  e.preventDefault();
+  comando('dettaturaApri');
+  window.close();
+});
+chrome.runtime.onMessage.addListener((m) => {
+  if (m && m.da === 'offscreen' && m.tipo === 'statoDettatura') mostraDettatura(m.stato);
+});
+(async () => {
+  const c = (await chrome.commands.getAll()).find((x) => x.name === 'dettatura');
+  if (c && c.shortcut) $('tastoDetta').textContent = c.shortcut.replace(/Shift/g, 'Maiusc');
+  try {
+    const r = await comando('dettaturaStato');
+    if (r && r.stato) mostraDettatura(r.stato);
+  } catch {}
+})();
