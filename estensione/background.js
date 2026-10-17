@@ -282,6 +282,29 @@ async function iniettaBarra(tabId) {
 const IN_CORSO = ['lettura', 'pausa', 'preparazione'];
 
 /**
+ * La scorciatoia mette in pausa o riprende la lettura in corso invece di leggere? Una lettura che
+ * suona si mette sempre in pausa; una in pausa si riprende solo da questa pagina, o se non e' legata
+ * a una pagina (testo incollato nel pannello). Una pausa rimasta in un'altra scheda, o di prima di
+ * ricaricare la pagina, non si riprende qui al buio, senza barretta ne' evidenziazione.
+ */
+async function daAlternare(s, tabId) {
+  if (!s || !IN_CORSO.includes(s.fase)) return false;
+  if (s.fase !== 'pausa' || s.tabId === null || s.tabId === undefined) return true;
+  return letturaDiQuestaPagina(tabId, s);
+}
+
+/** La lettura in corso e' di questa pagina: stessa scheda e la sua barretta e' ancora nel documento. */
+async function letturaDiQuestaPagina(tabId, s) {
+  if (s.tabId !== tabId) return false;
+  try {
+    const [r] = await chrome.scripting.executeScript({ target: { tabId }, func: () => !!window.__leggiAdAltaVoceBarra });
+    return !!(r && r.result);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Legge nella scheda. Con la scorciatoia (daPopup false): la selezione; senza
  * selezione mette in pausa o riprende la lettura in corso, e se non c'e' niente
  * in corso legge l'articolo della pagina.
@@ -298,7 +321,7 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
     if (scelto.motivo === 'vuoto') {
       // scorciatoia senza selezione: pausa/riprendi la lettura in corso, altrimenti l'articolo
       const s = await statoAttuale();
-      if (s && IN_CORSO.includes(s.fase)) {
+      if (await daAlternare(s, tab.id)) {
         await aOffscreen({ tipo: 'alterna' });
         return false;
       }
@@ -313,15 +336,20 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
     return false;
   }
   const testo = scelto.testo;
-  // Alt+Q sullo stesso testo che si sta leggendo: pausa o ripresa, non si ricomincia
+  // Alt+Q sullo stesso testo che si sta leggendo: pausa o ripresa, non si ricomincia (la pausa
+  // solo da questa pagina: lo stesso articolo riaperto in un'altra scheda si rilegge con la barretta)
   if (!daPopup) {
     const s = await statoAttuale();
-    if (s && IN_CORSO.includes(s.fase) && s.impronta === impronta(testo)) {
+    if (s && s.impronta === impronta(testo) && (await daAlternare(s, tab.id))) {
       await aOffscreen({ tipo: 'alterna' });
       return true;
     }
   }
   await fermaDettatura();
+  // la lettura che finisce era in un'altra scheda: la sua barretta e la sua evidenziazione si tolgono
+  const prima = await statoAttuale();
+  if (prima && Number.isInteger(prima.tabId) && prima.tabId !== tab.id && IN_CORSO.includes(prima.fase))
+    chrome.tabs.sendMessage(prima.tabId, { da: 'offscreen', tipo: 'stato', stato: { ...prima, fase: 'inattivo', errore: null, download: null, mp3: null } }).catch(() => {});
   const conBarra = await iniettaBarra(tab.id);
   // una lettura normale toglie i colori delle ripetizioni lasciati da "Rileggi la bozza"
   if (conBarra) chrome.tabs.sendMessage(tab.id, { da: 'background', tipo: 'ripetizioni', parole: [] }).catch(() => {});

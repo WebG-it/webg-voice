@@ -4,6 +4,11 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.5.1] - 2026-10-17
+
+- Alt+Q (o la scorciatoia scelta) senza selezione su un articolo, con una lettura rimasta in pausa in un'altra scheda o prima di ricaricare la pagina: riprendeva quella lettura vecchia, senza barretta e senza evidenziazione nella pagina aperta (segnalato il 17-10: pausa la mattina, la sera la scorciatoia su un articolo riprendeva la pausa, anche perche' era lo stesso articolo). Ora una lettura in pausa si riprende con la scorciatoia solo dalla sua pagina, o se non e' legata a una pagina (testo incollato nel pannello); altrimenti si legge l'articolo aperto, con barretta ed evidenziazione. Una lettura che suona si mette ancora in pausa da qualsiasi scheda. Quando una lettura passa a un'altra scheda, la barretta e l'evidenziazione della scheda vecchia si tolgono (prima restavano ferme su In pausa).
+- Verifiche: test/e2e/scorciatoia-articolo.mjs (nuova, riproduce il caso: KO sulla 1.5.0, tutto OK sulla 1.5.1, anche su webg.it, Wikipedia e Il Post), novita130 16 su 16, test:funzioni 100 su 100, test:voci 17 su 17, test:pulizia 70 su 70.
+
 ## [1.5.0] - 2026-10-16
 
 - Lettura fluida anche sui computer lenti o occupati: scelta automatica della voce in base alla velocita' misurata (rimisurata ogni giorno). Qualita' massima (Kokoro fp32) sui computer veloci; Bilanciata (stesso Kokoro in uint8, 177 MB, scaricato solo se serve, circa il 13% piu' leggero con pochi core) quando il computer e' carico; Leggera, la voce del sistema offerta da Chrome (solo voci italiane installate, scelte per qualita', mai eSpeak) quando nemmeno la Bilanciata regge, con avviso nel pannello. Scelta a mano nelle opzioni, sezione Voce per i computer lenti; una voce del sistema in rete si puo' scegliere solo a mano ed e' dichiarata. Misurati e scartati: Kokoro int8 e q8f16 (piu' lenti), fp16 (piu' lento e sbaglia parole), q4f16 (nessun guadagno), WebGPU sulla scheda video integrata (audio vuoto).
