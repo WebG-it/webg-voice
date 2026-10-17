@@ -155,3 +155,17 @@ testo, riquadro modificabile e testo incollato (elenco nel pannello, colori nell
 a 0,15 in meno e una frase per blocco) e la partenza a freddo con la scorciatoia. `iframe.mjs`
 prova "Rileggi la bozza" anche dentro TinyMCE. `freddo.mjs` misura le fasi del caricamento del
 motore e la memoria dei processi a motore fermo, con varianti di opzioni di sessione.
+
+## Scorciatoia senza selezione (1.5.1)
+
+```
+CHROME=<chrome> PROFILO=<profilo con la voce> [URL=<articoli veri, separati da virgole>] node test/e2e/scorciatoia-articolo.mjs
+```
+
+Due articoli locali in due schede: la scorciatoia legge l'articolo con barretta ed evidenziazione,
+mette in pausa e riprende nella stessa pagina, e con una lettura in pausa in A legge l'articolo di B
+(anche se il testo e' lo stesso) invece di riprendere A al buio; la barretta di A si toglie. Una
+lettura che suona si mette in pausa da qualsiasi scheda; dopo aver ricaricato la pagina la
+scorciatoia rilegge con la barretta. Con `URL` prova anche pagine vere.
+Il profilo tiene in cache lo script di fondo dell'estensione finche' la versione non cambia: per
+provare una modifica senza cambiare versione, usare una copia nuova del profilo.
