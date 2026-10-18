@@ -122,6 +122,9 @@ textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
 button.piccolo { flex: 1; justify-content: center; padding: 5px 8px; font-size: 12px; color: var(--tenue); background: none; }
 #chiamata { flex-basis: 100%; }
 .consenso { display: block; margin-top: 8px; font-size: 12px; }
+.campo { display: block; font-size: 12px; }
+.campo input[type=text] { display: block; width: 100%; box-sizing: border-box; margin-top: 3px; padding: 5px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie); color: var(--testo); font: inherit; }
+#chiamataOpz .mb { margin: 4px 0 0; }
 .consenso input { vertical-align: middle; margin-right: 4px; }
 button.piccolo:hover:not(:disabled) { color: var(--testo); background: var(--superficie); filter: none; }
 

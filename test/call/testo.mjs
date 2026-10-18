@@ -1,6 +1,6 @@
 // Prova senza browser di src/lib/chiamata-testo.js e src/lib/parakeet.js (parti pure).
 //   node test/call/testo.mjs
-import { creaTrascrizione, markdown, nomeFileChiamata, formattaOra, somiglianza } from '../../src/lib/chiamata-testo.js';
+import { creaTrascrizione, markdown, nomeFileChiamata, formattaOra, somiglianza, cartellaValida } from '../../src/lib/chiamata-testo.js';
 import { componiTesto, leggiVocabolario } from '../../src/lib/parakeet.js';
 
 let ok = 0;
@@ -119,6 +119,18 @@ uguali('nome file vuoto', nomeFileChiamata('', new Date(2026, 9, 18, 9, 5)), 'Ca
 uguali('nome file solo simboli', nomeFileChiamata('???', new Date(2026, 9, 18, 9, 5)), 'Call 2026-10-18 09-05.md');
 controlla('nome file lungo', nomeFileChiamata('a'.repeat(300), new Date(2026, 0, 1, 0, 0)).length < 110);
 controlla('nome file senza punto finale', !/\.\.md$/.test(nomeFileChiamata('Titolo...', new Date())));
+
+// cartella scelta dall'utente
+uguali('cartella vuota', cartellaValida(''), 'WebG Voice');
+uguali('cartella non data', cartellaValida(undefined), 'WebG Voice');
+uguali('cartella semplice', cartellaValida('Call clienti'), 'Call clienti');
+uguali('sottocartelle', cartellaValida('Lavoro/Call\\2026'), 'Lavoro/Call/2026');
+uguali('niente risalite', cartellaValida('../../Windows/System32'), 'Windows/System32');
+uguali('niente percorso assoluto', cartellaValida('C:\\Users\\x\\Desktop'), 'C/Users/x');
+uguali('solo punti', cartellaValida('..'), 'WebG Voice');
+uguali('caratteri vietati', cartellaValida('a<b>:c|d?e'), 'a b  c d e'.replace(/\s+/g, ' '));
+uguali('al massimo tre livelli', cartellaValida('a/b/c/d/e'), 'a/b/c');
+controlla('nome lungo tagliato', cartellaValida('x'.repeat(200)).length <= 60);
 
 // vocabolario e testo
 {

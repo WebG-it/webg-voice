@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.6.2] - 2026-10-18
+
+- Trascrivi la call: la cartella dove salvare il file si sceglie dal pannello (una sottocartella dei Download, di serie WebG Voice, ripulita da percorsi assoluti e da '..'), oppure si può far comparire a ogni trascrizione la finestra Salva con nome. Testi dello store aggiornati. Nelle prove, profilo nuovo a ogni giro: un profilo riusato conservava una copia vecchia del service worker.
+
 ## [1.6.1] - 2026-10-18
 
 - Trascrivi la call, correzioni dopo la controprova: la bozza recuperata non sovrascrive più il testo finale ancora da salvare; barretta rimessa anche dopo un riavvio del service worker e un secondo tentativo prima di fermare la call su una navigazione intermedia; nessun file vuoto quando non c'è parlato; stato 'attiva' non pubblicato se la sessione è caduta durante l'avvio; tetto di attesa della chiusura annullato a fine ordinata; il pannello dice che la lettura aspetta la call; nota sull'inglese nei testi dello store.

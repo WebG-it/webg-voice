@@ -4,9 +4,8 @@
 // Una trascrizione alla volta, legata alla scheda dove e' partita.
 
 import { PERMESSI_CHIAMATA } from './chiamata-permessi.js';
-import { creaTrascrizione, markdown, nomeFileChiamata } from './lib/chiamata-testo.js';
+import { creaTrascrizione, markdown, nomeFileChiamata, cartellaValida } from './lib/chiamata-testo.js';
 const PAGINA_BARRETTA = 'chiamata-pagina.js';
-const CARTELLA = 'WebG Voice';
 
 let C = null; // { tabId, titolo, host, inizio } anche in storage.session (il service worker puo' ripartire)
 async function chiam() {
@@ -227,11 +226,14 @@ export function creaChiamata(c) {
     try {
       if (!(await chrome.permissions.contains({ permissions: ['downloads'] }))) throw new Error('permesso downloads revocato');
       ascoltaDownload();
+      // la cartella la sceglie l'utente (sottocartella dei download, predefinita «WebG Voice»), oppure
+      // chiede dove salvare ogni volta
+      const { chiamataCartella, chiamataChiediDove } = await chrome.storage.local.get(['chiamataCartella', 'chiamataChiediDove']);
       const id = await chrome.downloads.download({
         url: `data:text/markdown;charset=utf-8,${encodeURIComponent(m.testo)}`,
-        filename: `${CARTELLA}/${m.nomeFile}`,
+        filename: `${cartellaValida(chiamataCartella)}/${m.nomeFile}`,
         conflictAction: 'uniquify',
-        saveAs: false,
+        saveAs: chiamataChiediDove === true,
       });
       await chrome.storage.local.set({ chiamataUltima: { ...ultima, downloadId: id, salvata: false, inCorso: true } });
       // completato (o interrotto) lo dice onChanged; se il download era gia' finito prima di questo punto si controlla ora
@@ -316,6 +318,10 @@ export function creaChiamata(c) {
     const prep = await c.aOffscreen({ tipo: 'chiamPrepara' });
     if (!prep.ok) return { avviata: false, errore: prep.errore };
     return avvia(tab.id, `PROVA:${urlAudio}`);
+  };
+  globalThis.__testChiamataModello = async () => {
+    await c.assicuraOffscreen();
+    return c.aOffscreen({ tipo: 'chiamPrepara' });
   };
   globalThis.__testChiamataFerma = () => ferma('prova');
   globalThis.__testChiamataStato = () => c.aOffscreen({ tipo: 'chiamStato' });

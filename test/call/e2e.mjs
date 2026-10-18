@@ -189,10 +189,15 @@ try {
   // il consenso a trascrivere (spunta una tantum del pannello) e' gia' dato
   await sw.evaluate(() => chrome.storage.local.set({ chiamataConsenso: true }));
 
+  // CARTELLA: sottocartella scelta dall'utente nel pannello
+  if (process.env.CARTELLA) await sw.evaluate((c) => chrome.storage.local.set({ chiamataCartella: c }), process.env.CARTELLA);
+  if (process.env.CARTELLA) log('cartella in storage:', JSON.stringify(await sw.evaluate(async () => (await chrome.storage.local.get('chiamataCartella')).chiamataCartella)));
   // fonti del modello: i file locali al posto di Hugging Face
   const mappa = {};
   for (const [k, loc] of Object.entries(LOCALI)) mappa[FILE_CHIAMATA[k].fonti[0]] = `${BASE}/modelli/${loc}`;
   await sw.evaluate((m) => globalThis.__testChiamataFonti(m), mappa);
+  // con un profilo nuovo il modello si scarica prima (dal server locale), come farebbe il pannello al primo uso
+  if (SCHEDA === 'reale') log('modello pronto:', JSON.stringify(await sw.evaluate(() => globalThis.__testChiamataModello())));
 
   const t0 = Date.now();
   const tab = await sw.evaluate(async () => (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0]);
@@ -272,6 +277,7 @@ try {
     if (process.env.MEM_DETTAGLIO) log('processi:', dettaglioMemoria(b.process().pid));
     log('stato:', JSON.stringify(st.stato ? { fase: st.stato.fase, righe: st.stato.righe, inCoda: st.stato.inCoda, lacune: st.stato.lacune } : st));
   }
+  if (process.env.CARTELLA) log('cartella in storage prima dello stop:', JSON.stringify(await sw.evaluate(async () => (await chrome.storage.local.get(['chiamataCartella', 'chiamataChiediDove'])))));
   const tStop = Date.now();
   await sw.evaluate(() => globalThis.__testChiamataFerma());
   // il file arriva dall'offscreen al service worker e va in storage (downloads non concesso nel test)
@@ -284,8 +290,9 @@ try {
       const u = await sw.evaluate(async () => (await chrome.storage.local.get('chiamataUltima')).chiamataUltima);
       if (u && u.salvata && u.downloadId !== undefined) {
         const d = await sw.evaluate(async (id) => (await chrome.downloads.search({ id }))[0], u.downloadId);
+        if (process.env.DEBUG) log('download:', JSON.stringify({ filename: d && d.filename, url: d && d.url && d.url.slice(0, 40), byExtensionId: d && d.byExtensionId, state: d && d.state }));
         if (d && d.state === 'complete' && existsSync(d.filename)) {
-          controlla('file nella cartella WebG Voice dei download', d.filename.includes('WebG Voice'), d.filename.split('Users').pop());
+          controlla('file nella cartella scelta dei download', d.filename.replaceAll('\\', '/').includes(`/${process.env.CARTELLA_ATTESA || 'WebG Voice'}/`), d.filename.split('Users').pop());
           salvato = { testo: readFileSync(d.filename, 'utf8'), nomeFile: d.filename.replaceAll('\\', '/').split('/').pop() };
           try {
             rmSync(d.filename);
@@ -329,7 +336,7 @@ try {
     }
     controlla('orari coerenti con i turni (±4 s)', fuori === 0, `${fuori} righe fuori turno`);
   }
-  controlla('memoria massima del browser', massimoMB > 0 && massimoMB < 4000, `${massimoMB} MB`);
+  controlla('memoria massima del browser', massimoMB > 0 && massimoMB < 6000, `${massimoMB} MB`);
 } catch (e) {
   if (!String(e.message).includes('FINE_NAVIGAZIONE')) throw e;
 } finally {

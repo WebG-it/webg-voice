@@ -143,6 +143,21 @@ export function markdown({ trascrizione, titolo, host, inizio, fine, versione, s
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
 }
 
+export const CARTELLA_PREDEFINITA = 'WebG Voice';
+
+/**
+ * Sottocartella dei download scelta dall'utente. Chrome salva solo dentro la cartella dei download:
+ * niente percorsi assoluti, niente risalite («..»), niente caratteri non ammessi nei nomi. Vuota o non
+ * valida, torna alla predefinita (il nome dell'estensione).
+ */
+export function cartellaValida(testo) {
+  const pezzi = String(testo ?? '')
+    .split(/[\\/]+/)
+    .map((p) => p.replace(/[\u0000-\u001f<>:"|?*]+/g, ' ').replace(/\s+/g, ' ').replace(/[. ]+$/g, '').replace(/^[. ]+/g, '').slice(0, 60).trim())
+    .filter((p) => p && p !== '.' && p !== '..');
+  return pezzi.length ? pezzi.slice(0, 3).join('/') : CARTELLA_PREDEFINITA;
+}
+
 /** Nome del file: titolo della scheda e data, senza caratteri che i nomi dei file non ammettono. */
 export function nomeFileChiamata(titolo, quando) {
   let t = String(titolo || '')

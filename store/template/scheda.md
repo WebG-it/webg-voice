@@ -190,7 +190,7 @@ senta come prima. L'audio non viene registrato, salvato né inviato a nessuno. F
 scheda mostra una barretta rossa e l'icona mostra «CALL».
 
 **downloads (facoltativo, non concesso all'installazione)**: richiesto insieme a tabCapture, serve
-solo a salvare nella cartella dei download, in «WebG Voice», il file di testo (.md) della trascrizione
+solo a salvare nella cartella dei download, in una sottocartella scelta dall'utente (di serie «WebG Voice») o con la finestra «Salva con nome», il file di testo (.md) della trascrizione
 quando l'utente la ferma, anche se in quel momento il pannello è chiuso.
 
 **storage**: le impostazioni (velocità e voce scelte, testo incollato nel popup, misura della

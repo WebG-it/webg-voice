@@ -74,7 +74,7 @@ partecipanti: offre un messaggio da incollare nella chat per avvisarli, e la pri
 spuntare che lo si farà.
 
 Il file Markdown è testo semplice, non cifrato, nella cartella dei download (sottocartella «WebG
-Voice»): se quella cartella si sincronizza con un servizio (OneDrive, Google Drive), il testo va con
+Voice» di serie, o quella che l'utente sceglie dal pannello): se quella cartella si sincronizza con un servizio (OneDrive, Google Drive), il testo va con
 lei. Il nome del file contiene il titolo della scheda; l'ultimo nome salvato si dimentica dopo un
 giorno. Chrome tiene nella sua cronologia dei download il nome del file. Il modello delle call si può
 eliminare dal pannello.

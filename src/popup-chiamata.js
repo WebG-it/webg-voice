@@ -1,7 +1,7 @@
 // Pannello: "Trascrivi la call". Permessi facoltativi (tabCapture e downloads) chiesti al clic,
 // download del modello, avvio e stop, ultimo file salvato e recupero di una trascrizione interrotta.
 
-import { creaTrascrizione, markdown, nomeFileChiamata } from './lib/chiamata-testo.js';
+import { creaTrascrizione, markdown, nomeFileChiamata, cartellaValida } from './lib/chiamata-testo.js';
 import { PERMESSI_CHIAMATA } from './chiamata-permessi.js';
 
 const $ = (id) => document.getElementById(id);
@@ -237,9 +237,31 @@ async function aggiorna() {
   await disegna(s, chiamataUltima, chiamataBozza, chiamataDaSalvare);
 }
 
+// scelta della cartella: sta fuori dal riquadro che si ridisegna ogni secondo, per non perdere quello che si scrive
+const opz = $('chiamataOpz');
+const campoCartella = $('chiamataCartella');
+const campoChiedi = $('chiamataChiediDove');
+(async () => {
+  const { chiamataCartella, chiamataChiediDove } = await chrome.storage.local.get(['chiamataCartella', 'chiamataChiediDove']);
+  campoCartella.value = chiamataCartella || '';
+  campoChiedi.checked = chiamataChiediDove === true;
+  campoCartella.disabled = campoChiedi.checked;
+})();
+campoCartella.addEventListener('change', async () => {
+  // si salva quello che Chrome puo' davvero usare, e il campo lo mostra
+  const v = campoCartella.value.trim() ? cartellaValida(campoCartella.value) : '';
+  campoCartella.value = v;
+  await chrome.storage.local.set({ chiamataCartella: v });
+});
+campoChiedi.addEventListener('change', async () => {
+  campoCartella.disabled = campoChiedi.checked;
+  await chrome.storage.local.set({ chiamataChiediDove: campoChiedi.checked });
+});
+
 bottone.addEventListener('click', () => {
   aperto = !aperto;
   box.hidden = !aperto;
+  opz.hidden = !aperto;
   clearInterval(timer);
   if (aperto) {
     messaggio = '';

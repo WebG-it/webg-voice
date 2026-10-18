@@ -161,7 +161,7 @@ La lettura misura in continuo quanto il computer ci mette a preparare la voce e 
 Per tenere traccia di cosa si dice in una call fatta nel browser (Meet, Teams, Zoom web) quando non
 c'è un bot che entra al tuo posto. Dal pannello, **Trascrivi la call**: l'estensione ascolta l'audio
 della scheda e il tuo microfono e li trascrive sul tuo computer mentre la call va avanti. Alla fine
-salva un file `.md` nei download (cartella `WebG Voice`), con titolo della scheda e data come nome e
+salva un file `.md` nei download, con titolo della scheda e data come nome e
 l'orario di ogni frase.
 
 - **Io** è il microfono, **Call** è l'audio della scheda (tutti gli altri insieme). I singoli
@@ -192,7 +192,9 @@ l'orario di ogni frase.
   trascritto. In memoria resta solo il testo (una call di un'ora non riempie la memoria). Il testo si
   copia anche ogni 15 secondi nello spazio dell'estensione: se qualcosa si ferma, il pannello offre
   di salvare quello che c'era.
-- Il file `.md` è testo semplice, non cifrato, e finisce in `Download/WebG Voice`: se quella cartella
+- La cartella si sceglie dal pannello: una sottocartella dei Download (Chrome non permette altro),
+  di serie `WebG Voice`, oppure la finestra «Salva con nome» a ogni trascrizione.
+- Il file `.md` è testo semplice, non cifrato, e finisce nella cartella scelta (di serie `Download/WebG Voice`): se quella cartella
   si sincronizza (OneDrive, Google Drive) il testo va con lei. Chi lo tiene ne risponde.
 - Permessi facoltativi `tabCapture` e `downloads`: Chrome li chiede solo la prima volta che
   premi **Trascrivi la call**, non all'installazione.

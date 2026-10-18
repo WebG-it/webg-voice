@@ -29,6 +29,16 @@ try {
   const t = await p.evaluate(() => document.getElementById('chiamataBox').innerText);
   controlla('pannello: Consenti e inizia', /Consenti e inizia/.test(t), t.replace(/\n+/g, ' | ').slice(0, 160));
   controlla('pannello: consenso da spuntare', /Avviserò i partecipanti/.test(t));
+  // cartella di salvataggio: si scrive, si normalizza, si ricorda
+  await p.type('#chiamataCartella', 'Call clienti/../Torino');
+  await p.$eval('#chiamataCartella', (e) => e.dispatchEvent(new Event('change', { bubbles: true })));
+  await new Promise((r) => setTimeout(r, 300));
+  const salvata = await p.evaluate(async () => (await chrome.storage.local.get('chiamataCartella')).chiamataCartella);
+  controlla('cartella scelta: normalizzata e salvata', salvata === 'Call clienti/Torino', JSON.stringify(salvata));
+  await p.click('#chiamataChiediDove');
+  await new Promise((r) => setTimeout(r, 300));
+  const chiedi = await p.evaluate(async () => (await chrome.storage.local.get('chiamataChiediDove')).chiamataChiediDove);
+  controlla('chiedi dove salvare: salvato, campo cartella disattivato', chiedi === true && (await p.$eval('#chiamataCartella', (e) => e.disabled)));
 } finally {
   await b.close();
   try {
