@@ -3,7 +3,7 @@
   "name": "__MSG_nomeEstensione__",
   "short_name": "__MSG_nomeEstensione__",
   "default_locale": "it",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "__MSG_descrizione__",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",
@@ -12,8 +12,10 @@
     "https://github.com/WebG-it/webg-voice/*",
     "https://release-assets.githubusercontent.com/*",
     "https://huggingface.co/onnx-community/*",
+    "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/*",
     "https://*.hf.co/*"
   ],
+  "optional_permissions": ["tabCapture", "downloads"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
   "background": { "service_worker": "background.js", "type": "module" },
   "action": {

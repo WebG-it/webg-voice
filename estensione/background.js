@@ -5,6 +5,7 @@ import { modelliInCache, VOCI, voceValida } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
 import { leggiDizionario } from './lib/dizionario.js';
 import { creaDettatura, impostazioniDettatura } from './dettatura-sw.js';
+import { creaChiamata } from './chiamata-sw.js';
 import './lib/ripetizioni.js'; // registra globalThis.webgRipetizioni ("Rileggi la bozza")
 
 const OFFSCREEN = 'offscreen.html';
@@ -77,7 +78,7 @@ async function assicuraOffscreen() {
     .createDocument({
       url: OFFSCREEN,
       reasons: ['AUDIO_PLAYBACK', 'WORKERS', 'USER_MEDIA'],
-      justification: 'Sintesi vocale locale e riproduzione audio della lettura ad alta voce; microfono per la dettatura, trascritta sul computer (Web Worker con ONNX Runtime)',
+      justification: 'Sintesi vocale locale e riproduzione audio della lettura ad alta voce; microfono per la dettatura e audio della scheda per la trascrizione delle call (solo su richiesta), trascritti sul computer (Web Worker con ONNX Runtime); l\'audio della scheda catturata si rimanda all\'uscita audio',
     })
     .finally(() => {
       creazione = null;
@@ -215,6 +216,7 @@ async function avvisa(tabId, motivo) {
     protetta: 'Chrome non permette la lettura su questa pagina: apri il pulsante di WebG Voice e incolla il testo.',
     vuoto: tasto ? `Seleziona un testo e premi ${tasto}.` : 'Seleziona un testo e usa la scorciatoia o il tasto destro.',
     dettaturaProtetta: 'Chrome non permette di dettare in questa pagina: apri la pagina della dettatura dal pulsante di WebG Voice.',
+    chiamataInCorso: 'Sto trascrivendo una call: la lettura e la dettatura aspettano che finisca (ferma la trascrizione dalla barretta rossa o dal pannello).',
     articolo: tasto
       ? `Non trovo un articolo da leggere in questa pagina: seleziona il testo e premi ${tasto}.`
       : 'Non trovo un articolo da leggere in questa pagina: seleziona il testo e usa la scorciatoia o il tasto destro.',
@@ -392,24 +394,40 @@ chrome.windows.onFocusChanged.addListener((w) => {
   if (w !== chrome.windows.WINDOW_ID_NONE) attivitaChrome();
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (tab && info.menuItemId && (await chiamataOccupa(tab.id))) return;
   preriscaldaSubito();
   if (info.menuItemId === 'leggi-selezione') leggiDaScheda(tab, info.selectionText, false, info.frameId);
   else if (info.menuItemId === 'leggi-articolo') leggiDaScheda(tab, '', false, undefined, 'articolo');
 });
 
 // ---- Dettatura (dettatura-sw.js) ----
+// dettatura, trascrizione di una call e lettura non girano insieme sul processore
+async function fermaLettura() {
+  if (!(await chrome.offscreen.hasDocument())) return;
+  const s = await statoAttuale();
+  if (s && IN_CORSO.includes(s.fase)) await aOffscreen({ tipo: 'stop' });
+}
 const dettatura = creaDettatura({
   aOffscreen,
   assicuraOffscreen,
   scorciatoia,
-  // dettatura e lettura non girano insieme sul processore
-  fermaLettura: async () => {
-    if (!(await chrome.offscreen.hasDocument())) return;
-    const s = await statoAttuale();
-    if (s && IN_CORSO.includes(s.fase)) await aOffscreen({ tipo: 'stop' });
-  },
+  fermaLettura,
 });
+// ---- Trascrizione di una call (chiamata-sw.js) ----
+const chiamata = creaChiamata({
+  aOffscreen,
+  assicuraOffscreen,
+  apriMicrofono: () => dettatura.apriPagina('microfono'),
+  fermaLettura,
+  fermaDettatura: () => fermaDettatura(),
+});
+/** Una call in trascrizione ha il processore: lettura e dettatura aspettano che finisca. */
+async function chiamataOccupa(tabId) {
+  if (!(await chiamata.attiva())) return false;
+  if (tabId !== undefined) await avvisa(tabId, 'chiamataInCorso');
+  return true;
+}
 /** Prima di leggere: una dettatura in corso si ferma. */
 async function fermaDettatura() {
   if (await dettatura.attiva()) await dettatura.ferma();
@@ -418,13 +436,15 @@ async function fermaDettatura() {
 chrome.commands.onCommand.addListener(async (comando, tab) => {
   if (comando === 'dettatura') {
     const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+    if (t && (await chiamataOccupa(t.id))) return;
     const r = await dettatura.comando(t);
     if (r && r.motivo === 'protetta' && t) await avvisa(t.id, 'dettaturaProtetta');
     return;
   }
   if (comando === 'leggi-selezione') {
-    preriscaldaSubito();
     const t = tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+    if (t && (await chiamataOccupa(t.id))) return;
+    preriscaldaSubito();
     leggiDaScheda(t);
   } else if (comando === 'ferma-lettura') {
     if (await chrome.offscreen.hasDocument()) aOffscreen({ tipo: 'stop' });
@@ -436,7 +456,8 @@ const BASE_ESTENSIONE = chrome.runtime.getURL('');
 const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
-const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'riallinea', 'dettaturaFerma', 'dettaturaRilascio']);
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'riallinea', 'dettaturaFerma', 'dettaturaRilascio', 'chiamataFerma']);
+const OCCUPA_CON_CHIAMATA = new Set(['leggiSelezioneAttiva', 'rileggi', 'dettaturaAvviaQui', 'dettaturaScarica', 'dettaturaMisuraPC', 'prerisc', 'preparaMotore']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
 
@@ -460,6 +481,10 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
     dettatura.daOffscreen(msg);
     return;
   }
+  if (msg.da === 'offscreen' && ['statoChiamata', 'livelloChiamata', 'bozzaChiamata', 'chiamataFinita'].includes(msg.tipo)) {
+    chiamata.daOffscreen(msg);
+    return;
+  }
   if (msg.da === 'offscreen' && msg.tipo === 'riposo') {
     chrome.offscreen.closeDocument().catch(() => {});
     return;
@@ -480,9 +505,14 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   if (msg.tipo === 'leggiTesto' && (typeof msg.testo !== 'string' || !msg.testo.trim() || msg.testo.length > MAX_TESTO)) return;
   if (msg.tipo === 'voce' && !Object.hasOwn(VOCI, msg.valore)) return;
   if (/^dettatura(Scarica|Cancella)$/.test(msg.tipo) && !Object.hasOwn(dettatura.MODELLI_DETTATURA, msg.modello)) return;
+  if (msg.tipo === 'chiamataAvvia' && !(Number.isInteger(msg.tabId) && typeof msg.streamId === 'string' && msg.streamId.length < 500)) return;
   if (msg.tipo === 'mp3' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
   if (msg.tipo === 'rileggi' && msg.testo !== undefined && (typeof msg.testo !== 'string' || msg.testo.length > MAX_TESTO)) return;
   (async () => {
+    // durante una call la lettura, la dettatura e il caricamento del motore di lettura aspettano
+    if (OCCUPA_CON_CHIAMATA.has(msg.tipo) && (await chiamata.attiva())) {
+      return msg.tipo === 'prerisc' || msg.tipo === 'preparaMotore' ? { ok: false } : { errore: 'Sto trascrivendo una call: aspetta che finisca.', avviato: false, avviata: false, letto: false };
+    }
     switch (msg.tipo) {
       case 'stato': {
         const s = await statoAttuale();
@@ -493,6 +523,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         if (!(await modelliInCache())) return { ok: false };
         return aOffscreen({ tipo: 'prerisc' });
       case 'leggiTesto':
+        if (await chiamata.attiva()) return { errore: 'Sto trascrivendo una call: la lettura aspetta che finisca.' };
         await fermaDettatura();
         return aOffscreen({ tipo: 'leggi', testo: msg.testo, ...(await impostazioni()), tabId: null, t0: Date.now() });
       case 'voce':
@@ -501,6 +532,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         return aOffscreen({ tipo: 'voce', valore: msg.valore });
       case 'leggiArticolo': {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tab && (await chiamataOccupa(tab.id))) return { letto: false, motivo: 'chiamataInCorso' };
         const esito = await leggiDaScheda(tab, '', true, undefined, 'articolo');
         return esito === true ? { letto: true } : { letto: false, motivo: esito || 'articolo' };
       }
@@ -574,6 +606,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       // ---- dettatura ----
       case 'dettaturaAlterna': {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tab && (await chiamataOccupa(tab.id))) return { avviata: false, motivo: 'chiamataInCorso' };
         return dettatura.alterna(tab);
       }
       case 'dettaturaAvviaQui':
@@ -606,6 +639,24 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       case 'dettaturaApri':
         await dettatura.apriPagina('');
         return { ok: true };
+      // ---- trascrizione di una call ----
+      case 'chiamataStato':
+        return chiamata.stato();
+      case 'chiamataPrepara': {
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        return chiamata.prepara(tab);
+      }
+      case 'chiamataAvvia':
+        return chiamata.avvia(msg.tabId, msg.streamId);
+      case 'chiamataFerma':
+        // dalla barretta nella scheda: solo la scheda che si sta trascrivendo
+        if (daBarretta && !(await chiamata.eLaScheda(mittente.tab.id))) return { ok: false };
+        return chiamata.ferma(daBarretta ? 'barretta' : 'pannello');
+      case 'chiamataScarica':
+        return chiamata.scaricaModello();
+      case 'chiamataCancella':
+        if (await chiamata.attiva()) return { ok: false };
+        return aOffscreen({ tipo: 'chiamCancella' });
       case 'consenti':
         return aOffscreen({ tipo: 'consenti' });
       case 'rifiuta':

@@ -156,6 +156,52 @@ La lettura misura in continuo quanto il computer ci mette a preparare la voce e 
   dispositivo l'audio resta lì; altrimenti l'audio va ai server di Google, e solo se lo scegli
   esplicitamente.
 
+## Trascrivi la call
+
+Per tenere traccia di cosa si dice in una call fatta nel browser (Meet, Teams, Zoom web) quando non
+c'è un bot che entra al tuo posto. Dal pannello, **Trascrivi la call**: l'estensione ascolta l'audio
+della scheda e il tuo microfono e li trascrive sul tuo computer mentre la call va avanti. Alla fine
+salva un file `.md` nei download (cartella `WebG Voice`), con titolo della scheda e data come nome e
+l'orario di ogni frase.
+
+- **Io** è il microfono, **Call** è l'audio della scheda (tutti gli altri insieme). I singoli
+  partecipanti non si distinguono.
+- La scheda catturata da Chrome viene silenziata: l'estensione la rimanda all'uscita audio, così la
+  call si sente come prima. Con altoparlanti aperti il microfono capta anche la call: le frasi
+  dell'altra parte ripetute da "Io" nello stesso istante si tolgono in automatico, ma con le cuffie
+  il risultato è più pulito.
+- Un segno visibile finché ascolta: "CALL" rossa sull'icona e una barretta rossa nella scheda, con
+  il tempo, il livello delle due fonti, **Ferma e salva** e un messaggio da incollare nella chat per
+  avvisare i partecipanti. La vede solo chi trascrive (e chi riceve la sua condivisione dello
+  schermo), non i partecipanti: avvisarli e ottenere il consenso, dove serve, resta a carico di chi
+  trascrive; per questo la prima volta si chiede di spuntare che lo si farà. Se la barretta non può
+  restare nella pagina (per esempio la call passa a un altro sito), la trascrizione si ferma e si salva.
+- Il motore è Parakeet TDT 0.6B v3 (NVIDIA, licenza CC-BY-4.0, versione int8 in ONNX): si scarica
+  la prima volta che si usa (circa 670 MB) e riconosce l'italiano da solo. Sul PC di sviluppo
+  (Ryzen 7 7735U) trascrive a 0,1-0,2 volte il tempo reale, contro 0,37 di Whisper small, con meno
+  errori (24,5% di parole sbagliate contro 30,7% su 20 frasi di prova con molti termini tecnici).
+  Provata su una call vera di 18 minuti: nessun ritardo accumulato, nessun tratto perso, il file è
+  pronto in meno di un secondo dallo stop. Mentre trascrive occupa circa 2,5 GB di memoria (fino a
+  circa 4 GB in totale, per il browser, nei secondi del caricamento), che si liberano 2 minuti
+  dopo la fine: serve un computer con almeno 8 GB, meglio 16.
+- Dove il parlato si sovrappone o c'è rumore, il riconoscimento tende a inventare brevi frasi
+  (spesso in inglese: «You know?»). Quelle poco sicure e brevi si scartano e il file dice quante.
+  Una frase detta davvero in inglese e sicura si tiene.
+- L'audio non si salva: si trascrive a blocchi alle pause e ogni blocco si butta appena
+  trascritto. In memoria resta solo il testo (una call di un'ora non riempie la memoria). Il testo si
+  copia anche ogni 15 secondi nello spazio dell'estensione: se qualcosa si ferma, il pannello offre
+  di salvare quello che c'era.
+- Il file `.md` è testo semplice, non cifrato, e finisce in `Download/WebG Voice`: se quella cartella
+  si sincronizza (OneDrive, Google Drive) il testo va con lei. Chi lo tiene ne risponde.
+- Permessi facoltativi `tabCapture` e `downloads`: Chrome li chiede solo la prima volta che
+  premi **Trascrivi la call**, non all'installazione.
+- Mentre una call si trascrive, lettura e dettatura aspettano (il pannello e le scorciatoie lo dicono).
+- Se la scheda si chiude, la call passa a un altro sito (la barretta non può restare) o qualcosa si
+  ferma, la trascrizione si chiude da sola e il file dice perché è finita prima. Il testo è copiato
+  ogni 15 secondi: una trascrizione interrotta si recupera alla call successiva o dal pannello.
+- Il riassunto e l'invio ai task non fanno parte dell'estensione: il file `.md` si dà a chi lo
+  riassume.
+
 ## Come funziona
 
 Testo → piccola normalizzazione (date, orari, migliaia, unità, abbreviazioni) → eSpeak NG 1.52.0
@@ -174,7 +220,7 @@ l'MP3 si salva con un link di download dal popup (niente permesso `downloads`).
 ## Privacy
 
 L'estensione non raccoglie e non invia dati: il testo resta sul computer, anche gli MP3 si creano
-lì, e l'audio della dettatura si trascrive sul computer. Le sole connessioni servono a scaricare i
+lì, e l'audio della dettatura e delle call si trascrive sul computer. Le sole connessioni servono a scaricare i
 file del modello, delle voci e (se detti) del modello di riconoscimento. Dettagli in
 [docs/PRIVACY.md](docs/PRIVACY.md).
 

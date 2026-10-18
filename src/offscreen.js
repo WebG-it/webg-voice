@@ -81,8 +81,8 @@ function controllaRiposo() {
     }
     const m = stato.mp3;
     if (m && m.fase === 'pronto' && !m.salvato && Date.now() - m.quando < MP3_TENUTO_MS) return;
-    // non durante la dettatura (ascolto.js, nello stesso documento): chiuderlo la fermerebbe
-    if (globalThis.dettaturaAttiva) {
+    // non durante la dettatura o la trascrizione di una call (nello stesso documento): chiuderlo le fermerebbe
+    if (globalThis.dettaturaAttiva || globalThis.chiamataAttiva) {
       ultimoUso = Date.now();
       return;
     }
@@ -961,7 +961,7 @@ async function cediAllaLettura(J) {
     const margine = L && ctx ? L.finePrevista - ctx.currentTime : 0;
     const serve = L && L.pompaAttiva && L.inAttesa !== 'anticipo' && stato.fase !== 'pausa' && !(L.partito && margine >= 20);
     // durante la dettatura il processore serve a Whisper: l'MP3 aspetta
-    if (!serve && !globalThis.dettaturaAttiva) return;
+    if (!serve && !globalThis.dettaturaAttiva && !globalThis.chiamataAttiva) return;
     await dorme(150);
   }
 }

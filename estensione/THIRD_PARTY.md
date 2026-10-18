@@ -97,3 +97,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
   delle voci); l'indice è in `vendor/espeak/espeak-dati.json`. Si rigenera con lo script
   `scripts/dati-espeak.mjs` del repository.
 - Il sorgente corrispondente è quello del tag indicato sopra.
+
+## Parakeet TDT 0.6B v3 (modello della trascrizione delle call)
+
+- Modello originale: © NVIDIA, https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3, licenza Creative
+  Commons Attribution 4.0 (CC-BY-4.0): https://creativecommons.org/licenses/by/4.0/
+- Modifiche: quantizzazione int8 e conversione in ONNX a cura di istupakov,
+  https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, revisione
+  `8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce`, pubblicate con la stessa licenza. I file non sono nel
+  pacchetto: si scaricano la prima volta che si usa «Trascrivi la call», con controllo SHA-256, e
+  WebG Voice non li modifica.
+- Il codice che li usa (calcolo dello spettro con il modello `nemo128.onnx`, encoder, decodifica
+  greedy TDT) è di questo progetto.

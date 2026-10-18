@@ -97,6 +97,12 @@ export function costruisci({ test = false, uscita = null } = {}) {
       m.nomeEstensione.message += ' (TEST)';
       writeFileSync(f, JSON.stringify(m, null, 2));
     }
+    // nei test i permessi facoltativi (trascrizione delle call) sono gia' concessi: nessuno puo' cliccare il consenso
+    const fm = join(out, 'manifest.json');
+    const man = JSON.parse(readFileSync(fm, 'utf8'));
+    man.permissions = [...new Set([...man.permissions, ...(man.optional_permissions || [])])];
+    delete man.optional_permissions;
+    writeFileSync(fm, JSON.stringify(man, null, 2));
   } else ripulisci(out);
   controllaSintassi(out);
 

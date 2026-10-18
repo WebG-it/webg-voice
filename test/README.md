@@ -169,3 +169,25 @@ lettura che suona si mette in pausa da qualsiasi scheda; dopo aver ricaricato la
 scorciatoia rilegge con la barretta. Con `URL` prova anche pagine vere.
 Il profilo tiene in cache lo script di fondo dell'estensione finche' la versione non cambia: per
 provare una modifica senza cambiare versione, usare una copia nuova del profilo.
+
+## Trascrizione delle call (1.6)
+
+```
+node test/call/testo.mjs        # unione, eco, Markdown, nome file (senza browser)
+node test/call/filtro.mjs       # filtro dei frammenti inventati, su casi veri
+python test/call/costruisci-audio.py <frasi Call> <frasi Io> <uscita> [turni]   # call finta: call.wav, io.wav, turni.json
+node test/call/segmenta.mjs <call.wav> <cartella>   # ritaglia come l'estensione, per provare il motore sui segmenti
+CHROME=<chrome for testing> MODELLI=<cartella con parakeet/> AUDIO=<cartella> FRASI=<frasi.json> [SCHEDA=prova|reale] [SENZA_TESTA=1] [NAVIGA=stessa|cross] node test/call/e2e.mjs
+CHROME=... MODELLI=... AUDIO=<cartella con wav> node test/call/banco-parakeet.mjs   # velocita e memoria del motore
+```
+
+- `e2e.mjs` con `SCHEDA=prova`: l'audio della "scheda" è un file suonato dall'offscreen (headless).
+  Con `SCHEDA=reale` si guida il pannello come un utente e si cattura davvero la scheda con
+  `tabCapture`: serve una finestra (`SENZA_TESTA=1`), in un Chrome for Testing separato. Il
+  microfono finto è `io.wav`. Controlla testi e fonti distinte, orari, barretta, segno CALL,
+  file nei download, memoria. Senza `turni.json` (call vera, `DURATA_S`) controlla tenuta e coda.
+- Il flag `--use-fake-ui-for-media-stream` rompe la cattura della scheda ("Requested device not
+  found"): per il microfono si usa `--auto-accept-camera-and-microphone-capture` più
+  `Browser.grantPermissions`. L'identificativo della scheda lo chiede il pannello, non il service
+  worker (con COOP/COEP nel manifest, quello del service worker non è utilizzabile).
+- `matrice-cattura.mjs` e `prova-cattura.mjs` sono le diagnosi che hanno portato a questo.

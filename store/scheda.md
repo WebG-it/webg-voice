@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.5.1
+# Scheda Chrome Web Store, WebG Voice 1.6.0
 
 Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
 con `npm run store`: non modificare questo file a mano.
@@ -29,6 +29,9 @@ Leggi ad alta voce in italiano, offline dopo il primo download.
 WebG Voice legge ad alta voce, in italiano, il testo che selezioni in una pagina web o un
 articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
 serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
+
+Novità della versione 1.6
+• Trascrivi la call: dal pannello, per le call nel browser (Meet, Teams, Zoom web). Ascolta l'audio della scheda e il tuo microfono, li trascrive sul tuo computer mentre la call va avanti (scarica un modello di circa 670 MB, una volta sola; mentre trascrive usa circa 2,5 GB di memoria) e, alla fine, salva un file .md con gli orari ("Io" è il microfono, "Call" gli altri). L'audio non si registra né esce dal computer. Una barretta rossa e il segno CALL sull'icona dicono che sta ascoltando, e c'è un messaggio pronto da incollare nella chat per avvisare i partecipanti. I permessi per catturare la scheda e salvare il file si chiedono solo la prima volta che la usi.
 
 Novità della versione 1.4
 • Dettatura: premi Ctrl+Spazio in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
@@ -152,10 +155,12 @@ Made by WebG, https://www.webg.it
 
 ## Scopo unico (single purpose)
 
-Leggere ad alta voce, con una voce sintetica che funziona sul computer dell'utente, il testo che
-l'utente seleziona in una pagina, incolla nel popup o l'articolo della pagina che chiede di
-ascoltare, anche salvando la lettura in un file MP3 creato sul computer. Mentre legge può
-evidenziare la frase in lettura e, nella rilettura di una bozza, le parole ripetute vicine.
+Strumenti vocali che funzionano interamente sul computer dell'utente: leggere ad alta voce, con una
+voce sintetica, il testo che l'utente seleziona in una pagina, incolla nel popup o l'articolo della
+pagina che chiede di ascoltare (anche salvando la lettura in un file MP3); scrivere sotto dettatura nel
+campo scelto; trascrivere in un file di testo, su richiesta, l'audio della call aperta in una scheda e
+il microfono dell'utente. Tre modi di usare la voce nel browser, con lo stesso criterio: tutto locale,
+niente account, niente audio o testo inviato a servizi esterni.
 
 ## Giustificazione dei permessi
 
@@ -176,8 +181,17 @@ selezionato e "Leggi tutto l'articolo" sulla pagina.
 **offscreen**: la sintesi vocale, la riproduzione audio e la creazione degli MP3 girano in un
 documento offscreen, così continuano anche dopo la chiusura del popup.
 
-(Nessun permesso "downloads": l'MP3 si salva con un normale link di download dal pannello
-dell'estensione.)
+(L'MP3 si salva con un normale link di download dal pannello dell'estensione.)
+
+**tabCapture (facoltativo, non concesso all'installazione)**: serve solo alla funzione «Trascrivi la
+call», che l'utente avvia dal pannello. Chrome lo chiede in quel momento. Cattura l'audio della
+scheda attiva, che viene trascritto sul computer e rimandato all'uscita audio perché la call si
+senta come prima. L'audio non viene registrato, salvato né inviato a nessuno. Finché cattura, la
+scheda mostra una barretta rossa e l'icona mostra «CALL».
+
+**downloads (facoltativo, non concesso all'installazione)**: richiesto insieme a tabCapture, serve
+solo a salvare nella cartella dei download, in «WebG Voice», il file di testo (.md) della trascrizione
+quando l'utente la ferma, anche se in quel momento il pannello è chiuso.
 
 **storage**: le impostazioni (velocità e voce scelte, testo incollato nel popup, misura della
 velocità del computer usata per evitare pause, scelte delle opzioni "Evidenzia nella pagina la frase" e "Tieni la
@@ -191,7 +205,7 @@ sceglie) resta nella cache dell'estensione per funzionare offline; senza questo 
 potrebbe cancellarla e costringere a riscaricarla.
 
 **Autorizzazioni host (github.com/WebG-it/webg-voice, release-assets.githubusercontent.com,
-huggingface.co/onnx-community, *.hf.co)**: servono solo a scaricare i file della voce dalla
+huggingface.co/onnx-community, huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, *.hf.co)**: servono solo a scaricare i file della voce dalla
 release del progetto su GitHub e, se GitHub non risponde, dalla copia originale su Hugging Face.
 L'estensione non legge né modifica pagine di questi siti e non invia loro alcun dato dell'utente.
 
@@ -212,7 +226,10 @@ informazioni di autenticazione, comunicazioni personali, posizione, cronologia w
 dell'utente, contenuti dei siti web) la risposta è "non raccolti".
 
 Il testo da leggere, compreso l'articolo della pagina quando l'utente chiede di ascoltarlo, viene
-elaborato solo sul computer dell'utente e non lascia mai il browser; anche gli MP3 si creano sul
+elaborato solo sul computer dell'utente e non lascia mai il browser; lo stesso vale per l'audio della
+dettatura e per quello delle call trascritte su richiesta (scheda e microfono): si elabora solo in
+locale, non si registra e non si invia a nessuno, e il solo risultato è un file di testo nella
+cartella dei download dell'utente; anche gli MP3 si creano sul
 computer e si salvano nella sua cartella dei download.
 
 Dichiarazioni da spuntare:
