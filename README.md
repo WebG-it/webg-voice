@@ -186,7 +186,8 @@ l'orario di ogni frase.
   dopo la fine: serve un computer con almeno 8 GB, meglio 16.
 - Dove il parlato si sovrappone o c'è rumore, il riconoscimento tende a inventare brevi frasi
   (spesso in inglese: «You know?»). Quelle poco sicure e brevi si scartano e il file dice quante.
-  Una frase detta davvero in inglese e sicura si tiene.
+  Una frase detta davvero in inglese e sicura si tiene; in una call in inglese qualche frase
+  breve e incerta può andare persa, e il file dice quante.
 - L'audio non si salva: si trascrive a blocchi alle pause e ogni blocco si butta appena
   trascritto. In memoria resta solo il testo (una call di un'ora non riempie la memoria). Il testo si
   copia anche ogni 15 secondi nello spazio dell'estensione: se qualcosa si ferma, il pannello offre

@@ -250,6 +250,10 @@ play.addEventListener('click', async () => {
   // (aprire il popup concede activeTab su quella scheda)
   const r = await comando('leggiSelezioneAttiva');
   if (r && r.letto) return;
+  if (r && r.errore) {
+    avvisoPagina(r.errore);
+    return;
+  }
   if (r && r.protetta) {
     avvisoPagina(AVVISO_PROTETTA);
     apriIncolla();

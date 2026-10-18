@@ -183,8 +183,15 @@ export function creaChiamata(c) {
 
   /** Una trascrizione interrotta e mai salvata (SW o Chrome fermati) si salva da sola prima di una nuova. */
   async function recuperaBozza() {
-    const { chiamataBozza: b } = await chrome.storage.local.get('chiamataBozza');
+    const { chiamataBozza: b, chiamataDaSalvare: daSalvare, chiamataUltima: u } = await chrome.storage.local.get(['chiamataBozza', 'chiamataDaSalvare', 'chiamataUltima']);
     if (!b || !Array.isArray(b.righe) || !b.righe.length) return;
+    // il testo finale, completo, e' gia' li' (da salvare o in salvataggio): la bozza, piu' vecchia, non serve
+    if (daSalvare || (u && u.inCorso)) return;
+    // salvata davvero dopo la bozza: la bozza e' un avanzo
+    if (u && u.salvata && (u.quando || 0) >= (b.fine || b.inizio || 0)) {
+      await chrome.storage.local.remove('chiamataBozza');
+      return;
+    }
     try {
       const t = creaTrascrizione();
       t.importa(b);
@@ -259,7 +266,11 @@ export function creaChiamata(c) {
       // una dopo l'altra: il file si scrive prima che la scheda e lo stato vengano ripuliti
       codaAzioni = codaAzioni
         .then(async () => {
-          if (typeof msg.testo === 'string') await scrivi(msg);
+          if (typeof msg.testo === 'string' && msg.righe === 0 && !msg.lacune) {
+            // nessun parlato e nessun tratto perso: un file vuoto non serve a nessuno
+            await chrome.storage.local.set({ chiamataUltima: { salvata: false, errore: 'nessun parlato riconosciuto', quando: Date.now() } });
+            await chrome.storage.local.remove(['chiamataBozza', 'chiamataDaSalvare']);
+          } else if (typeof msg.testo === 'string') await scrivi(msg);
           else if (msg.errore !== 'annullata') await chrome.storage.local.set({ chiamataUltima: { salvata: false, errore: msg.errore || 'nessun testo', quando: Date.now() } });
           await chiusa();
         })
@@ -284,7 +295,13 @@ export function creaChiamata(c) {
     if (s && s.tabId === tabId) {
       await badge(tabId, 'CALL');
       // la pagina e' cambiata (anche dominio): se la barretta non puo' tornare, la trascrizione si ferma e si salva
-      if (ultimoStato && !(await iniettaBarretta(tabId, ultimoStato))) await ferma('barretta-persa');
+      let st = ultimoStato;
+      if (!st) st = ((await c.aOffscreen({ tipo: 'chiamStato' }).catch(() => null)) || {}).stato || null;
+      if (st && !(await iniettaBarretta(tabId, st))) {
+        // una navigazione intermedia (accesso, reindirizzamento) puo' far fallire il primo tentativo
+        await new Promise((ok) => setTimeout(ok, 1500));
+        if (!(await iniettaBarretta(tabId, st))) await ferma('barretta-persa');
+      }
     }
   });
 

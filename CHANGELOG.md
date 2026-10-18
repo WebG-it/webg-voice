@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.6.1] - 2026-10-18
+
+- Trascrivi la call, correzioni dopo la controprova: la bozza recuperata non sovrascrive più il testo finale ancora da salvare; barretta rimessa anche dopo un riavvio del service worker e un secondo tentativo prima di fermare la call su una navigazione intermedia; nessun file vuoto quando non c'è parlato; stato 'attiva' non pubblicato se la sessione è caduta durante l'avvio; tetto di attesa della chiusura annullato a fine ordinata; il pannello dice che la lettura aspetta la call; nota sull'inglese nei testi dello store.
+
 ## [1.6.0] - 2026-10-18
 
 - Trascrivi la call (nuova): dal pannello, ascolta l'audio della scheda (tabCapture) e il microfono, li trascrive sul computer a blocchi con Parakeet TDT 0.6B v3 (ONNX Runtime Web, circa 670 MB, scaricati alla prima volta, SHA-256 e revisione fissati) e alla fine salva un file .md con orari nei download (cartella WebG Voice): Io è il microfono, Call la scheda. L'audio della scheda, che Chrome silenzia, si rimanda all'uscita. Segno visibile: CALL sull'icona e barretta rossa nella scheda con tempo, livelli, Ferma e salva e messaggio da incollare nella chat per avvisare i partecipanti; la prima volta si spunta che si avviseranno. Permessi tabCapture e downloads facoltativi, chiesti solo al primo uso. Audio mai salvato né inviato: blocchi buttati appena trascritti, in memoria solo testo, copia ogni 15 secondi per recuperare una trascrizione interrotta. Eco della call captata dal microfono tolta, frammenti inventati e poco sicuri scartati e contati nel file. Se la barretta non può restare nella pagina la trascrizione si ferma e si salva. Mentre una call si trascrive, lettura, dettatura e caricamento della voce aspettano.

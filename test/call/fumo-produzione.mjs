@@ -19,7 +19,7 @@ try {
   const swT = await b.waitForTarget((t) => t.type() === 'service_worker' && t.url().includes('background.js'), { timeout: 20000 });
   const id = new URL(swT.url()).host;
   const m = await (await swT.worker()).evaluate(() => chrome.runtime.getManifest());
-  controlla('versione', m.version === '1.6.0', m.version);
+  controlla('versione', /^1.6./.test(m.version), m.version);
   controlla('permessi facoltativi', JSON.stringify(m.optional_permissions) === '["tabCapture","downloads"]', JSON.stringify(m.optional_permissions));
   controlla('permessi obbligatori senza tabCapture/downloads', !m.permissions.includes('tabCapture') && !m.permissions.includes('downloads'));
   const p = await b.newPage();

@@ -323,6 +323,7 @@ async function avvia({ streamId, titolo, host, tabId, versione }) {
       salvaBozza(S);
       pubblica();
     }, BOZZA_OGNI_MS);
+    if (S !== sessione) return;
     stato.fase = 'attiva';
     pubblica();
   } catch (e) {
@@ -385,7 +386,9 @@ async function ferma(motivo) {
   // i segmenti chiusi da termina() sono gia' in coda: si aspetta che il motore li finisca
   try {
     if (S.inLavoro || S.coda.length) {
-      await Promise.race([new Promise((ok) => (S.fineCoda = ok)), new Promise((ok) => setTimeout(ok, ATTESA_CHIUSURA_MS))]);
+      let tetto;
+      await Promise.race([new Promise((ok) => (S.fineCoda = ok)), new Promise((ok) => (tetto = setTimeout(ok, ATTESA_CHIUSURA_MS)))]);
+      clearTimeout(tetto);
       // scaduto il tempo: i segmenti rimasti in coda si segnano come tratti non trascritti
       for (const j of S.coda.splice(0)) {
         S.testo.lacuna(j.inizio, j.fine);
