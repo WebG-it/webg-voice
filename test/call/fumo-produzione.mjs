@@ -1,0 +1,38 @@
+// Prova di fumo della build di produzione (estensione/): il pannello mostra «Trascrivi la call» e,
+// senza permessi, offre «Consenti e inizia» (i permessi tabCapture e downloads sono facoltativi).
+//   CHROME=... node test/call/fumo-produzione.mjs   (headless, profilo temporaneo)
+import puppeteer from 'puppeteer';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+
+const EXT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'estensione');
+const profilo = mkdtempSync(join(tmpdir(), 'call-fumo-'));
+const b = await puppeteer.launch({ headless: true, pipe: true, enableExtensions: [EXT], executablePath: process.env.CHROME, userDataDir: profilo, args: ['--no-first-run'] });
+let ko = 0;
+const controlla = (n, c, d = '') => {
+  if (!c) ko++;
+  console.log(c ? 'OK ' : 'KO ', n, d);
+};
+try {
+  const swT = await b.waitForTarget((t) => t.type() === 'service_worker' && t.url().includes('background.js'), { timeout: 20000 });
+  const id = new URL(swT.url()).host;
+  const m = await (await swT.worker()).evaluate(() => chrome.runtime.getManifest());
+  controlla('versione', m.version === '1.6.0', m.version);
+  controlla('permessi facoltativi', JSON.stringify(m.optional_permissions) === '["tabCapture","downloads"]', JSON.stringify(m.optional_permissions));
+  controlla('permessi obbligatori senza tabCapture/downloads', !m.permissions.includes('tabCapture') && !m.permissions.includes('downloads'));
+  const p = await b.newPage();
+  await p.goto(`chrome-extension://${id}/popup.html`);
+  await p.click('#chiamata');
+  await p.waitForFunction(() => document.getElementById('chiamataBox').textContent.length > 20, { timeout: 15000 });
+  const t = await p.evaluate(() => document.getElementById('chiamataBox').innerText);
+  controlla('pannello: Consenti e inizia', /Consenti e inizia/.test(t), t.replace(/\n+/g, ' | ').slice(0, 160));
+  controlla('pannello: consenso da spuntare', /Avviserò i partecipanti/.test(t));
+} finally {
+  await b.close();
+  try {
+    rmSync(profilo, { recursive: true, force: true });
+  } catch {}
+}
+process.exit(ko ? 1 : 0);
