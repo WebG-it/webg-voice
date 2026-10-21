@@ -73,6 +73,24 @@ try {
   const fine = await attendi((s) => s.fase === 'inattivo', 60000);
   ok('lento: arriva in fondo', fine.blocco >= 1 && !fine.errore, { blocco: fine.blocco, totale: fine.totale });
 
+  // 1b (1.6.3). lento, poi "Voce naturale" dalla barretta: il resto riparte con Kokoro qualita' massima
+  await avviaLettura(1.3);
+  const s1b = await attendi((s) => s.fase === 'lettura' || s.errore, 30000);
+  ok('naturale: parte con la voce del sistema', s1b.motoreLettura === 'sistema', { motore: s1b.motoreLettura });
+  await comando('voceNaturale');
+  const s1c = await attendi((s) => (s.fase === 'lettura' && s.motoreLettura !== 'sistema') || s.errore, 120000);
+  ok('naturale: il resto con Kokoro', s1c.motoreLettura === 'massima' && !s1c.avvisoMotore, { motore: s1c.motoreLettura, avviso: s1c.avvisoMotore, errore: s1c.errore });
+  await comando('stop');
+
+  // 1c (1.6.3). misura lenta piu' vecchia di 30 minuti: non vale piu', si torna a Kokoro
+  await sw.evaluate(async () => {
+    await chrome.storage.local.set({ motoreLettura: 'auto', rtf: 1.3, rtfQuando: Date.now() - 31 * 60 * 1000 });
+  });
+  await sw.evaluate((t) => globalThis.__testLeggiTesto(t), TESTO);
+  const s1d = await attendi((s) => s.fase === 'lettura' || s.errore, 120000);
+  ok('lento vecchio di 31 minuti: Kokoro', s1d.motoreLettura === 'massima', { motore: s1d.motoreLettura });
+  await comando('stop');
+
   // 2. carico: qualita' massima subito, Bilanciata in sottofondo, poi Bilanciata
   await avviaLettura(1.0);
   const s2 = await attendi((s) => s.fase === 'lettura' || s.errore, 60000);
