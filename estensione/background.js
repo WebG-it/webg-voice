@@ -4,6 +4,7 @@
 import { modelliInCache, VOCI, voceValida } from './lib/modelli.js';
 import { impronta } from './lib/impronta.js';
 import { leggiDizionario } from './lib/dizionario.js';
+import { SOGLIA_SISTEMA } from './lib/motore-lettura.js';
 import { creaDettatura, impostazioniDettatura } from './dettatura-sw.js';
 import { creaChiamata } from './chiamata-sw.js';
 import './lib/ripetizioni.js'; // registra globalThis.webgRipetizioni ("Rileggi la bozza")
@@ -134,8 +135,11 @@ async function impostazioni() {
     voceSalvata(),
     chrome.storage.local.get(['motoreLettura', 'voceSistema', 'rtfQuando']),
   ]);
-  // la misura della velocita' vale un giorno: poi si torna a misurare con la voce migliore
-  const rtfRecente = !o.rtfQuando || Date.now() - o.rtfQuando < 24 * 3600 * 1000;
+  // la misura della velocita' vale un giorno: poi si torna a misurare con la voce migliore.
+  // Se porta alla voce del sistema vale solo 30 minuti: con quella voce Kokoro non gira e non si
+  // rimisura, e un carico passeggero lascerebbe la voce metallica per tutta la giornata.
+  const validita = typeof rtf === 'number' && rtf > SOGLIA_SISTEMA ? 30 * 60 * 1000 : 24 * 3600 * 1000;
+  const rtfRecente = !o.rtfQuando || Date.now() - o.rtfQuando < validita;
   return { velocita, rtf, dizionario: diz, voce, motoreLettura: o.motoreLettura || 'auto', voceSistema: o.voceSistema || '', rtfRecente };
 }
 
@@ -456,7 +460,7 @@ const BASE_ESTENSIONE = chrome.runtime.getURL('');
 const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime.getURL(OFFSCREEN);
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
-const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'riallinea', 'dettaturaFerma', 'dettaturaRilascio', 'chiamataFerma']);
+const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'voceNaturale', 'riallinea', 'dettaturaFerma', 'dettaturaRilascio', 'chiamataFerma']);
 const OCCUPA_CON_CHIAMATA = new Set(['leggiSelezioneAttiva', 'rileggi', 'dettaturaAvviaQui', 'dettaturaScarica', 'dettaturaMisuraPC', 'prerisc', 'preparaMotore']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
@@ -659,6 +663,12 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
         return aOffscreen({ tipo: 'chiamCancella' });
       case 'consenti':
         return aOffscreen({ tipo: 'consenti' });
+      case 'voceNaturale':
+        // "Voce naturale" sulla barretta: la misura che aveva portato alla voce del sistema si butta
+        // e il resto della lettura riparte con Kokoro (che si rimisura leggendo)
+        await chrome.storage.local.remove(['rtf', 'rtfQuando']);
+        if (await chrome.offscreen.hasDocument()) return aOffscreen({ tipo: 'voceNaturale' });
+        return { ok: true };
       case 'rifiuta':
       case 'pausa':
       case 'riprendi':

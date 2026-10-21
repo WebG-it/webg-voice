@@ -4,6 +4,10 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.6.3] - 2026-10-21
+
+- Voce metallica spiegata: quando il computer e' lento e WebG Voice passa da sola alla voce del sistema, la barretta sulla pagina e il pannello lo dicono, con il pulsante Voce naturale che riprende la lettura con Sara o Nicola. La misura che porta alla voce del sistema vale 30 minuti invece di 24 ore, poi si torna alla voce naturale.
+
 ## [1.6.2] - 2026-10-18
 
 - Trascrivi la call: la cartella dove salvare il file si sceglie dal pannello (una sottocartella dei Download, di serie WebG Voice, ripulita da percorsi assoluti e da '..'), oppure si può far comparire a ogni trascrizione la finestra Salva con nome. Testi dello store aggiornati. Nelle prove, profilo nuovo a ogni giro: un profilo riusato conservava una copia vecchia del service worker.

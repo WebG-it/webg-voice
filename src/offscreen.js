@@ -387,7 +387,7 @@ async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, 
   stato.motoreLettura = scelta.motore;
   stato.avvisoMotore = scelta.avviso || null;
   if (scelta.motore === 'sistema' && !bozza) {
-    leggiSistema({ testo, velocita, tabId, titolo, voce: scelta.voce, t0 });
+    leggiSistema({ testo, velocita, tabId, titolo, voce: scelta.voce, t0, richiesta: { testo, velocita, tabId, dizionario, voce, titolo } });
     return;
   }
   const v = scelta.motore === 'bilanciata' ? 'bilanciata' : 'massima';
@@ -583,7 +583,7 @@ async function decidiMotore(preferenza, rtfMisurato, voceScelta) {
       .finally(() => (scaricandoVariante = false));
   }
   let avviso = null;
-  if (s.motore === 'sistema' && pref === 'auto') avviso = 'Il computer è lento: leggo con la voce del sistema, meno naturale ma senza attese. Puoi cambiarla nelle opzioni.';
+  if (s.motore === 'sistema' && pref === 'auto') avviso = 'Il computer è lento: leggo con la voce del sistema, più metallica ma senza attese. Premi Voce naturale per tornare a Sara o Nicola, oppure scegli Qualità massima nelle opzioni.';
   else if (s.motore === 'bilanciata' && pref === 'auto') avviso = 'Il computer è carico: uso la versione bilanciata della voce.';
   return { ...s, voce: vs, avviso };
 }
@@ -597,11 +597,11 @@ function frasiDi(testo) {
   }
   return out;
 }
-function leggiSistema({ testo, velocita, tabId, titolo, voce, t0 }) {
+function leggiSistema({ testo, velocita, tabId, titolo, voce, t0, richiesta = null }) {
   const frasi = frasiDi(testo);
   const tutte = vociSistema || speechSynthesis.getVoices();
   const v = tutte.find((x) => (x.voiceURI || x.name) === voce.uri) || null;
-  const S = { frasi, i: 0, t0: t0 || Date.now(), v, velocita: typeof velocita === 'number' ? velocita : 1 };
+  const S = { frasi, i: 0, t0: t0 || Date.now(), v, velocita: typeof velocita === 'number' ? velocita : 1, richiesta };
   if (typeof velocita === 'number') stato.velocita = velocita;
   letturaSistema = S;
   speechSynthesis.cancel();
@@ -641,6 +641,23 @@ function leggiSistema({ testo, velocita, tabId, titolo, voce, t0 }) {
     speechSynthesis.speak(u);
   };
   prossima();
+}
+// "Voce naturale" dalla barretta: il resto della lettura (dalla frase che si sente) riparte con Kokoro,
+// misura dimenticata: se il computer e' ancora lento lo si rimisura leggendo.
+function voceNaturale() {
+  const S = letturaSistema;
+  if (!S || !S.richiesta) return;
+  const resto = S.frasi.slice(S.i).join(' ');
+  speechSynthesis.resume(); // una voce in pausa resta in pausa anche dopo cancel()
+  fermaSistema();
+  rtf = null;
+  stato.rtf = null;
+  if (!resto.trim()) {
+    stato.fase = 'inattivo';
+    pubblica();
+    return;
+  }
+  leggi({ ...S.richiesta, testo: resto, velocita: stato.velocita, motoreLettura: 'massima', t0: Date.now() });
 }
 function fermaSistema() {
   if (!letturaSistema) return;
@@ -1085,6 +1102,9 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       break;
     case 'consenti':
       consenti();
+      break;
+    case 'voceNaturale':
+      voceNaturale();
       break;
     case 'rifiuta':
       richiestaInAttesa = null;

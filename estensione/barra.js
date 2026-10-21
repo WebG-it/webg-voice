@@ -105,8 +105,16 @@
   const mbEl = $('.mb');
   const siEl = $('.si');
   const noEl = $('.no');
-  siEl.addEventListener('click', () => comando('consenti'));
-  noEl.addEventListener('click', () => comando(fase === 'consenso' ? 'rifiuta' : 'stop'));
+  // riquadro: 'consenso' e download (Scarica/Annulla) oppure 'sistema' (voce del sistema scelta da sola)
+  let modoRiquadro = null;
+  let sistemaChiuso = null; // impronta della lettura in cui l'avviso e' stato chiuso con Va bene
+  siEl.addEventListener('click', () => comando(modoRiquadro === 'sistema' ? 'voceNaturale' : 'consenti'));
+  noEl.addEventListener('click', () => {
+    if (modoRiquadro !== 'sistema') return comando(fase === 'consenso' ? 'rifiuta' : 'stop');
+    sistemaChiuso = improntaLettura;
+    riquadro.hidden = true;
+  });
+  let improntaLettura = null;
   const MB = (b) => Math.round(b / 1e6);
 
   function aggiornaRiquadro(s) {
@@ -114,7 +122,17 @@
     let mostra = false;
     avanz.hidden = mbEl.hidden = true;
     siEl.hidden = noEl.hidden = true;
-    if (s.fase === 'consenso') {
+    modoRiquadro = null;
+    improntaLettura = s.impronta || null;
+    const inCorso = s.fase === 'lettura' || s.fase === 'pausa' || s.fase === 'preparazione';
+    if (inCorso && s.motoreLettura === 'sistema' && s.avvisoMotore && sistemaChiuso !== improntaLettura) {
+      mostra = true;
+      modoRiquadro = 'sistema';
+      msgEl.textContent = 'Il computer è lento: leggo con la voce del sistema, più metallica. Non è un guasto.';
+      siEl.textContent = 'Voce naturale';
+      noEl.textContent = 'Va bene';
+      siEl.hidden = noEl.hidden = false;
+    } else if (s.fase === 'consenso') {
       mostra = true;
       const gia = d && d.scaricati ? ` Ne hai già ${MB(d.scaricati)} MB: riprende da lì.` : '';
       msgEl.textContent = `Sei su una connessione a consumo: per leggere serve scaricare la voce, circa ${MB(d ? d.totale : 330e6)} MB, una volta sola.${gia}`;

@@ -8,6 +8,7 @@ const vel = $('vel');
 const velVal = $('velVal');
 const statoBox = $('statoBox');
 const statoTesto = $('statoTesto');
+const voceNaturale = $('voceNaturale');
 const barraDl = $('barraDl');
 const mb = $('mb');
 const scarica = $('scarica');
@@ -97,6 +98,9 @@ function mostra(s) {
   statoBox.classList.remove('errore');
   barraDl.hidden = mb.hidden = true;
   scarica.hidden = rifiuta.hidden = true;
+  // voce del sistema scelta in automatico (computer lento): lo si dice sempre, con la via d'uscita
+  const conSistema = !!(s && s.motoreLettura === 'sistema' && s.avvisoMotore);
+  voceNaturale.hidden = !conSistema;
   const d = s && s.download;
   const dv = s && s.downloadVoce;
   mostraMp3(s && s.mp3);
@@ -143,6 +147,8 @@ function mostra(s) {
         : `In lettura${parte}`;
   } else if (s && s.fase === 'pausa') {
     statoTesto.textContent = 'In pausa';
+  } else if (conSistema) {
+    statoTesto.textContent = "L'ultima lettura era con la voce del sistema, più metallica: il computer era lento. Voce naturale torna a Sara o Nicola; per non farlo più, Qualità massima nelle opzioni.";
   } else if (inCache || (s && s.motorePronto)) {
     statoTesto.textContent = 'Voce pronta, anche offline.';
   } else {
@@ -316,6 +322,11 @@ scarica.addEventListener('click', () => {
   comando(fase === 'consenso' ? 'consenti' : 'preparaMotore');
 });
 rifiuta.addEventListener('click', () => comando('rifiuta'));
+voceNaturale.addEventListener('click', () => {
+  voceNaturale.hidden = true;
+  if (!['lettura', 'pausa', 'preparazione'].includes(fase)) statoTesto.textContent = 'La prossima lettura sarà con la voce naturale.';
+  comando('voceNaturale');
+});
 
 let invio = null;
 vel.addEventListener('input', () => {
