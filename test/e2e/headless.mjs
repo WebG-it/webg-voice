@@ -104,7 +104,9 @@ try {
   if (process.env.SENZA_POPUP) await sw.evaluate(() => chrome.runtime.sendMessage({ a: 'background', tipo: 'leggiTesto', testo: 'Prova di lettura.' }).catch(() => {}));
   else pop = await leggiSelezione('#testo p:nth-of-type(1)');
   const off = await offscreen();
-  const s1 = await attendi(off, (s) => s.fase === 'consenso' || s.fase === 'lettura' || s.errore, 30000);
+  // con la rete non a consumo la voce si scarica gia' dall'installazione: la lettura chiesta intanto
+  // resta in preparazione (con l'avanzamento) e parte alla fine del download (1.7.0)
+  const s1 = await attendi(off, (s) => s.fase === 'consenso' || s.fase === 'lettura' || s.fase === 'preparazione' || s.errore, 30000);
   R.primoUso = s1.fase;
   log('primo uso:', s1.fase);
   if (s1.fase === 'consenso') {

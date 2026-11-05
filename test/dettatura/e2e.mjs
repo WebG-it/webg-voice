@@ -130,22 +130,22 @@ try {
   {
     const { r, f } = await preparaScheda('input', '#campo');
     controlla('input: campo trovato', r.haCampo === true, JSON.stringify(r));
-    await detta('Ciao Marco virgola come stai?');
-    await detta('Ehm, domani chiamo Aldo.', 1.8);
+    await detta('Ciao Luca virgola come stai?');
+    await detta('Ehm, domani chiamo Paolo.', 1.8);
     await fine();
     const v = await f.$eval('#campo', (e) => e.value);
-    controlla('input: testo pulito', v === 'Ciao Marco, come stai? Domani chiamo Aldo.', JSON.stringify(v));
+    controlla('input: testo pulito', v === 'Ciao Luca, come stai? Domani chiamo Paolo.', JSON.stringify(v));
   }
   // ---- 2. textarea alla React ----
   {
     const { f } = await preparaScheda('react', '#campo');
     await detta('Il cliente vuole il modulo.');
     await detta('Per la home page.', 0.5);
-    await detta('Nuovo paragrafo. Poi sentiamo Kian.', 1.5);
+    await detta('Nuovo paragrafo. Poi sentiamo Elena.', 1.5);
     await fine();
     const v = await f.$eval('#campo', (e) => e.value);
     const st = await f.evaluate(() => window.statoReact);
-    controlla('react: testo nel campo', v === 'Il cliente vuole il modulo per la home page.\n\nPoi sentiamo Kian.', JSON.stringify(v));
+    controlla('react: testo nel campo', v === 'Il cliente vuole il modulo per la home page.\n\nPoi sentiamo Elena.', JSON.stringify(v));
     controlla('react: onChange visto (stato = valore)', st === v, JSON.stringify(st));
   }
   // ---- 3. annulla e cancella l'ultima frase ----
@@ -164,10 +164,10 @@ try {
   // ---- 4. editor che gestisce beforeinput (ProseMirror, Lexical) ----
   {
     const { f } = await preparaScheda('gestito', '#campo');
-    await detta('Ciao Aldo virgola a capo ti mando il preventivo.');
+    await detta('Ciao Paolo virgola a capo ti mando il preventivo.');
     await fine();
     const mod = await f.evaluate(() => window.modello);
-    controlla('editor gestito: testo dal beforeinput', JSON.stringify(mod) === JSON.stringify(['Ciao Aldo,', 'Ti mando il preventivo.']), JSON.stringify(mod));
+    controlla('editor gestito: testo dal beforeinput', JSON.stringify(mod) === JSON.stringify(['Ciao Paolo,', 'Ti mando il preventivo.']), JSON.stringify(mod));
   }
   // ---- 5. contenteditable semplice ----
   {

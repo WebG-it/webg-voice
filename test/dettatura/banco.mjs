@@ -15,7 +15,7 @@ const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MODELLI = process.env.MODELLI;
 const AUDIO = process.env.AUDIO;
 const FILE = (process.env.FILE || 'c1_Diego,c2_Elsa,c3_Diego,m1_Diego,m2_Elsa,m3_Isabella,l1_Diego,l2_Elsa').split(',');
-const PROMPT = process.env.PROMPT ?? 'WebG, Joomla, YOOtheme, recensionidimarco, Home Assistant, Kian, Aldo.';
+const PROMPT = process.env.PROMPT ?? 'WebG, Joomla, YOOtheme, recensionidiluca, Home Assistant, Elena, Paolo.';
 const RIPETI = +(process.env.RIPETI || 2);
 const CONF = {
   base: { nMel: 80, teste: 8, dimTesta: 64, layer: 6 },

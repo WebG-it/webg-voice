@@ -121,9 +121,9 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
     return { primoSuono, buchi, confini, attese, n };
   };
   for (const [nome, k, primoMax, lenta] of [
-    ['Corridoio carico, sintesi più lenta della voce', { fisso: 800, perFonema: 60, audio: 42 }, 4500, 5000],
-    ['Corridoio oggi, sintesi pari alla voce', { fisso: 600, perFonema: 41, audio: 46 }, 4500, 3000],
-    ['PC come il Corridoio del 13-10', { fisso: 450, perFonema: 33, audio: 46 }, 3500],
+    ['PC di prova carico, sintesi più lenta della voce', { fisso: 800, perFonema: 60, audio: 42 }, 4500, 5000],
+    ['PC di prova oggi, sintesi pari alla voce', { fisso: 600, perFonema: 41, audio: 46 }, 4500, 3000],
+    ['PC di prova del 13-10', { fisso: 450, perFonema: 33, audio: 46 }, 3500],
     ['PC veloce', { fisso: 250, perFonema: 20, audio: 46 }, 2000],
   ]) {
     const r = simula(k);
@@ -244,8 +244,11 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   prova('a capo: riga lunga senza punto seguita da minuscola continua', lunga.length === 1, JSON.stringify(lunga).slice(0, 90));
   prova('segno ">": frecce e confronti senza numero restano', normalizza('a -> b') === 'a -> b' && normalizza('x>y') === 'x>y');
   const py = readFileSync(join(qui, '..', 'scripts', 'immagini-store.py'), 'utf8');
-  const e2e = readFileSync(join(qui, 'e2e', 'headless.mjs'), 'utf8');
-  prova('store: screenshot 2 da pagina e pannello della stessa lettura', /\("store-2-lettura\.png", "store-2-popup\.png"\)/.test(py) && e2e.includes("'store-2-lettura.png'") && e2e.includes("'store-2-popup.png'") && /prima\.blocco === dopo\.blocco/.test(e2e));
+  // dalla 1.7.0 le catture vengono da test/e2e/catture-store.mjs: pagina e pannello con lo stesso stato
+  // della lettura (stessa parte e stesso totale), cosi' la schermata 1 non si contraddice
+  const catture = readFileSync(join(qui, 'e2e', 'catture-store.mjs'), 'utf8');
+  const stati = [...catture.matchAll(/fase: 'lettura', (?:velocita: [\d.]+, )?blocco: (\d+), totale: (\d+)/g)].map((m) => `${m[1]}/${m[2]}`);
+  prova('store: schermata 1 da pagina e pannello nella stessa parte della lettura', /pagina_con_pannello\(src, "pagina-lettura\.png", "pannello-lettura\.png"\)/.test(py) && stati.length === 2 && stati[0] === stati[1], JSON.stringify(stati));
   prova('store: ogni cattura usata dallo script la produce il test e2e', [...py.matchAll(/"(store-[^"]+\.png)"/g)].every((m) => e2e.includes(`'${m[1]}'`)), [...py.matchAll(/"(store-[^"]+\.png)"/g)].map((m) => m[1]).join(', '));
 }
 
@@ -293,7 +296,7 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
 
   // revisione 1.3.0
   // 1. mail citata breve con una riga che comincia con un numero
-  const mailBreve = "Ciao Marco,\n> Ti scrivo per l'evento.\n> 2024 e' stato un anno difficile\n> e speriamo nel prossimo.\n\nRisposta mia.";
+  const mailBreve = "Ciao Luca,\n> Ti scrivo per l'evento.\n> 2024 e' stato un anno difficile\n> e speriamo nel prossimo.\n\nRisposta mia.";
   const nb = normalizza(mailBreve);
   const pb = paragrafi(nb);
   prova('citazione: blocco di righe col ">" anche con un numero dopo il segno', !nb.includes('>') && !nb.includes('maggiore') && nb.includes('2024 è stato') && pb[pb.length - 1] === 'Risposta mia.', JSON.stringify(pb));
@@ -331,7 +334,7 @@ prova('MP3: blocchi entro il tetto (salvo frasi senza punteggiatura)', piuLungo 
   ];
   const sb3 = cuori.filter(([a, b]) => normalizza(a) !== b).map(([a]) => `${a} -> ${normalizza(a)}`);
   prova('"<3": cuore tolto, confronto con unita\' o altre cifre letto', !sb3.length, sb3.join(' | ') || `${cuori.length} casi`);
-  // elisione davanti a un numero (prova di Marco sulla 1.3.0)
+  // elisione davanti a un numero (prova a mano sulla 1.3.0)
   const { inLettere } = await import('../src/lib/normalizza.js');
   const elisioni = [
     ["aggiornata l'8 settembre", "aggiornata l'otto settembre"],

@@ -50,6 +50,22 @@ try {
       if (!(await chrome.offscreen.hasDocument()))
         await chrome.offscreen.createDocument({ url: 'offscreen.html', reasons: ['AUDIO_PLAYBACK', 'WORKERS', 'USER_MEDIA'], justification: 'prova' });
     }, rtf);
+  // profilo nuovo (regola delle prove): la voce si scarica dall'installazione, si aspetta che finisca
+  {
+    const t0 = Date.now();
+    for (;;) {
+      let s = null;
+      try {
+        s = await stato();
+      } catch {}
+      const d = s && s.download;
+      if (s && (s.motorePronto || (d && d.totale && d.scaricati >= d.totale))) break;
+      if (Date.now() - t0 > 900000) throw new Error('voce non scaricata in 15 minuti');
+      await dorme(1000);
+    }
+    await dorme(4000);
+    log('voce sul computer');
+  }
   const TESTO = 'Prima frase della prova. Seconda frase, un po\' piu\' lunga della prima. Terza frase per finire la prova di lettura.';
   const avviaLettura = async (rtf) => {
     await leggi(rtf);

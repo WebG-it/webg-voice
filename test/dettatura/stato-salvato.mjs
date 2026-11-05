@@ -1,4 +1,4 @@
-// Pagina della dettatura con uno stato salvato da versioni precedenti (come nel profilo di Marco).
+// Pagina della dettatura con uno stato salvato da versioni precedenti (come in un profilo vero aggiornato).
 //   CHROME=<chrome> [EXT=<cartella estensione>] [STATO=<json per chrome.storage.local>] node test/dettatura/stato-salvato.mjs
 import puppeteer from 'puppeteer';
 import { mkdtempSync, rmSync } from 'node:fs';

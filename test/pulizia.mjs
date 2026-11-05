@@ -34,8 +34,8 @@ function seq(segmenti, o = {}) {
 }
 
 // ---- esitazioni e riempitivi ----
-uguale('ehm', uno('Ehm, domani chiamo Aldo.'), 'Domani chiamo Aldo.');
-uguale('ehm in mezzo', uno('Domani, ehm, chiamo Aldo per il sito.'), 'Domani chiamo Aldo per il sito.');
+uguale('ehm', uno('Ehm, domani chiamo Paolo.'), 'Domani chiamo Paolo.');
+uguale('ehm in mezzo', uno('Domani, ehm, chiamo Paolo per il sito.'), 'Domani chiamo Paolo per il sito.');
 uguale('uhm', uno('Allora, uhm, il preventivo è pronto.'), 'Il preventivo è pronto.');
 uguale('cioè fra virgole', uno('Il sito, cioè, va rifatto.'), 'Il sito, va rifatto.');
 uguale('cioè con significato', uno('Il prezzo, cioè dieci euro, va bene.'), 'Il prezzo, cioè dieci euro, va bene.');
@@ -55,18 +55,18 @@ uguale('numeri ripetuti restano', uno('Il codice è 22 22.'), 'Il codice è 22 2
 // ---- autocorrezioni ----
 uguale('no anzi', uno('Ci vediamo martedì no anzi mercoledì.'), 'Ci vediamo mercoledì.');
 uguale('no anzi con ripresa', uno('Ci vediamo alle cinque, no anzi alle sei.'), 'Ci vediamo alle sei.');
-uguale('cioè volevo dire', uno('Scrivi a Marco, cioè volevo dire a Luca.'), 'Scrivi a Luca.');
+uguale('cioè volevo dire', uno('Scrivi a Luca, cioè volevo dire a Giulia.'), 'Scrivi a Giulia.');
 uguale('scusa con ripresa', uno('Domani vado a Roma, scusa, a Milano.'), 'Domani vado a Milano.');
 uguale('scusa normale', uno('Scusa il ritardo, arrivo subito.'), 'Scusa il ritardo, arrivo subito.');
-uguale('scusa in mezzo normale', uno('Marco, scusa se ti scrivo tardi.'), 'Marco, scusa se ti scrivo tardi.');
+uguale('scusa in mezzo normale', uno('Luca, scusa se ti scrivo tardi.'), 'Luca, scusa se ti scrivo tardi.');
 uguale('anzi no numeri', uno('Il prezzo è dieci euro, anzi no, quindici euro.'), 'Il prezzo è quindici euro.');
 uguale('anzi normale', uno('Non mi piace, anzi lo odio.'), 'Non mi piace, anzi lo odio.');
 uguale('compra il pane', uno('Compra il latte, no scusa, il pane.'), 'Compra il pane.');
 
 // ---- punteggiatura a voce ----
-uguale('virgola punto', uno('Ciao Marco virgola come stai punto'), 'Ciao Marco, come stai.');
-uguale('virgola con segni whisper', uno('Ciao Marco, virgola, come stai? Punto.'), 'Ciao Marco, come stai.');
-uguale('punto interrogativo', uno('Ciao Marco virgola come stai punto interrogativo'), 'Ciao Marco, come stai?');
+uguale('virgola punto', uno('Ciao Luca virgola come stai punto'), 'Ciao Luca, come stai.');
+uguale('virgola con segni whisper', uno('Ciao Luca, virgola, come stai? Punto.'), 'Ciao Luca, come stai.');
+uguale('punto interrogativo', uno('Ciao Luca virgola come stai punto interrogativo'), 'Ciao Luca, come stai?');
 uguale('punto di domanda', uno('Vieni domani punto di domanda'), 'Vieni domani?');
 uguale('punto esclamativo', uno('Che bello punto esclamativo'), 'Che bello!');
 uguale('due punti', uno('Ecco la lista due punti latte e pane.'), 'Ecco la lista: latte e pane.');
@@ -77,9 +77,9 @@ uguale('a che punto', uno('A che punto siamo con il sito?'), 'A che punto siamo 
 uguale('punto di vista', uno('Dal mio punto di vista va bene.'), 'Dal mio punto di vista va bene.');
 uguale('punto in mezzo', uno('Ho finito punto domani riprendo.'), 'Ho finito. Domani riprendo.');
 uguale('la virgola', uno('Togli la virgola dopo il nome.'), 'Togli la virgola dopo il nome.');
-uguale('a capo', uno('Ciao Aldo virgola a capo ti scrivo per il sito.'), 'Ciao Aldo,\nTi scrivo per il sito.');
-uguale('vai a capo', uno('Caro Marco, vai a capo. Ti mando il preventivo.'), 'Caro Marco,\nTi mando il preventivo.');
-uguale('a capo del progetto', uno('Aldo è a capo del progetto.'), 'Aldo è a capo del progetto.');
+uguale('a capo', uno('Ciao Paolo virgola a capo ti scrivo per il sito.'), 'Ciao Paolo,\nTi scrivo per il sito.');
+uguale('vai a capo', uno('Caro Luca, vai a capo. Ti mando il preventivo.'), 'Caro Luca,\nTi mando il preventivo.');
+uguale('a capo del progetto', uno('Paolo è a capo del progetto.'), 'Paolo è a capo del progetto.');
 uguale('nuovo paragrafo', uno('Fine della prima parte punto nuovo paragrafo la seconda parte.'), 'Fine della prima parte.\n\nLa seconda parte.');
 uguale('parentesi', uno('Il sito apri parentesi WebG chiudi parentesi è pronto.'), 'Il sito (WebG) è pronto.');
 uguale('virgolette', uno('Ha detto apri virgolette va bene chiudi virgolette.'), 'Ha detto "va bene".');
@@ -89,18 +89,21 @@ uguale('trattino inciso', uno('Il sito – quello nuovo – è pronto.'), 'Il si
 uguale('trattino in parola', uno('Mandami una e-mail.'), 'Mandami una e-mail.');
 
 // ---- elenchi ----
-uguale('primo secondo', seq(['Primo, comprare il latte.', 'Secondo, chiamare Aldo.', 'Terzo, aggiornare Joomla.']), '1. Comprare il latte.\n2. Chiamare Aldo.\n3. Aggiornare Joomla.');
+uguale('primo secondo', seq(['Primo, comprare il latte.', 'Secondo, chiamare Paolo.', 'Terzo, aggiornare Joomla.']), '1. Comprare il latte.\n2. Chiamare Paolo.\n3. Aggiornare Joomla.');
 uguale('secondo me', seq(['Secondo me il sito va bene.']), 'Secondo me il sito va bene.');
+uguale('prima, nome proprio: niente elenco', seq(['Prima, Giulia ha chiamato il cliente.']), 'Prima, Giulia ha chiamato il cliente.');
+uguale('primo, nome inventato: niente elenco', seq(['Primo, Zefiro porta il vino.']), 'Primo, Zefiro porta il vino.');
+uguale('elenco con un nome dentro', seq(['Primo, comprare il latte.', 'Secondo, Luca chiama il cliente.']), '1. Comprare il latte.\n2. Luca chiama il cliente.');
 uguale('elenco puntato', seq(['Da comprare elenco puntato latte.', 'Pane.', 'Uova. Fine elenco.', 'Grazie.']), 'Da comprare\n- Latte.\n- Pane.\n- Uova.\nGrazie.');
 
 // ---- maiuscole e segmenti ----
-uguale('continuazione breve', seq([['Domani mattina chiamo Aldo.', 2], ['Per il sito di WebG.', 0.6]]), 'Domani mattina chiamo Aldo per il sito di WebG.');
-uguale('frase nuova dopo pausa lunga', seq([['Domani chiamo Aldo.', 2], ['Poi sento Kian.', 1.8]]), 'Domani chiamo Aldo. Poi sento Kian.');
+uguale('continuazione breve', seq([['Domani mattina chiamo Paolo.', 2], ['Per il sito di WebG.', 0.6]]), 'Domani mattina chiamo Paolo per il sito di WebG.');
+uguale('frase nuova dopo pausa lunga', seq([['Domani chiamo Paolo.', 2], ['Poi sento Elena.', 1.8]]), 'Domani chiamo Paolo. Poi sento Elena.');
 uguale('domanda resta', seq([['Vieni domani?', 2], ['Ti aspetto.', 0.5]]), 'Vieni domani? Ti aspetto.');
-uguale('parola di legame', seq([['Ho parlato con.', 2], ['Aldo del sito.', 1.5]]), 'Ho parlato con Aldo del sito.');
+uguale('parola di legame', seq([['Ho parlato con.', 2], ['Paolo del sito.', 1.5]]), 'Ho parlato con Paolo del sito.');
 uguale('in mezzo a una frase', uno('Il cliente vuole il modulo.', { prima: 'Ciao, ' }), 'il cliente vuole il modulo.');
 uguale('dopo un punto', uno('Il cliente vuole il modulo.', { prima: 'Fatto.' }), ' Il cliente vuole il modulo.');
-uguale('dopo una parola', uno('Il cliente vuole il modulo.', { prima: 'Ciao Marco' }), ' il cliente vuole il modulo.');
+uguale('dopo una parola', uno('Il cliente vuole il modulo.', { prima: 'Ciao Luca' }), ' il cliente vuole il modulo.');
 uguale('campo vuoto', uno('il cliente vuole il modulo'), 'Il cliente vuole il modulo');
 
 // ---- comandi ----
@@ -117,9 +120,9 @@ uguale('grazie per la visione', eAllucinazione('Grazie per la visione!'), true);
 uguale('frase vera', eAllucinazione('Grazie per il preventivo, lo guardo domani.'), false);
 
 // ---- dizionario personale ----
-uguale('sostituzione', applicaSostituzioni('Ho scritto su recensioni di Marco.', [['recensioni di Marco', 'recensionidimarco']]), 'Ho scritto su recensionidimarco.');
+uguale('sostituzione', applicaSostituzioni('Ho scritto su recensioni di Luca.', [['recensioni di Luca', 'recensionidiluca']]), 'Ho scritto su recensionidiluca.');
 uguale('sostituzione maiuscole', applicaSostituzioni('chiama web g domani', [['web g', 'WebG']]), 'chiama WebG domani');
-uguale('sostituzione nella sessione', uno('Ho pubblicato su recensioni di Marco.', { sostituzioni: [['recensioni di Marco', 'recensionidimarco']] }), 'Ho pubblicato su recensionidimarco.');
+uguale('sostituzione nella sessione', uno('Ho pubblicato su recensioni di Luca.', { sostituzioni: [['recensioni di Luca', 'recensionidiluca']] }), 'Ho pubblicato su recensionidiluca.');
 
 // ---- utilita' ----
 uguale('ultima frase', 'Uno. Due tre. Quattro cinque.'.slice(0, inizioUltimaFrase('Uno. Due tre. Quattro cinque.')), 'Uno. Due tre. ');

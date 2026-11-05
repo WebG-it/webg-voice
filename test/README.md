@@ -55,7 +55,7 @@ CHROME=<...> node test/dettatura/web-speech.mjs
   release GitHub `dettatura-v1`, con l'encoder corto.
 - `riserva.mjs`: chi ha l'encoder originale (riserva) passa da solo a quello corto alla volta dopo.
 - `stato-salvato.mjs`: aggiornamento da una versione precedente. Mette in `chrome.storage.local` lo
-  stato lasciato dalla 1.3.2-1.3.3 (quello letto nel profilo di Marco: misura vecchia, modello Leggero
+  stato lasciato dalla 1.3.2-1.3.3 (quello letto in un profilo vero aggiornato: misura vecchia, modello Leggero
   proposto e mai scaricato) e apre la pagina della dettatura: deve partire, rispondere sul microfono e
   preselezionare il modello consigliato. Gira anche con Chrome stabile (`CHROME=.../chrome.exe`).
   Con la 1.3.4 dava KO (errore di sintassi in dettatura.js); la build ora controlla la sintassi di ogni script.
@@ -191,3 +191,28 @@ CHROME=... MODELLI=... AUDIO=<cartella con wav> node test/call/banco-parakeet.mj
   `Browser.grantPermissions`. L'identificativo della scheda lo chiede il pannello, non il service
   worker (con COOP/COEP nel manifest, quello del service worker non è utilizzabile).
 - `matrice-cattura.mjs` e `prova-cattura.mjs` sono le diagnosi che hanno portato a questo.
+
+## Rilascio 1.7.0
+
+```
+npm run test:esporta     # trascrizione in TXT, SRT e DOCX, zip e CRC controllati (senza browser)
+CHROME=<chrome> PROFILO=<profilo nuovo> [GIRI=8] node test/e2e/evidenzia-cambio-scheda.mjs
+CHROME=<chrome> PROFILO=<profilo nuovo> USCITE=<cartella> node test/e2e/catture-store.mjs
+python scripts/immagini-store.py <cartella USCITE>
+```
+
+- `evidenzia-cambio-scheda.mjs`: il difetto del 18-10. Lettura in A, si passa a B e si preme la
+  scorciatoia due volte (pausa, poi lettura di B), piu' doppie pressioni ravvicinate da una scheda
+  all'altra, una pagina senza articolo e un articolo breve: in ogni caso la scheda che legge deve
+  avere la frase in `CSS.highlights` e l'evidenziazione deve seguire la voce. Sulla 1.6.3 una
+  doppia pressione su quattro restava senza evidenziazione.
+- `catture-store.mjs`: catture per la scheda dello store senza scaricare modelli. Gli stati di
+  lettura, dettatura e call si mandano alle pagine con gli script veri dell'estensione; il pannello
+  vero si apre come pagina a doppia densita'. Poi `scripts/immagini-store.py` compone le sei
+  schermate 1280x800 e il riquadro 440x280 in `store/immagini/`.
+- Su Windows il profilo di prova va in un percorso corto (per esempio `%TEMP%\wvp-...`): con un
+  percorso lungo IndexedDB fallisce ("Internal error opening database") e la voce non si scarica.
+- `csp-download.mjs` (build di produzione, `estensione/`): con la CSP vera (connect-src limitato)
+  scarica da internet voce, dettatura Leggero e Parakeet, legge una frase, registra gli host
+  contattati (redirect compresi) e controlla che la CSP non blocchi niente.
+  `CHROME=<chrome> PROFILO=<profilo nuovo> node test/e2e/csp-download.mjs`

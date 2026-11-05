@@ -104,7 +104,8 @@ async function prova(file, secondi) {
 }
 
 let ko = 0;
-const FRASE = 'ho pubblicato una nuova recensione su recensioni di marco poi ho controllato che la pagina si vedesse bene anche dal telefono';
+// la frase detta in frase_silenzio.wav (se il file ne contiene un'altra, passarla con FRASE=...)
+const FRASE = (process.env.FRASE || 'ho pubblicato una nuova recensione su recensioni di luca poi ho controllato che la pagina si vedesse bene anche dal telefono').toLowerCase();
 for (const [file, sec] of [
   ['silenzio30.wav', 30],
   ['ventola30.wav', 30],
