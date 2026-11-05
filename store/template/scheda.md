@@ -1,236 +1,282 @@
-# Scheda Chrome Web Store, {{NOME_BREVE}} {{VERSIONE}}
+# Scheda Chrome Web Store, {{NOME_BREVE}} {{VERSIONE}} del {{DATA}}
 
-Testi pronti da incollare nel modulo della scheda. Generato da `store/template/scheda.md`
-con `npm run store`: non modificare questo file a mano.
+Testi pronti da incollare nel modulo della scheda, in italiano (lingua principale) e in inglese.
+Generato da `store/template/scheda.md` con `npm run store`: non modificare questo file a mano.
 
-## Nome
+## Nome / Name
 
 {{NOME}}
 
-(Solo il marchio: il sottotitolo descrittivo sta nella descrizione, per non riempire il nome di parole chiave.)
+Solo il marchio: il sottotitolo descrittivo sta nel riassunto, per non riempire il nome di parole chiave.
 
-## Categoria
+## Categoria / Category
 
-Rendi tuo Chrome → Accessibilità (in inglese: Make Chrome Yours → Accessibility).
-Lingua principale: italiano.
+Rendi tuo Chrome → Accessibilità (Make Chrome Yours → Accessibility). Lingua principale: italiano.
 
-## Descrizione breve (italiano, {{LUNG_BREVE_IT}} caratteri su 132)
+## Riassunto (italiano, {{LUNG_BREVE_IT}} caratteri su 132)
 
 {{BREVE_IT}}
 
-## Descrizione breve (inglese, {{LUNG_BREVE_EN}} caratteri su 132)
+## Summary (English, {{LUNG_BREVE_EN}} characters out of 132)
 
 {{BREVE_EN}}
 
-## Descrizione lunga (italiano)
+## Descrizione (italiano)
 
-Leggi ad alta voce in italiano, offline dopo il primo download.
+Legge, scrive sotto dettatura e trascrive le call, in italiano e tutto sul tuo computer.
 
-{{NOME_BREVE}} legge ad alta voce, in italiano, il testo che selezioni in una pagina web o un
-articolo intero. La voce è naturale ed espressiva e funziona interamente sul tuo computer: non
-serve un account, non ci sono abbonamenti e il testo non viene mai inviato a servizi esterni.
+{{NOME_BREVE}} mette la voce dentro Chrome in tre modi. Legge ad alta voce le pagine con una voce
+naturale, scrive nei campi quello che detti e trascrive le call che fai nel browser. Le voci e i
+modelli girano sul tuo computer: niente account, niente abbonamento, nessun testo e nessun audio
+mandato a servizi esterni, salvo due scelte facoltative e spente di serie: il riconoscimento vocale di Google per la dettatura e una voce del sistema «in rete» scelta a mano per la lettura. Dopo il primo download funziona anche senza internet.
 
-Novità della versione 1.6
-• Trascrivi la call: dal pannello, per le call nel browser (Meet, Teams, Zoom web). Ascolta l'audio della scheda e il tuo microfono, li trascrive sul tuo computer mentre la call va avanti (scarica un modello di circa 670 MB, una volta sola; mentre trascrive usa circa 2,5 GB di memoria) e, alla fine, salva un file .md con gli orari ("Io" è il microfono, "Call" gli altri). L'audio non si registra né esce dal computer. Una barretta rossa e il segno CALL sull'icona dicono che sta ascoltando, e c'è un messaggio pronto da incollare nella chat per avvisare i partecipanti. I permessi per catturare la scheda e salvare il file si chiedono solo la prima volta che la usi.
+1. LEGGI
+• Seleziona un testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce".
+• Senza selezione, Alt+Q legge tutto l'articolo della pagina, senza menu, pubblicità e commenti.
+• Alt+Q di nuovo mette in pausa, Alt+W ferma (su Mac Control+Q e Control+W).
+• La frase che senti si evidenzia nella pagina, e una barretta ti lascia mettere in pausa, fermare
+  e cambiare la velocità.
+• Due voci, Sara e Nicola; velocità da 0,7 a 1,5; "Di nuovo" rilegge l'ultimo testo.
+• Crea MP3: salva la lettura in un file audio, creato sul computer.
+• Rileggi la bozza: per chi scrive, legge più lenta e segnala le parole ripetute vicine.
 
-Novità della versione 1.4
-• Dettatura: premi Ctrl+Spazio in un campo di qualsiasi pagina e parla. Il testo arriva già pulito, con
-  punteggiatura, a capo ed elenchi a voce, senza «ehm» e ripetizioni. Il riconoscimento gira sul tuo
-  computer: l'audio non esce. Il modello si scarica solo la prima volta che detti.
-• Segui con gli occhi: la frase che stai ascoltando si evidenzia nella pagina, e la pagina scorre
-  per tenerla in vista. Si spegne dalle opzioni.
-• Rileggi la bozza: per chi scrive. Legge più lenta, con pause fra le frasi, e ti segnala le parole
-  ripetute a poca distanza, nel pannello e colorate nel testo. Funziona anche dentro gli editor.
-• Parte prima: mentre usi Chrome la voce resta pronta fino a 30 minuti dall'ultima lettura, e la lettura comincia in un paio di secondi. Tenerla pronta occupa circa 1,2 GB di memoria; si spegne nelle opzioni.
-• Accenti giusti anche quando il testo usa l'apostrofo: "perche'", "citta'", "e'" si leggono
-  perché, città, è.
+2. DETTA
+• Clicca in un campo (Gmail, WhatsApp Web, un modulo, l'editor del tuo sito) e tieni premuto
+  Ctrl+Spazio mentre parli: al rilascio il testo si scrive (su Mac Control+Maiusc+X).
+• Punteggiatura, a capo ed elenchi a voce; esitazioni e ripetizioni tolte; "no anzi" corregge.
+• Il modello si scarica alla prima dettatura e gira sul computer: l'audio non esce (salvo se scegli
+  il riconoscimento di Google nella pagina della dettatura).
 
-Cosa fa
-• Legge tutto l'articolo, senza menu, pubblicità e commenti.
-• Salva in MP3, creato sul tuo computer.
-• Due voci: Sara o Nicola.
+3. TRASCRIVI LA CALL
+• Per le call nel browser (Meet, Teams, Zoom web): dal pannello, "Trascrivi la call".
+• Ascolta l'audio della scheda e il tuo microfono e li trascrive sul computer mentre la call va
+  avanti. Alla fine salva il testo con gli orari ("Io" sei tu, "Call" gli altri); lo esporti anche
+  in Word, TXT o sottotitoli SRT.
+• L'audio non si registra e non esce dal computer. Una barretta rossa nella scheda dice che sta
+  ascoltando e ti dà un messaggio pronto per avvisare i partecipanti.
+• I due permessi che servono (audio della scheda, salvataggio del file) si chiedono solo la prima
+  volta che la usi.
 
-Come si usa
-• Seleziona il testo e premi Alt+Q, oppure tasto destro → "Leggi ad alta voce". Alt+Q di nuovo mette in pausa, Alt+W ferma (su Mac Control+Q e Control+W).
-• Senza selezione, Alt+Q legge tutto l'articolo della pagina. Lo stesso fa il tasto destro sulla pagina → "Leggi tutto l'articolo", o il pulsante "Leggi l'articolo" nel pannello.
-• Durante la lettura compare una piccola barra con pausa, stop e velocità.
-• Dal pulsante dell'estensione puoi incollare un testo, scegliere la voce e regolare la velocità, da 0,7 a 1,5.
-• "Scarica MP3" nel pannello crea un file audio del testo incollato, della selezione o dell'articolo. Puoi chiudere il pannello mentre lavora: il file si salva nella cartella dei download.
-• "Rileggi la bozza" nel pannello rilegge il testo selezionato o incollato più lentamente e mostra le parole ripetute vicine.
+COSA SI SCARICA
+Ogni modello una volta sola, solo quando serve, con l'impronta SHA-256 controllata:
+voce Sara ({{MB}} MB, all'installazione, in sottofondo; sulle connessioni a consumo chiede prima),
+voce Nicola (mezzo MB, se la scegli), voce bilanciata (177 MB, solo sui computer lenti), dettatura
+(250 MB il modello Normale, oppure 77 o 565 MB), trascrizione delle call (circa 670 MB).
 
-Gratis, offline dopo il primo download
-Al primo avvio scarica il modello vocale (circa {{MB}} MB) una volta sola, in sottofondo, con
-l'avanzamento sull'icona. Se la connessione cade riprende da solo da dove era arrivato; sulle
-connessioni a consumo aspetta un tuo clic. Da quel momento la lettura funziona anche senza internet.
+PENSATA PER L'ITALIANO
+Numeri, date, orari, prezzi, sigle e abbreviazioni letti come li direbbe una persona; le parole
+inglesi più comuni dentro la frase si pronunciano all'inglese; un dizionario di pronuncia corregge
+le parole che escono storte. Sui computer lenti la lettura si adatta da sola e lo dice.
 
-Pensata per l'italiano
-Numeri, percentuali, date, orari, prezzi e abbreviazioni comuni vengono letti come li direbbe una
-persona. I testi lunghi partono in pochi secondi: mentre una parte suona, la successiva si prepara,
-anche per articoli di migliaia di parole.
+ALL'INSTALLAZIONE
+Si apre una pagina di benvenuto con le tre funzioni, le scorciatoie e i pesi dei download. La
+guida completa è sempre nel pannello, al punto interrogativo.
 
-Due voci
-Sara, voce femminile, arriva con il primo download. Nicola, voce maschile, si scarica la prima
-volta che la scegli: mezzo MB, una volta sola. La scelta resta ricordata.
-
-Sigle e parole inglesi
-Le sigle che si dicono come parola (RAM, SEO, ISTAT) si leggono come parola, le altre si compitano;
-le parole inglesi più comuni e i nomi come Google, YouTube o iPhone si leggono all'inglese dentro la
-frase. Per le parole che non escono bene, nelle opzioni c'è un dizionario di pronuncia: scrivi come
-si deve leggere una parola e provala con Ascolta.
-
-Si adatta al tuo computer
-La lettura misura da sola la velocità della sintesi e, sui PC più lenti, si regola per evitare
-pause. Nelle opzioni c'è una prova di risoluzione problemi.
-
-Privacy
+PRIVACY
 Nessun dato raccolto, nessun tracciamento, nessuna pubblicità. Le sole connessioni servono a
-scaricare i file della voce.
+scaricare voci e modelli.
 
-Tecnologia: modello Kokoro-82M (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0),
-Mozilla Readability per l'articolo (Apache-2.0), lamejs per l'MP3 (LGPL-3.0).
-Codice sorgente aperto con licenza GPL-3.0: https://github.com/WebG-it/webg-voice
+Tecnologia: Kokoro-82M (Apache-2.0), Whisper (MIT), Parakeet TDT 0.6B v3 (CC-BY-4.0), ONNX
+Runtime Web (MIT), eSpeak NG (GPL-3.0), Mozilla Readability (Apache-2.0), lamejs (LGPL-3.0).
+Codice aperto con licenza GPL-3.0: https://github.com/WebG-it/webg-voice
 Realizzata da WebG, https://www.webg.it
 
-## Descrizione lunga (inglese)
+## Description (English)
 
-Read aloud in Italian, offline after the first download.
+Reads aloud, types your dictation and transcribes calls, in Italian and entirely on your computer.
 
-{{NOME_BREVE}} reads the text you select on a web page, or a whole article, aloud in Italian. The
-voice is natural and expressive and runs entirely on your computer: no account, no subscription,
-and your text is never sent to any external service.
+{{NOME_BREVE}} brings voice into Chrome in three ways. It reads web pages aloud with a natural
+Italian voice, types what you dictate into any field, and transcribes the calls you make in the
+browser. Voices and models run on your computer: no account, no subscription, no text or audio
+sent to external services, except for two optional choices, off by default: Google speech recognition for dictation and an "online" system voice picked by hand for reading. After the first download it also works offline.
 
-New in version 1.3
-• Follow along: the sentence being read is highlighted on the page, which scrolls to keep it in
-  view. It can be turned off in the options.
-• Proofread your draft: reads more slowly, with pauses between sentences, and points out words
-  repeated close together, in the panel and highlighted in the text. Works inside editors too.
-• Starts faster: while you use Chrome the voice stays ready for up to 30 minutes after the last reading. Keeping it ready uses about 1.2 GB of memory; you can turn it off in the options.
-• Correct stress when Italian text uses an apostrophe instead of an accent ("perche'", "citta'").
+1. READ
+• Select text and press Alt+Q, or right-click → "Leggi ad alta voce".
+• With nothing selected, Alt+Q reads the whole article, without menus, ads or comments.
+• Alt+Q again pauses, Alt+W stops (on Mac Control+Q and Control+W).
+• The sentence you hear is highlighted on the page, and a small bar lets you pause, stop and
+  change the speed.
+• Two voices, Sara and Nicola; speed from 0.7 to 1.5; "Di nuovo" reads the last text again.
+• Create MP3: saves the reading as an audio file, made on your computer.
+• Proofread: for writers, reads more slowly and points out words repeated close together.
 
-Also in 1.2
-• Smoother: starts within a couple of seconds and no longer stops at every line of text copied
-  from PDFs or emails.
-• Reads the whole article: press Alt+Q with nothing selected to hear the title and text, without
-  menus, ads or comments.
-• Saves MP3: one click turns the text into an audio file, created on your computer.
-• Two voices: Sara or Nicola.
+2. DICTATE (Italian)
+• Click in a field (Gmail, WhatsApp Web, a form, your site's editor) and hold Ctrl+Space while you
+  speak: on release the text is typed (on Mac Control+Shift+X).
+• Spoken punctuation, new lines and lists; hesitations and repetitions removed.
+• The model is downloaded at the first dictation and runs on your computer: audio never leaves it
+  (unless you choose Google speech recognition on the dictation page).
 
-How to use it
-• Select text and press Alt+Q, or right-click → "Leggi ad alta voce". Alt+Q again pauses, Alt+W stops (on Mac: Control+Q and Control+W).
-• With nothing selected, Alt+Q reads the whole article; so does right-click on the page → "Leggi tutto l'articolo".
-• While reading, a small bar offers pause, stop and speed controls.
-• From the extension button you can paste text, choose the voice and set the speed, from 0.7 to 1.5.
-• "Scarica MP3" in the panel creates an audio file of the pasted text, the selection or the article, saved to your downloads folder.
+3. TRANSCRIBE A CALL
+• For calls in the browser (Meet, Teams, Zoom web): from the panel, "Trascrivi la call".
+• Listens to the tab audio and your microphone and transcribes them on your computer while the
+  call goes on. At the end it saves the text with timestamps ("Io" is you, "Call" the others);
+  you can also export it as Word, TXT or SRT subtitles. It recognises English as well as Italian.
+• Audio is never recorded and never leaves the computer. A red bar in the tab shows it is
+  listening and gives you a ready message to tell the other participants.
+• The two permissions it needs (tab audio, saving the file) are asked only the first time.
 
-Free, offline after the first download
-On first start it downloads the voice model (about {{MB}} MB) once, in the background.
-If the connection drops it resumes on its own; on metered connections it waits for your click.
-After that, reading works offline.
+WHAT GETS DOWNLOADED
+Each model once, only when needed, with a fixed SHA-256 check: voice Sara ({{MB}} MB, at install,
+in the background; on metered connections it asks first), voice Nicola (half a MB, if you pick
+it), balanced voice (177 MB, only on slow computers), dictation (250 MB for the Normal model, or
+77 or 565 MB), call transcription (about 670 MB).
 
-Built for Italian
-Numbers, percentages, dates, times, prices and common abbreviations are read the way a person
-would say them. Long texts start within seconds: while one part plays, the next is prepared,
-even for articles thousands of words long.
+AT INSTALL
+A welcome page shows the three features, the shortcuts and the download sizes. The full guide is
+always one click away in the panel (question mark).
 
-Two voices
-Sara (female) comes with the first download. Nicola (male) is downloaded the first time you pick
-it: half a MB, once.
+PRIVACY
+No data collected, no tracking, no ads. The only network connections download voices and models.
 
-Acronyms and English words
-Acronyms said as words (RAM, SEO) are read as words, others are spelled out; common English words and
-names such as Google, YouTube or iPhone keep their English pronunciation inside the Italian sentence.
-A pronunciation dictionary in the options lets you fix any word and try it with Listen.
-
-Adapts to your computer
-Reading measures synthesis speed by itself and adjusts on slower PCs to avoid gaps. The options
-page has a troubleshooting test.
-
-Privacy
-No data collected, no tracking, no ads. The only network connections download the voice files.
-
-Technology: Kokoro-82M model (Apache-2.0), ONNX Runtime Web (MIT), eSpeak NG (GPL-3.0),
-Mozilla Readability for articles (Apache-2.0), lamejs for MP3 (LGPL-3.0).
+Technology: Kokoro-82M (Apache-2.0), Whisper (MIT), Parakeet TDT 0.6B v3 (CC-BY-4.0), ONNX
+Runtime Web (MIT), eSpeak NG (GPL-3.0), Mozilla Readability (Apache-2.0), lamejs (LGPL-3.0).
 Open source under GPL-3.0: https://github.com/WebG-it/webg-voice
 Made by WebG, https://www.webg.it
 
-## Scopo unico (single purpose)
+## Scopo unico (italiano)
 
 Strumenti vocali che funzionano interamente sul computer dell'utente: leggere ad alta voce, con una
-voce sintetica, il testo che l'utente seleziona in una pagina, incolla nel popup o l'articolo della
-pagina che chiede di ascoltare (anche salvando la lettura in un file MP3); scrivere sotto dettatura nel
-campo scelto; trascrivere in un file di testo, su richiesta, l'audio della call aperta in una scheda e
-il microfono dell'utente. Tre modi di usare la voce nel browser, con lo stesso criterio: tutto locale,
-niente account, niente audio o testo inviato a servizi esterni.
+voce sintetica, il testo che l'utente seleziona in una pagina, incolla nel pannello o l'articolo
+della pagina che chiede di ascoltare (anche salvando la lettura in un file MP3); scrivere sotto
+dettatura nel campo scelto; trascrivere in un file di testo, su richiesta, l'audio della call aperta
+in una scheda e il microfono dell'utente. Tre modi di usare la voce nel browser con lo stesso
+criterio: tutto locale, niente account, niente audio o testo inviato a servizi esterni, salvo due scelte facoltative e spente di serie: il riconoscimento vocale di Google per la dettatura e una voce del sistema «in rete» scelta a mano per la lettura.
 
-## Giustificazione dei permessi
+## Single purpose (English)
+
+Voice tools that run entirely on the user's computer: reading aloud, with a synthetic voice, the
+text the user selects on a page, pastes into the panel, or the article of the page they ask to hear
+(optionally saving it as an MP3 file); typing dictation into the chosen field; and, on request,
+transcribing into a text file the audio of a call open in a tab together with the user's
+microphone. Three ways to use voice in the browser under one rule: everything local, no account,
+no audio or text sent to external services, except for two optional choices, off by default: Google speech recognition for dictation and an "online" system voice picked by hand for reading.
+
+## Giustificazione dei permessi (italiano)
 
 **activeTab**: serve a leggere il testo selezionato, o l'articolo della pagina se non c'è
-selezione, nella scheda in cui l'utente ha appena premuto la scorciatoia, scelto una voce del
-menu o premuto un pulsante del pannello, e solo in quel momento. L'estensione non ha accesso
-alle pagine in nessun altro caso.
+selezione, e a dettare nel campo scelto, nella scheda in cui l'utente ha appena premuto la
+scorciatoia, scelto una voce del menu o premuto un pulsante del pannello, e solo in quel momento.
+L'estensione non ha accesso alle pagine in nessun altro caso.
 
 **scripting**: serve, sempre e solo nella scheda autorizzata da activeTab, a ricavare il testo
-selezionato o il testo dell'articolo (titolo e corpo, senza menu e pubblicità), a mostrare la
-barretta con pausa, stop e velocità durante la lettura e, durante quella stessa lettura, a
-evidenziare nella pagina la frase che si sta ascoltando e le parole ripetute di una bozza (con la
-CSS Custom Highlight API, senza modificare il testo della pagina).
+selezionato o l'articolo (titolo e corpo, senza menu e pubblicità), a mostrare la barretta della
+lettura, l'indicatore della dettatura e la barretta della trascrizione, a scrivere il testo dettato
+nel campo e a evidenziare la frase che si sta ascoltando (CSS Custom Highlight API, senza
+modificare il testo della pagina).
 
-**contextMenus**: aggiunge al menu del tasto destro "Leggi ad alta voce" quando c'è del testo
-selezionato e "Leggi tutto l'articolo" sulla pagina.
+**contextMenus**: aggiunge al tasto destro "Leggi ad alta voce" sul testo selezionato e "Leggi tutto
+l'articolo" sulla pagina.
 
-**offscreen**: la sintesi vocale, la riproduzione audio e la creazione degli MP3 girano in un
-documento offscreen, così continuano anche dopo la chiusura del popup.
+**offscreen**: sintesi vocale, riproduzione audio, creazione degli MP3, riconoscimento della
+dettatura e della trascrizione girano in un documento offscreen, così continuano anche dopo la
+chiusura del pannello. Il microfono si usa solo durante una dettatura o una trascrizione avviata
+dall'utente.
 
-(L'MP3 si salva con un normale link di download dal pannello dell'estensione.)
+**storage**: impostazioni, misura della velocità del computer e scelte delle opzioni restano in
+locale, nel browser dell'utente. L'ultimo testo letto (per "Di nuovo") e l'ultima trascrizione da
+esportare restano solo in memoria (chrome.storage.session) e spariscono quando Chrome si chiude. Il
+dizionario di pronuncia usa chrome.storage.sync: se l'utente ha attiva la sincronizzazione di
+Chrome, viaggia con essa sui suoi dispositivi. Lo sviluppatore non riceve nulla.
 
-**tabCapture (facoltativo, non concesso all'installazione)**: serve solo alla funzione «Trascrivi la
-call», che l'utente avvia dal pannello. Chrome lo chiede in quel momento. Cattura l'audio della
-scheda attiva, che viene trascritto sul computer e rimandato all'uscita audio perché la call si
-senta come prima. L'audio non viene registrato, salvato né inviato a nessuno. Finché cattura, la
-scheda mostra una barretta rossa e l'icona mostra «CALL».
+**unlimitedStorage**: voci e modelli (da {{MB}} MB in su) restano nella cache dell'estensione per
+funzionare offline; senza questo permesso Chrome potrebbe cancellarli e costringere a riscaricarli.
 
-**downloads (facoltativo, non concesso all'installazione)**: richiesto insieme a tabCapture, serve
-solo a salvare nella cartella dei download, in una sottocartella scelta dall'utente (di serie «WebG Voice») o con la finestra «Salva con nome», il file di testo (.md) della trascrizione
-quando l'utente la ferma, anche se in quel momento il pannello è chiuso.
+**tabCapture (facoltativo, non concesso all'installazione)**: serve solo a "Trascrivi la call",
+che l'utente avvia dal pannello; Chrome lo chiede in quel momento. Cattura l'audio della scheda
+attiva, che si trascrive sul computer e si rimanda all'uscita audio perché la call si senta come
+prima. L'audio non viene registrato, salvato né inviato a nessuno. Finché cattura, la scheda mostra
+una barretta rossa e l'icona mostra "CALL".
 
-**storage**: le impostazioni (velocità e voce scelte, testo incollato nel popup, misura della
-velocità del computer usata per evitare pause, scelte delle opzioni "Evidenzia nella pagina la frase" e "Tieni la
-voce pronta") restano in locale, nel browser dell'utente. Il dizionario di
-pronuncia, cioè le coppie di parole che l'utente scrive nelle opzioni, usa chrome.storage.sync:
-se l'utente ha attiva la sincronizzazione di Chrome, viaggia con essa sui suoi dispositivi tramite
-il suo account Google. Lo sviluppatore non riceve nulla.
-
-**unlimitedStorage**: la voce (circa {{MB}} MB, più mezzo MB per la voce Nicola se l'utente la
-sceglie) resta nella cache dell'estensione per funzionare offline; senza questo permesso Chrome
-potrebbe cancellarla e costringere a riscaricarla.
+**downloads (facoltativo, non concesso all'installazione)**: chiesto insieme a tabCapture, serve
+solo a salvare nella cartella dei download (in una sottocartella scelta dall'utente, di serie
+"WebG Voice", o con la finestra "Salva con nome") il file di testo della trascrizione quando
+l'utente la ferma, anche se il pannello è chiuso, e a mostrarlo nella cartella. Gli MP3 e le
+esportazioni in altri formati si salvano con un normale link dal pannello, senza questo permesso.
 
 **Autorizzazioni host (github.com/WebG-it/webg-voice, release-assets.githubusercontent.com,
-huggingface.co/onnx-community, huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, *.hf.co)**: servono solo a scaricare i file della voce dalla
-release del progetto su GitHub e, se GitHub non risponde, dalla copia originale su Hugging Face.
-L'estensione non legge né modifica pagine di questi siti e non invia loro alcun dato dell'utente.
+huggingface.co/onnx-community, huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, \*.hf.co)**:
+servono solo a scaricare voci e modelli. Le voci della lettura e i modelli della dettatura vengono
+dalle release del progetto su GitHub (github.com/WebG-it/webg-voice, con il rimando a
+release-assets.githubusercontent.com) e, come riserva, dalle revisioni fissate su Hugging Face
+(huggingface.co/onnx-community e la sua rete di distribuzione *.hf.co). La voce bilanciata e il modello
+della trascrizione delle call si scaricano solo da Hugging Face (huggingface.co/onnx-community e
+huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, con *.hf.co), senza release GitHub. L'estensione
+non legge né modifica pagine di questi siti e non invia loro alcun dato dell'utente.
 
-**Autorizzazioni host facoltative (https://\*/\*, http://\*/\*)**: non concesse
-all'installazione. Vengono chieste solo se l'utente vuole far leggere un testo che sta in un
-riquadro (iframe) di un altro sito, e solo per quel sito, con un clic dal popup: servono a leggere
-la selezione dentro quel riquadro, dove activeTab non arriva.
+**Autorizzazioni host facoltative (https://\*/\*, http://\*/\*)**: non concesse all'installazione.
+Si chiedono solo se l'utente vuole far leggere un testo che sta in un riquadro (iframe) di un altro
+sito, e solo per quel sito, con un clic dal pannello: servono a leggere la selezione dentro quel
+riquadro, dove activeTab non arriva.
 
-**Codice remoto**: no. Tutto il codice (JavaScript e WebAssembly, compresi Mozilla Readability
-per l'articolo e lamejs per l'MP3) è incluso nel pacchetto. I file scaricati sono i pesi del
-modello e gli stili delle voci, cioè dati, controllati con un'impronta SHA-256 fissa.
+**Codice remoto**: no. Tutto il codice (JavaScript e WebAssembly) è nel pacchetto. I file scaricati
+sono pesi dei modelli e stili delle voci, cioè dati, controllati con un'impronta SHA-256 fissa.
+
+## Permission justifications (English)
+
+**activeTab**: reads the selected text, or the page's article when nothing is selected, and types
+dictation into the chosen field, only in the tab where the user has just pressed the shortcut,
+chosen a context-menu item or pressed a panel button, and only at that moment.
+
+**scripting**: only in the tab granted by activeTab, extracts the selection or the article, shows
+the reading bar, the dictation indicator and the call-transcription bar, inserts dictated text into
+the field, and highlights the sentence being read (CSS Custom Highlight API, page text unchanged).
+
+**contextMenus**: adds "Leggi ad alta voce" on selected text and "Leggi tutto l'articolo" on the page.
+
+**offscreen**: speech synthesis, audio playback, MP3 creation and speech recognition for dictation
+and call transcription run in an offscreen document, so they keep going after the panel closes. The
+microphone is used only during a dictation or transcription started by the user.
+
+**storage**: settings and the measured computer speed stay local in the user's browser. The last
+text read (for "Di nuovo") and the last transcript to export are kept only in memory
+(chrome.storage.session) and disappear when Chrome closes. The pronunciation dictionary uses
+chrome.storage.sync and travels with Chrome Sync if the user has it on. The developer receives nothing.
+
+**unlimitedStorage**: voices and models ({{MB}} MB and more) stay in the extension cache to work
+offline; without it Chrome could evict them and force a new download.
+
+**tabCapture (optional, not granted at install)**: used only by "Trascrivi la call", started by the
+user from the panel; Chrome asks at that moment. It captures the active tab's audio, which is
+transcribed on the computer and played back to the speakers so the call sounds as before. Audio is
+never recorded, stored or sent anywhere. While capturing, the tab shows a red bar and the icon shows "CALL".
+
+**downloads (optional, not granted at install)**: requested together with tabCapture, only to save
+the transcript text file into the downloads folder (a subfolder chosen by the user, "WebG Voice" by
+default, or with "Save as") when the user stops it, even if the panel is closed, and to show it in
+its folder. MP3 files and exports to other formats are saved with a regular link from the panel,
+without this permission.
+
+**Host permissions (github.com/WebG-it/webg-voice, release-assets.githubusercontent.com,
+huggingface.co/onnx-community, huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, \*.hf.co)**:
+only to download voices and models. Reading voices and dictation models come from the project's GitHub
+releases (github.com/WebG-it/webg-voice, redirected to release-assets.githubusercontent.com) and, as a
+fallback, from pinned Hugging Face revisions (huggingface.co/onnx-community and its *.hf.co CDN). The
+balanced voice and the call-transcription model are downloaded only from Hugging Face
+(huggingface.co/onnx-community and huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx, with *.hf.co),
+with no GitHub release. No pages of these sites are read or changed and no user data is sent.
+
+**Optional host permissions (https://\*/\*, http://\*/\*)**: not granted at install. Requested only
+when the user wants to read text inside a frame from another site, only for that site, with a click
+in the panel, because activeTab does not reach it.
+
+**Remote code**: none. All code (JavaScript and WebAssembly) ships in the package. Downloaded files
+are model weights and voice styles, i.e. data, checked against a fixed SHA-256 hash.
 
 ## Pratiche sulla privacy (questionario)
 
-Dati raccolti: nessuno. Per ogni categoria del modulo (informazioni che consentono
-l'identificazione personale, informazioni sanitarie, informazioni finanziarie e di pagamento,
-informazioni di autenticazione, comunicazioni personali, posizione, cronologia web, attività
-dell'utente, contenuti dei siti web) la risposta è "non raccolti".
+Dati raccolti: nessuno. Per ogni categoria del modulo (identificazione personale, salute, dati
+finanziari e di pagamento, autenticazione, comunicazioni personali, posizione, cronologia web,
+attività dell'utente, contenuti dei siti web) la risposta è "non raccolti".
 
-Il testo da leggere, compreso l'articolo della pagina quando l'utente chiede di ascoltarlo, viene
-elaborato solo sul computer dell'utente e non lascia mai il browser; lo stesso vale per l'audio della
-dettatura e per quello delle call trascritte su richiesta (scheda e microfono): si elabora solo in
-locale, non si registra e non si invia a nessuno, e il solo risultato è un file di testo nella
-cartella dei download dell'utente; anche gli MP3 si creano sul
-computer e si salvano nella sua cartella dei download.
+Il testo da leggere, l'audio della dettatura e quello delle call trascritte su richiesta si
+elaborano solo sul computer dell'utente e non lasciano il browser. Due eccezioni, facoltative e
+spente di serie, entrambe scelte esplicitamente dall'utente e dichiarate accanto alla scelta:
+- nella pagina della dettatura il riconoscimento vocale di Chrome con l'opzione «anche mandando l'audio
+  a Google» (Web Speech di Google): l'audio della dettatura va ai server di Google;
+- nelle opzioni della lettura una voce del sistema indicata come «in rete», scelta a mano: il testo da
+  leggere va al servizio che fornisce quella voce.
+In entrambi i casi lo sviluppatore non riceve nulla.
 
 Dichiarazioni da spuntare:
 - Non vendo né trasferisco i dati degli utenti a terze parti, al di fuori dei casi d'uso approvati.
@@ -239,13 +285,18 @@ Dichiarazioni da spuntare:
   di prestito.
 
 URL delle norme sulla privacy: https://github.com/WebG-it/webg-voice/blob/main/docs/PRIVACY.md
-(oppure, con GitHub Pages attivo sulla cartella docs/: https://webg-it.github.io/webg-voice/PRIVACY)
 
 ## Immagini
 
 - Icona 128×128: `store/immagini/icona-store-128.png`
-- Screenshot 1280×800: `store/immagini/screenshot-*.png`
-- Tile promozionale piccola 440×280: `store/immagini/tile-440x280.png`
+- Screenshot 1280×800: `store/immagini/screenshot-1.png` … `screenshot-6.png`
+  1. Lettura di un articolo: frase evidenziata, barretta e pannello
+  2. Il pannello: le tre funzioni con le scorciatoie
+  3. Dettatura in un campo, con l'indicatore verde
+  4. Trascrizione di una call: barretta rossa e pannello con l'esportazione
+  5. Pagina di benvenuto
+  6. Impostazioni in tema scuro
+- Riquadro promozionale piccolo 440×280: `store/immagini/tile-440x280.png`
 
 ## Sito e assistenza
 

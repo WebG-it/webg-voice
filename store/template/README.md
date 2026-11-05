@@ -1,30 +1,118 @@
 # {{NOME_BREVE}}
 
-**{{NOME}}**: estensione per Chrome di [WebG](https://www.webg.it) che legge ad alta voce, in
-italiano, il testo che selezioni in una pagina o un articolo intero, e lo salva anche in MP3. Le
-voci (Sara e Nicola, del modello Kokoro-82M) girano tutte sul tuo computer: niente account, niente
-abbonamenti, niente testo inviato a servizi esterni. Dopo il primo download funziona anche senza
-connessione.
+**{{NOME}}** è l'estensione per Chrome di [WebG](https://www.webg.it) che mette la voce dentro il
+browser in tre modi, in italiano e tutto sul tuo computer:
 
-Dalla 1.3 scrive anche **sotto dettatura**: premi **Ctrl+Spazio** in un campo di qualsiasi pagina, parli,
-e il testo arriva nel campo già pulito (punteggiatura, a capo, elenchi, niente «ehm»). Anche il
-riconoscimento (Whisper di OpenAI) gira sul tuo computer: l'audio non esce.
+1. **Leggi**: legge ad alta voce il testo selezionato o l'articolo intero, con una voce naturale
+   (Sara o Nicola, modello Kokoro-82M), e lo salva anche in MP3.
+2. **Detta**: scrive nel campo dove hai il cursore quello che dici, già pulito (Whisper).
+3. **Trascrivi la call**: trascrive le call fatte nel browser, audio della scheda e microfono, e
+   salva il testo con gli orari, esportabile in Word, TXT o sottotitoli (Parakeet).
+
+Niente account, niente abbonamento, nessun testo e nessun audio mandato a servizi esterni, salvo due scelte facoltative e spente di serie: il riconoscimento vocale di Google per la dettatura e una voce del sistema «in rete» scelta a mano per la lettura.
+Dopo il primo download funziona anche senza connessione.
+
+Versione {{VERSIONE}} del {{DATA}} (novità nel [CHANGELOG](CHANGELOG.md)).
+
+*English version: [README.en.md](README.en.md).*
 
 ## Installare
 
-Dal Chrome Web Store (quando sarà pubblicata) oppure, per provarla dal codice:
+Dal [Chrome Web Store](https://chromewebstore.google.com/detail/ekblhgobhioceolefpbjbebjdhgbkpdm)
+oppure, per provarla dal codice:
 
 1. Scarica questo repository (o lo zip di una release) e apri `chrome://extensions`.
 2. Attiva **Modalità sviluppatore** (in alto a destra).
 3. **Carica estensione non pacchettizzata** e scegli la cartella `estensione`.
 
-Al primo avvio l'estensione scarica il modello vocale (circa {{MB}} MB) una volta sola, in
-sottofondo: l'avanzamento si vede nell'icona e nel popup. Se chiedi una lettura prima della fine,
-parte appena il modello è pronto. Il download va a pezzi e, se si interrompe, riprende da solo da
-dove era arrivato. Su una connessione a consumo (risparmio dati o rete cellulare) non parte da solo:
-al primo uso compare un pulsante per scaricarlo.
+Alla prima installazione si apre una **pagina di benvenuto** con le tre funzioni, le scorciatoie, una
+prova della voce e i pesi dei download. La **guida** completa è nel pannello, al punto interrogativo.
+Per averla sempre a portata: icona del puzzle in alto a destra in Chrome, puntina accanto a WebG Voice.
 
-## Usare
+## Le tre funzioni, passo passo
+
+### 1. Leggi
+
+1. Seleziona un testo in una pagina e premi **Alt+Q**, oppure tasto destro → **Leggi ad alta voce**.
+2. Senza selezione, **Alt+Q** legge tutto l'articolo della pagina (titolo e testo, senza menu,
+   pubblicità e commenti). Dal tasto destro sulla pagina c'è anche **Leggi tutto l'articolo**.
+3. **Alt+Q** di nuovo mette in pausa e riprende, **Alt+W** ferma.
+4. Durante la lettura la frase che senti si evidenzia nella pagina e una barretta in basso a destra
+   ha pausa, ferma e velocità.
+
+Dal pannello: voce (Sara o Nicola), velocità da 0,7 a 1,5, **Di nuovo** (rilegge l'ultimo testo
+dall'inizio), **Leggi un testo incollato**, **Crea MP3**, **Rileggi la bozza**.
+
+### 2. Detta
+
+1. Clicca nel campo dove vuoi scrivere (Gmail, WhatsApp Web, Claude.ai, un modulo, l'editor di Joomla).
+2. Tieni premuto **Ctrl+Spazio** mentre parli: al rilascio il testo si scrive. Con un tocco breve
+   resta in ascolto a mani libere, finché non premi di nuovo o dici «fine dettatura».
+3. La prima volta Chrome chiede il microfono e si scarica il modello adatto al computer.
+
+Punteggiatura, a capo ed elenchi si dettano a voce; esitazioni e ripetizioni si tolgono da sole.
+
+### 3. Trascrivi la call
+
+1. Apri la call in una scheda di Chrome (Meet, Teams, Zoom nel browser).
+2. Pannello di WebG Voice → **Trascrivi la call**. La prima volta Chrome chiede due permessi
+   facoltativi (audio della scheda, salvataggio del file) e si scarica il modello.
+3. Spunta che avviserai i partecipanti e premi **Inizia**: nella scheda compare una barretta rossa.
+4. A fine call **Ferma e salva**: il file `.md` va in `Download/WebG Voice`. Dal pannello lo esporti
+   anche in **TXT**, **DOCX** (Word) o **SRT** (sottotitoli).
+
+## Scorciatoie
+
+| Cosa | Windows e Linux | Mac |
+|---|---|---|
+| Leggi, pausa e riprendi | Alt+Q | Control+Q |
+| Ferma la lettura | Alt+W | Control+W |
+| Detta (tieni premuto, o tocco breve) | Ctrl+Spazio | Control+Maiusc+X |
+
+Si cambiano da `chrome://extensions/shortcuts` (pulsante **Cambia le scorciatoie** nella pagina di
+benvenuto, nella guida e nelle impostazioni). Chi aggiorna conserva le scorciatoie di prima.
+
+## Requisiti e pesi dei modelli
+
+- Chrome 116 o più recente.
+- Memoria: la lettura con la voce pronta occupa circa 1,2 GB; la trascrizione delle call circa
+  2,5 GB mentre lavora. Per la trascrizione servono almeno 8 GB di RAM, meglio 16.
+- Il modello Qualità della dettatura usa la scheda video (WebGPU).
+
+| Cosa | Quando si scarica | Peso |
+|---|---|---|
+| Voce Sara (lettura) | All'installazione, in sottofondo; su una rete a consumo chiede prima | {{MB}} MB |
+| Voce Nicola | La prima volta che la scegli | 0,5 MB |
+| Voce bilanciata (Kokoro uint8) | Solo se il computer è lento a leggere | 177 MB |
+| Dettatura Leggero / Normale / Qualità | Alla prima dettatura, quello scelto | 77 / 250 / 565 MB |
+| Trascrizione delle call (Parakeet) | La prima volta che trascrivi | 670 MB |
+
+Ogni file si scarica una volta sola, a pezzi con ripresa, dalle release di questo repository o dalle
+revisioni fissate su Hugging Face, con l'impronta SHA-256 controllata.
+
+## Domande frequenti
+
+**Su una pagina compare «!» e non legge.** Chrome non lascia entrare le estensioni nelle sue pagine
+interne, nel Chrome Web Store e nel visualizzatore PDF: incolla il testo nel pannello. Lo stesso «!»
+compare se premi la scorciatoia senza selezione su una pagina senza articolo.
+
+**La voce è diventata metallica.** Il computer era troppo occupato e WebG Voice è passata alla voce
+del sistema: lo dice nella barretta, con **Voce naturale** per tornare a Sara o Nicola. Per non
+farlo più: impostazioni, **Qualità massima**.
+
+**La scorciatoia è «non impostata».** Un'altra estensione usa già quei tasti: scegline altri.
+
+**Ctrl+Spazio non fa più l'autocompletamento.** Finché l'estensione è attiva serve alla dettatura;
+assegnale un altro tasto se ti serve.
+
+**Funziona offline?** Sì, dopo il primo download di ciascuna funzione.
+
+**La trascrizione distingue le persone?** No: «Io» è il tuo microfono, «Call» tutti gli altri.
+
+**Come libero spazio?** Pagina della dettatura → **Elimina dal computer**; pannello della
+trascrizione → **Elimina il modello**; togliendo l'estensione si cancella tutto.
+
+## Lettura nel dettaglio
 
 - Seleziona del testo e premi **Alt+Q**, oppure tasto destro → **Leggi ad alta voce**.
   **Alt+Q** di nuovo mette in pausa e riprende, **Alt+W** ferma la lettura.
@@ -32,16 +120,18 @@ al primo uso compare un pulsante per scaricarlo.
   carattere "œ" e non va bene come scorciatoia.
 - **Articolo intero**: senza selezione, **Alt+Q** legge tutto l'articolo della pagina (titolo e
   testo, senza menu, pubblicità, commenti e banner dei cookie, con Mozilla Readability). Lo stesso
-  fanno il tasto destro sulla pagina → **Leggi tutto l'articolo** e il pulsante **Leggi l'articolo**
-  del popup. Se la pagina non ha un articolo riconoscibile, l'icona mostra "!" e il popup lo spiega.
+  fanno il tasto destro sulla pagina → **Leggi tutto l'articolo** e il pulsante **Leggi**
+  del pannello. Se la pagina non ha un articolo riconoscibile, l'icona mostra "!" e il popup lo spiega.
   Gli articoli lunghi (migliaia di parole) partono in pochi secondi: il testo si prepara a sezioni
   mentre la prima suona, e l'audio già ascoltato non resta in memoria.
 - Durante la lettura compare in basso a destra una barretta con pausa, stop e velocità.
-- Il popup dell'estensione legge un testo incollato e regola la velocità (da 0,7 a 1,5); con il
-  campo vuoto, **Leggi** legge il testo selezionato nella pagina o, se non c'è, l'articolo.
+- Il pannello dell'estensione regola la velocità (da 0,7 a 1,5, con il cursore o con − e +) e, sotto
+  **Leggi un testo incollato**, legge qualunque testo; **Leggi** legge la selezione o l'articolo.
+- **Di nuovo** (in fondo al pannello) rilegge dall'inizio l'ultimo testo letto, anche se la pagina è
+  chiusa. Il testo resta solo in memoria (`chrome.storage.session`) finché Chrome è aperto.
 - **Voce**: Sara o Nicola, dal popup o dalle opzioni; la scelta resta ricordata. Nicola si scarica
   la prima volta che la scegli (mezzo MB, una volta sola).
-- **Scarica MP3** nel popup crea un file MP3 (mono, 24 kHz, 64 kbps, circa mezzo MB al minuto)
+- **Crea MP3** nel pannello crea un file MP3 (mono, 24 kHz, 64 kbps, circa mezzo MB al minuto)
   del testo incollato, della selezione o dell'articolo, con il titolo dell'articolo come nome del
   file. Tutto in locale; barra di avanzamento e Annulla nel popup, avanzamento anche sull'icona.
   Si può chiudere il popup: quando è pronto l'icona mostra "MP3" e riaprendo il popup il file si
@@ -178,7 +268,7 @@ l'orario di ogni frase.
   restare nella pagina (per esempio la call passa a un altro sito), la trascrizione si ferma e si salva.
 - Il motore è Parakeet TDT 0.6B v3 (NVIDIA, licenza CC-BY-4.0, versione int8 in ONNX): si scarica
   la prima volta che si usa (circa 670 MB) e riconosce l'italiano da solo. Sul PC di sviluppo
-  (Ryzen 7 7735U) trascrive a 0,1-0,2 volte il tempo reale, contro 0,37 di Whisper small, con meno
+  (un portatile di fascia media) trascrive a 0,1-0,2 volte il tempo reale, contro 0,37 di Whisper small, con meno
   errori (24,5% di parole sbagliate contro 30,7% su 20 frasi di prova con molti termini tecnici).
   Provata su una call vera di 18 minuti: nessun ritardo accumulato, nessun tratto perso, il file è
   pronto in meno di un secondo dallo stop. Mentre trascrive occupa circa 2,5 GB di memoria (fino a
@@ -217,15 +307,20 @@ alle letture, e un Web Worker con lamejs codifica man mano.
 
 Il modello si scarica dalla release `model-v1` di questo repository; se GitHub non risponde, dalla
 stessa revisione su Hugging Face. In entrambi i casi l'estensione controlla l'impronta SHA-256.
-Nessun permesso in più rispetto alla 1.1: l'articolo usa activeTab e scripting come la selezione,
-l'MP3 si salva con un link di download dal popup (niente permesso `downloads`).
+L'articolo usa activeTab e scripting come la selezione; l'MP3 e le esportazioni della trascrizione si
+salvano con un link di download dal pannello. I soli permessi facoltativi (`tabCapture`, `downloads`
+e i siti dei riquadri) si chiedono al momento dell'uso.
 
 ## Privacy
 
-L'estensione non raccoglie e non invia dati: il testo resta sul computer, anche gli MP3 si creano
-lì, e l'audio della dettatura e delle call si trascrive sul computer. Le sole connessioni servono a scaricare i
-file del modello, delle voci e (se detti) del modello di riconoscimento. Dettagli in
-[docs/PRIVACY.md](docs/PRIVACY.md).
+L'estensione non raccoglie e non invia dati: il testo resta sul computer, gli MP3 si creano lì, e
+l'audio della dettatura e delle call si trascrive sul computer senza essere salvato. L'ultimo testo
+letto (per **Di nuovo**) e l'ultima trascrizione da esportare restano solo in memoria e spariscono
+quando Chrome si chiude. Le sole connessioni servono a scaricare voci e modelli. Due eccezioni,
+facoltative e spente di serie: nella pagina della dettatura si può scegliere il riconoscimento di
+Chrome, che può mandare l'audio a Google; nelle opzioni della lettura si può scegliere a mano una voce
+del sistema indicata come «in rete», che manda il testo da leggere al servizio di quella voce.
+Dettagli in [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## Sviluppo
 
@@ -235,6 +330,8 @@ npm run build          # ricostruisce estensione/ da src/
 npm run test:fonemi    # confronta i fonemi con il riferimento di kokoro-onnx
 npm run test:funzioni  # sezioni, blocchi, nome e tag dell'MP3 (senza browser)
 npm run test:pulizia   # pulizia italiana del testo dettato, casi veri (senza browser)
+npm run test:voci      # scelta della voce del sistema e del motore (senza browser)
+npm run test:esporta   # trascrizione in TXT, SRT e DOCX (senza browser)
 npm run release -- patch "cosa è cambiato"   # nuova versione: changelog, build, zip, tag
 npm run store          # rigenera testi della scheda store, privacy e questo README
 ```
@@ -242,8 +339,8 @@ npm run store          # rigenera testi della scheda store, privacy e questo REA
 Ogni modifica, anche minima, fa avanzare la versione (patch per le correzioni, minor per le
 funzioni). La versione vive solo in `src/manifest.json`; l'hook `.githooks/pre-commit` blocca i
 commit che toccano il codice senza versione nuova e senza voce in `CHANGELOG.md`.
-Il nome dell'estensione vive solo in `src/manifest.json` (`name` e `short_name`): i testi in
-`store/`, `docs/PRIVACY.md` e questo README si rigenerano da `store/template/` con `npm run store`.
+I testi in `store/`, `docs/PRIVACY.md`, questo README e `README.en.md` si rigenerano da
+`store/template/` con `npm run store`.
 
 ## Contatti
 
@@ -259,19 +356,3 @@ Gli encoder Whisper sono modificati da WebG (`scripts/accorcia-encoder.py`, stes
 in `THIRD_PARTY.md`.
 
 ---
-
-## English
-
-**{{NOME_BREVE}}** is a Chrome extension by [WebG](https://www.webg.it) that reads selected text,
-or a whole article, aloud in Italian with natural neural voices (Kokoro-82M, voices Sara and
-Nicola) running entirely on your computer, and can save it as MP3. No account, no subscription,
-no text sent anywhere; on first start it downloads the voice model (about {{MB}} MB) once, in the
-background, then it works offline. Select text and press **Alt+Q** (with nothing selected it reads
-the whole article; again to pause or resume, **Alt+W** to stop), or right-click → *Leggi ad alta
-voce*. Since 1.3 it also types Italian dictation: press **Ctrl+Space** in any text field and speak;
-recognition (OpenAI Whisper, small by default) runs locally and the audio never leaves your computer.
-Licensed under GPL-3.0-or-later (it bundles eSpeak NG); see `THIRD_PARTY.md` for the
-Kokoro, Readability and Whisper base/small (Apache-2.0), Whisper large-v3-turbo and ONNX Runtime
-(MIT) and lamejs (LGPL-3.0) notices; the Whisper encoders are modified by WebG (same weights,
-`scripts/accorcia-encoder.py`). Contact:
-info@webg.it or GitHub issues.

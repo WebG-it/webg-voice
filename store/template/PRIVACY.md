@@ -1,6 +1,6 @@
 # Informativa sulla privacy di {{NOME_BREVE}}
 
-Ultimo aggiornamento: versione {{VERSIONE}}.
+Ultimo aggiornamento: {{DATA_LUNGA}}, versione {{VERSIONE}}.
 
 {{NOME}} è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente, scrive nei campi delle pagine sotto dettatura e, su richiesta,
@@ -35,7 +35,7 @@ accanto alla scelta.
 Il microfono si usa solo per la dettatura e per la trascrizione di una call (sezione seguente), solo dopo il permesso che l'utente dà una volta nella
 pagina della dettatura, e solo mentre la dettatura è attiva: si accende con Ctrl+Spazio (o il pulsante
 Detta) e si spegne quando l'utente la ferma, cambia scheda o chiude la pagina. Mentre ascolta, la
-pagina mostra un indicatore rosso in alto e Chrome il suo indicatore del microfono.
+pagina mostra un indicatore verde in alto e Chrome il suo indicatore del microfono.
 
 L'audio si trascrive interamente sul computer dell'utente, con il modello di riconoscimento dentro il browser:
 non viene registrato su disco, non viene inviato a WebG né a terzi, e resta in memoria solo il tempo
@@ -79,6 +79,12 @@ lei. Il nome del file contiene il titolo della scheda; l'ultimo nome salvato si 
 giorno. Chrome tiene nella sua cronologia dei download il nome del file. Il modello delle call si può
 eliminare dal pannello.
 
+Esportazione in altri formati: dopo il salvataggio, il pannello offre «Esporta come» TXT, DOCX
+(Word), SRT (sottotitoli) o di nuovo Markdown. Il file si crea nel pannello, sul computer, dallo
+stesso testo, e si salva nella cartella dei download con un normale link. Per permetterlo una copia
+del testo dell'ultima trascrizione resta nella memoria di sessione dell'estensione
+(chrome.storage.session): non va su disco e sparisce quando Chrome si chiude.
+
 ## Dati salvati sul computer
 
 Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
@@ -99,7 +105,16 @@ Restano solo nel browser dell'utente, nello spazio riservato all'estensione:
   nello spazio di sincronizzazione di Chrome, quindi se hai la sincronizzazione attiva Chrome lo
   copia sui tuoi altri dispositivi tramite il tuo account Google; WebG non lo riceve.
 
+Restano invece solo in memoria, finché Chrome è aperto, l'ultimo testo letto (per il pulsante «Di
+nuovo» del pannello) e il testo dell'ultima trascrizione da esportare: non vanno su disco e non si
+sincronizzano.
+
 Si cancellano disinstallando l'estensione.
+
+## Pagine di benvenuto e guida
+
+Alla prima installazione l'estensione apre una pagina di benvenuto, e il pannello ha un collegamento
+alla guida. Sono pagine dentro l'estensione: non caricano niente da internet e non raccolgono dati.
 
 ## Connessioni di rete
 
@@ -121,6 +136,8 @@ https://github.com/WebG-it/webg-voice/issues
 
 ## English summary
 
+Last updated: {{DATA_EN}}, version {{VERSIONE}}.
+
 {{NOME_BREVE}} collects no data. Text (including the article of the page, when you ask to hear
 it) is turned into speech locally in your browser and never leaves your computer; MP3 files are
 also created locally. The only network requests download the voice files (about {{MB}} MB, plus
@@ -128,5 +145,5 @@ half a MB for the Nicola voice if you pick it) from the project's GitHub release
 fallback, from Hugging Face. Dictation (Ctrl+Space) uses the microphone only while it is active and
 transcribes the audio locally; the audio is never stored or sent anywhere, unless you
 explicitly choose the optional Chrome speech recognition that sends audio to Google. The dictation
-models (77 to 565 MB) are downloaded only the first time you dictate. The optional call transcription (button "Trascrivi la call", after Chrome asks for the tab capture and downloads permissions) listens to the active tab and your microphone, transcribes locally in chunks, discards the audio right away and saves only a text file in your downloads folder; nothing is sent anywhere. Tell the other participants you are transcribing. Settings and
+models (77 to 565 MB) are downloaded only the first time you dictate. The optional call transcription (button "Trascrivi la call", after Chrome asks for the tab capture and downloads permissions) listens to the active tab and your microphone, transcribes locally in chunks, discards the audio right away and saves only a text file in your downloads folder; nothing is sent anywhere. Tell the other participants you are transcribing. After saving, the transcript can be exported as TXT, DOCX or SRT, created locally in the panel. The last text read (for "Di nuovo") and the last transcript to export are kept only in memory until Chrome closes. Settings and
 the voice files are stored locally and removed when you uninstall the extension.

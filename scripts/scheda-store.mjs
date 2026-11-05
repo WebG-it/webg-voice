@@ -2,6 +2,7 @@
 // in store/template/, dal manifest (versione) e da src/_locales (nome e descrizione breve,
 // unica fonte):
 //   store/template/README.md  -> README.md
+//   store/template/README.en.md -> README.en.md
 //   store/template/scheda.md  -> store/scheda.md
 //   store/template/PRIVACY.md -> docs/PRIVACY.md
 // Uso: npm run store
@@ -20,7 +21,17 @@ const BREVE_EN = en.descrizione.message;
 for (const [k, t] of [['italiano', BREVE_IT], ['inglese', BREVE_EN]]) {
   if ([...t].length > 132) throw new Error(`descrizione breve in ${k} troppo lunga: ${[...t].length} caratteri`);
 }
+// data della versione dal CHANGELOG ("## [X.Y.Z] - AAAA-MM-GG"): la stessa in tutti i testi
+const voceLog = readFileSync(join(RADICE, 'CHANGELOG.md'), 'utf8').match(new RegExp(`^## \\[${m.version.replace(/\./g, '\\.')}\\] - (\\d{4})-(\\d{2})-(\\d{2})`, 'm'));
+if (!voceLog) throw new Error(`nel CHANGELOG manca la data della ${m.version}`);
+const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const [, aa, mm, gg] = voceLog;
 const valori = {
+  DATA: `${gg}-${mm}-${aa}`,
+  DATA_ISO: `${aa}-${mm}-${gg}`,
+  DATA_LUNGA: `${Number(gg)} ${MESI[Number(mm) - 1]} ${aa}`,
+  DATA_EN: `${MONTHS[Number(mm) - 1]} ${Number(gg)}, ${aa}`,
   NOME: breve,
   NOME_BREVE: breve,
   VERSIONE: m.version,
@@ -36,6 +47,7 @@ const riempi = (t) => t.replace(/\{\{(\w+)\}\}/g, (x, k) => {
 });
 for (const [da, a] of [
   ['store/template/README.md', 'README.md'],
+  ['store/template/README.en.md', 'README.en.md'],
   ['store/template/scheda.md', 'store/scheda.md'],
   ['store/template/PRIVACY.md', 'docs/PRIVACY.md'],
 ]) {

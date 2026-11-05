@@ -102,6 +102,9 @@ export function costruisci({ test = false, uscita = null } = {}) {
     const man = JSON.parse(readFileSync(fm, 'utf8'));
     man.permissions = [...new Set([...man.permissions, ...(man.optional_permissions || [])])];
     delete man.optional_permissions;
+    // nei test i modelli arrivano anche da un server locale (test/dettatura/e2e.mjs, test/call/e2e.mjs)
+    const csp = man.content_security_policy && man.content_security_policy.extension_pages;
+    if (csp && /connect-src/.test(csp)) man.content_security_policy.extension_pages = csp.replace(/connect-src ([^;]*)/, 'connect-src $1 http://127.0.0.1:* http://localhost:*');
     writeFileSync(fm, JSON.stringify(man, null, 2));
   } else ripulisci(out);
   controllaSintassi(out);
