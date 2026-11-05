@@ -5,25 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>WebG Voice</title>
+<link rel="stylesheet" href="tema.css">
 <link rel="stylesheet" href="diagnostica.css">
 </head>
 <body>
+<div class="pagina con-indice">
+<nav class="indice" aria-label="Sezioni delle impostazioni">
+  <a class="marca" href="#"><span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="5" cy="9.5" r="2"/><path d="M8.6 6.2a4.6 4.6 0 0 1 0 6.6l-1-1a3.2 3.2 0 0 0 0-4.6zM10.9 3.9a7.9 7.9 0 0 1 0 11.2l-1-1a6.5 6.5 0 0 0 0-9.2z"/></svg></span>Impostazioni</a>
+  <ol>
+    <li><a href="#uso"><span class="seg" aria-hidden="true"></span>Come si usa</a></li>
+    <li><a href="#scorciatoie"><span class="seg" aria-hidden="true"></span>Scorciatoie</a></li>
+    <li><a href="#dettatura" style="--c: var(--verde)"><span class="seg" aria-hidden="true"></span>Dettatura</a></li>
+    <li><a href="#voce" style="--c: var(--blu)"><span class="seg" aria-hidden="true"></span>Voce</a></li>
+    <li><a href="#lettura" style="--c: var(--blu)"><span class="seg" aria-hidden="true"></span>Lettura</a></li>
+    <li><a href="#trascrizione" style="--c: var(--rosso)"><span class="seg" aria-hidden="true"></span>Trascrizione</a></li>
+    <li><a href="#dizionario" style="--c: var(--giallo)"><span class="seg" aria-hidden="true"></span>Dizionario</a></li>
+    <li><a href="#problemi"><span class="seg" aria-hidden="true"></span>Risoluzione problemi</a></li>
+  </ol>
+</nav>
 <main>
-  <header>
-    <img src="icone/icona-48.png" alt="" width="40" height="40">
+  <header class="testa">
+    <span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="5" cy="9.5" r="2"/><path d="M8.6 6.2a4.6 4.6 0 0 1 0 6.6l-1-1a3.2 3.2 0 0 0 0-4.6zM10.9 3.9a7.9 7.9 0 0 1 0 11.2l-1-1a6.5 6.5 0 0 0 0-9.2z"/></svg></span>
     <div>
       <h1 id="titolo">WebG Voice</h1>
-      <p class="sotto">Lettura ad alta voce in italiano, sul tuo computer. <span id="versioneTesta"></span></p>
+      <p class="sotto">Legge, scrive sotto dettatura e trascrive le call, tutto sul tuo computer. <span id="versioneTesta"></span></p>
     </div>
   </header>
 
-  <section class="scheda">
+  <section class="scheda" id="uso">
     <h2>Come si usa</h2>
     <p>Seleziona del testo e premi <kbd id="tasto">Alt+Q</kbd> (di nuovo per pausa e ripresa, <kbd id="tastoStop">Alt+W</kbd> per fermare), oppure tasto destro → <em>Leggi ad alta voce</em>.
       Senza selezione, la stessa scorciatoia legge tutto l'articolo della pagina, senza menu e pubblicità; dal tasto destro sulla pagina c'è <em>Leggi tutto l'articolo</em>.</p>
     <p>Dal pulsante dell'estensione puoi incollare un testo, scegliere la voce, regolare la velocità e salvare la lettura in un file MP3, creato sul tuo computer.
       La lettura si adatta da sola alla velocità di questo computer.</p>
-    <p><a href="#" id="tasti">Cambia la scorciatoia</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="https://www.webg.it" target="_blank" rel="noopener">webg.it</a></p>
+    <p><a href="guida.html">Guida completa</a> · <a href="benvenuto.html">Il giro di benvenuto</a> · <a href="#" id="tasti">Cambia la scorciatoia</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="https://www.webg.it" target="_blank" rel="noopener">webg.it</a></p>
   </section>
 
   <section class="scheda" id="scorciatoie">
@@ -42,7 +57,7 @@
   </section>
 
   <section class="scheda" id="dettatura">
-    <h2>Dettatura</h2>
+    <h2><span class="cornice verde" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/></svg></span>Dettatura</h2>
     <p>Clicca in un campo di una pagina e premi <kbd data-comando="dettatura">…</kbd>: parli e il testo si scrive lì, con punteggiatura, a capo ed elenchi a voce.
       Il riconoscimento gira sul tuo computer; il modello si scarica la prima volta che detti.</p>
     <dl><dt>Stato</dt><dd id="dettStato" aria-live="polite">…</dd><dt>Modello</dt><dd id="dettModello">…</dd><dt>Invio a Google</dt><dd id="dettGoogle">…</dd></dl>
@@ -50,7 +65,7 @@
   </section>
 
   <section class="scheda" id="voce">
-    <h2>Voce</h2>
+    <h2><span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg></span>Voce</h2>
     <p>Scegli chi legge, nelle letture e negli MP3. Sara arriva con il primo download; Nicola si scarica la prima volta che la scegli (mezzo MB, una volta sola).</p>
     <div class="scelteVoce" role="radiogroup" aria-label="Voce">
       <div class="sceltaVoce"><label><input type="radio" name="voce" value="sara"> Sara</label> <button data-ascolta="sara">Ascolta</button></div>
@@ -60,7 +75,7 @@
   </section>
 
   <section class="scheda" id="lettura">
-    <h2>Lettura</h2>
+    <h2><span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 3h12v1.6H2zm0 4h12v1.6H2zm0 4h8v1.6H2z"/></svg></span>Lettura</h2>
     <label class="scelta"><input type="checkbox" id="optEvidenzia"> Evidenzia nella pagina la frase che sto ascoltando e fai scorrere la pagina per tenerla in vista</label>
     <p class="nota">Funziona sul testo selezionato e sull'articolo intero. Se scorri tu la pagina, per qualche secondo non la sposta. Dentro aree di testo, riquadri ed editor la frase non si evidenzia.</p>
     <h3>Voce per i computer lenti</h3>
@@ -79,8 +94,15 @@
     <p class="nota">La voce resta caricata per 30 minuti dall'ultima lettura finché usi Chrome, così la lettura parte subito. Occupa circa 1,2 GB di memoria; spenta, si libera dopo 10 minuti e la prima lettura dopo una pausa parte con un paio di secondi in più.</p>
   </section>
 
+  <section class="scheda" id="trascrizione">
+    <h2><span class="cornice rosso" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 2.5h10a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H8l-3 2.5V11H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg></span>Trascrizione delle call</h2>
+    <p>Si avvia dal pulsante di WebG Voice, riga <strong>Trascrivi la call</strong>, con la call aperta in una scheda di Chrome (Meet, Teams, Zoom nel browser).
+      Ascolta l'audio della scheda e il tuo microfono, trascrive sul computer con Parakeet e alla fine salva un file nei download; dal pannello lo esporti anche in TXT, Word (DOCX) o sottotitoli (SRT).</p>
+    <p class="nota">Al primo uso Chrome chiede due permessi facoltativi (catturare l'audio della scheda, salvare il file) e si scarica il modello, circa 670 MB, una volta sola. L'audio non viene mai salvato né inviato. Ricordati di avvisare i partecipanti.</p>
+  </section>
+
   <section class="scheda" id="dizionario">
-    <h2>Dizionario di pronuncia</h2>
+    <h2><span class="cornice giallo" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 2h7a3 3 0 0 1 3 3v9H5a2 2 0 0 1-2-2z"/></svg></span>Dizionario di pronuncia</h2>
     <p>Se una parola viene letta male, scrivi come si deve leggere: la sostituzione vale ovunque compaia
       la parola intera, maiuscole o minuscole. Esempio: <em>VHelper</em> → <em>vi helper</em>.
       Le sigle e le parole inglesi più comuni sono già gestite.</p>
@@ -119,6 +141,7 @@
     <p id="verdetto" class="verdetto" hidden></p>
   </details>
 </main>
+</div>
 <script type="module" src="diagnostica.js"></script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Benvenuto in WebG Voice</title>
+<link rel="stylesheet" href="tema.css">
+<link rel="stylesheet" href="diagnostica.css">
+<link rel="stylesheet" href="pagine.css">
+</head>
+<body>
+<div class="pagina">
+<main class="benvenuto">
+  <header class="eroe">
+    <div class="cornici" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <h1>WebG Voice legge, scrive e prende appunti per te.</h1>
+    <p class="lead">Tre cose, tutte sul tuo computer: legge ad alta voce le pagine, scrive quello che detti, trascrive le call.
+      Niente account, niente abbonamento, niente testo o audio mandato fuori, salvo due scelte facoltative e spente di serie (il riconoscimento di Google per la dettatura, una voce del sistema «in rete» per la lettura).</p>
+    <div class="statoVoce" role="status" aria-live="polite">
+      <span class="spia" aria-hidden="true"></span>
+      <div><p id="statoVoce">Controllo la voce…</p><progress id="barraVoce" max="1" value="0" hidden></progress></div>
+    </div>
+  </header>
+
+  <ol class="giro">
+    <li class="tappa" style="--c: var(--blu)">
+      <span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg></span>
+      <div>
+        <h2>Leggi</h2>
+        <p>Seleziona un testo e premi <kbd data-comando="leggi-selezione">Alt+Q</kbd>. Senza selezione legge tutto l'articolo della pagina, senza menu e pubblicità.
+          Lo stesso tasto mette in pausa e riprende, <kbd data-comando="ferma-lettura">Alt+W</kbd> ferma. Anche dal tasto destro: <em>Leggi ad alta voce</em>.</p>
+        <figure class="provala">
+          <p id="testoProva">Ciao! Sono Sara, la voce di WebG Voice. Mentre leggo, la frase che senti si colora nella pagina e la barretta in basso a destra ti lascia mettere in pausa, fermare o cambiare la velocità.</p>
+          <button id="prova" class="primario"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg><span>Ascolta questo paragrafo</span></button>
+        </figure>
+      </div>
+    </li>
+    <li class="tappa" style="--c: var(--verde)">
+      <span class="cornice verde" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.5M5.5 14.5h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+      <div>
+        <h2>Detta</h2>
+        <p>Clicca in un campo (Gmail, WhatsApp Web, un modulo, l'editor del tuo sito) e tieni premuto <kbd data-comando="dettatura">Ctrl+Spazio</kbd> mentre parli: al rilascio il testo si scrive, con punteggiatura e senza «ehm».
+          Con un tocco breve resta in ascolto a mani libere. La prima volta Chrome chiede il microfono e si scarica il modello.</p>
+        <p class="nota"><a href="#" data-azione="dettatura">Apri la pagina della dettatura</a> per provarla e scegliere il modello.</p>
+      </div>
+    </li>
+    <li class="tappa" style="--c: var(--rosso)">
+      <span class="cornice rosso" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 2.5h10a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H8l-3 2.5V11H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1zm1.5 2.5v1.3h7V5zm0 2.6v1.3h4.5V7.6z"/></svg></span>
+      <div>
+        <h2>Trascrivi la call</h2>
+        <p>Apri la call in una scheda di Chrome (Meet, Teams, Zoom nel browser), poi il pulsante di WebG Voice e <strong>Trascrivi la call</strong>.
+          Ascolta la scheda e il tuo microfono e alla fine salva il testo con gli orari; lo esporti anche in Word, TXT o sottotitoli.
+          Ricordati di avvisare chi partecipa: la barretta rossa ti dà un messaggio pronto da incollare nella chat.</p>
+      </div>
+    </li>
+  </ol>
+
+  <section class="scheda" aria-labelledby="t-fissa">
+    <h2 id="t-fissa">Tienila a portata di mano</h2>
+    <p>Clicca sull'icona del puzzle in alto a destra in Chrome, poi sulla puntina accanto a <strong>WebG Voice</strong>: il pulsante resta nella barra, con le tre funzioni a un clic.</p>
+  </section>
+
+  <section class="scheda" aria-labelledby="t-tasti">
+    <h2 id="t-tasti">Scorciatoie</h2>
+    <table class="tasti">
+      <tbody>
+        <tr><td>Leggi, pausa e riprendi</td><td><kbd data-comando="leggi-selezione">…</kbd></td></tr>
+        <tr><td>Ferma la lettura</td><td><kbd data-comando="ferma-lettura">…</kbd></td></tr>
+        <tr><td>Detta (tieni premuto, o tocco breve per le mani libere)</td><td><kbd data-comando="dettatura">…</kbd></td></tr>
+      </tbody>
+    </table>
+    <p class="nota" data-se-mancano hidden>Una scorciatoia «non impostata» vuol dire che un'altra estensione usa già quei tasti: scegline altri.</p>
+    <p>Le cambi quando vuoi dalla pagina delle scorciatoie di Chrome.</p>
+    <div class="azioni"><button data-azione="scorciatoie">Cambia le scorciatoie</button></div>
+  </section>
+
+  <section class="scheda" aria-labelledby="t-pesi">
+    <h2 id="t-pesi">Cosa si scarica, e quando</h2>
+    <p>Le voci e i modelli girano sul tuo computer, quindi vanno scaricati. Ognuno una volta sola, solo quando serve, con l'impronta controllata. Poi tutto funziona anche senza connessione.</p>
+    <table class="pesi">
+      <thead><tr><th scope="col">Cosa</th><th scope="col">Quando</th><th scope="col" class="num">Peso</th></tr></thead>
+      <tbody>
+        <tr><td>Voce Sara, per leggere</td><td>Subito, in sottofondo. Su una rete a consumo chiede prima.</td><td class="num" data-peso="voce">326 MB</td></tr>
+        <tr><td>Voce Nicola</td><td>La prima volta che la scegli</td><td class="num" data-peso="nicola">0,5 MB</td></tr>
+        <tr><td>Voce bilanciata</td><td>Solo se il computer è lento a leggere</td><td class="num" data-peso="bilanciata">177 MB</td></tr>
+        <tr><td>Dettatura, modello Normale</td><td>Alla prima dettatura (Leggero <span data-peso="dettLeggero">77 MB</span>, Qualità <span data-peso="dettQualita">565 MB</span>)</td><td class="num" data-peso="dettNormale">250 MB</td></tr>
+        <tr><td>Trascrizione delle call</td><td>La prima volta che trascrivi</td><td class="num" data-peso="chiamata">670 MB</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="scheda" aria-labelledby="t-privacy">
+    <h2 id="t-privacy">I tuoi dati restano tuoi</h2>
+    <p>Testi, voce dettata e audio delle call si elaborano solo sul computer. WebG non riceve niente: niente statistiche, niente account.
+      Le impostazioni restano nel tuo profilo di Chrome, il dizionario di pronuncia si sincronizza solo se hai attiva la sincronizzazione di Chrome.</p>
+  </section>
+
+  <footer class="piede">
+    <a class="bottone primario" href="guida.html">Apri la guida</a>
+    <a class="bottone" href="#" data-azione="opzioni">Impostazioni</a>
+    <span class="nota">WebG Voice <span data-versione></span>, di <a href="https://www.webg.it" target="_blank" rel="noopener">WebG</a>. Software libero, GPL-3.0.</span>
+  </footer>
+</main>
+</div>
+<script type="module" src="pagine.js"></script>
+</body>
+</html>

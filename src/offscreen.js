@@ -380,6 +380,11 @@ async function leggi({ testo, velocita, tabId, t0, rtf: rtfSalvato, dizionario, 
   ferma(false);
   // dettatura e lettura non insieme: il motore della dettatura (inattivo) si chiude, niente CPU ne' memoria
   if (globalThis.webgChiudiDettatura) globalThis.webgChiudiDettatura();
+  // subito "preparo": la scelta del motore aspetta il motore, che al primo avvio sta ancora scaricando
+  // la voce; prima la lettura chiesta restava muta (fase inattiva) fino alla fine del download, ora
+  // pannello e barretta mostrano l'avanzamento e la lettura parte appena la voce e' pronta
+  Object.assign(stato, { fase: 'preparazione', tabId: tabId ?? null, errore: null, blocco: 0, totale: 0, impronta: impronta(testo), titolo: titolo || null });
+  pubblica();
   if (rtf === null && typeof rtfSalvato === 'number') aggiornaRtf(rtfSalvato);
   if (voce) stato.voce = voceValida(voce);
   // quale motore: Kokoro (qualita' massima o bilanciata) o la voce del sistema
@@ -760,16 +765,29 @@ const PAUSA_BOZZA = 0.35;
 
 // Frase in corso: ogni 150 ms si guarda quale blocco sta suonando (il tempo dell'audio si ferma
 // in pausa, quindi l'evidenziazione resta giusta) e, se cambia, lo si dice alla scheda.
+// Un solo giro alla volta, legato alla sua lettura: una lettura nuova che parte prima che il giro
+// della vecchia se ne accorga (meno di 150 ms dopo, col motore caldo) chiude quel giro e apre il suo.
+// Prima il giro vecchio restava e la lettura nuova non aveva evidenziazione (difetto del 18-10).
 let timerFrase = null;
+let letturaFrase = null;
+function chiudiGiroFrase() {
+  if (!timerFrase) return;
+  clearInterval(timerFrase);
+  timerFrase = null;
+  const V = letturaFrase;
+  letturaFrase = null;
+  if (V && V.evidenziato >= 0 && Number.isInteger(V.tabId)) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'evidenzia', tabId: V.tabId, testo: null }).catch(() => {});
+}
 function seguiFrase(L) {
-  if (timerFrase || L.tabId === null || L.tabId === undefined) return;
+  if (L.tabId === null || L.tabId === undefined) return;
+  if (timerFrase && letturaFrase === L) return;
+  chiudiGiroFrase();
   L.evidenziato = -1;
   L.primaInviata = false;
+  letturaFrase = L;
   timerFrase = setInterval(() => {
     if (L !== lettura) {
-      clearInterval(timerFrase);
-      timerFrase = null;
-      if (L.evidenziato >= 0) chrome.runtime.sendMessage({ da: 'offscreen', tipo: 'evidenzia', tabId: L.tabId, testo: null }).catch(() => {});
+      chiudiGiroFrase();
       return;
     }
     const t = contesto().currentTime;

@@ -1,81 +1,79 @@
-:root {
-  --sfondo: #f5f5f7;
-  --superficie: #ffffff;
-  --testo: #1d1d1f;
-  --tenue: #6e6e73;
-  --bordo: rgba(0, 0, 0, 0.12);
-  --accento: #23417b;
-  --accento-testo: #ffffff;
-  --ok: #2e6b3a;
-  --attenzione: #9a5b00;
-  --male: #b3261e;
+/* Pagine dell'estensione (opzioni, dettatura, benvenuto, guida). Fondamenta in tema.css. */
+body { font-size: 14.5px; line-height: 1.55; }
+.pagina { display: grid; grid-template-columns: 1fr; max-width: 1040px; margin: 0 auto; padding: 28px 20px 64px; gap: 28px; }
+@media (min-width: 900px) {
+  .pagina.con-indice { grid-template-columns: 200px minmax(0, 1fr); }
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sfondo: #161618;
-    --superficie: #222225;
-    --testo: #f2f2f4;
-    --tenue: #a1a1a6;
-    --bordo: rgba(255, 255, 255, 0.14);
-    --accento: #8fb0ea;
-    --accento-testo: #0f1d38;
-    --ok: #8ed39b;
-    --attenzione: #f2c46d;
-    --male: #f2b8b5;
-  }
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--sfondo); color: var(--testo); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
-header { display: flex; gap: 14px; align-items: center; margin-bottom: 20px; }
-h1 { font-size: 22px; margin: 0; }
-h2 { font-size: 15px; margin: 0 0 12px; }
-.sotto { margin: 2px 0 0; color: var(--tenue); }
-.scheda { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+main { max-width: 760px; min-width: 0; }
+.pagina:not(.con-indice) main { margin: 0 auto; width: 100%; }
+
+/* testata */
+header.testa { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
+header.testa .cornice { width: 44px; height: 44px; border-width: 4px; border-radius: 5px; }
+header.testa .cornice svg { width: 20px; height: 20px; color: var(--arancio); }
+h1 { font-size: 26px; line-height: 1.15; letter-spacing: -0.015em; margin: 0; font-weight: 700; }
+h2 { font-size: 17px; line-height: 1.3; margin: 0 0 12px; font-weight: 650; letter-spacing: -0.005em; }
+h3 { font-size: 14.5px; margin: 20px 0 6px; font-weight: 650; }
+.sotto { margin: 3px 0 0; color: var(--tenue); }
+p { margin: 0 0 10px; max-width: 70ch; }
+
+/* indice laterale */
+nav.indice { position: sticky; top: 24px; align-self: start; display: none; }
+@media (min-width: 900px) { nav.indice { display: block; } }
+nav.indice ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.indice a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--tenue); text-decoration: none; font-weight: 500; }
+nav.indice a:hover { background: var(--superficie); color: var(--testo); }
+nav.indice a[aria-current="true"] { background: var(--superficie-2); color: var(--testo); font-weight: 600; }
+nav.indice .seg { width: 9px; height: 9px; border-radius: 2px; border: 2px solid var(--c, var(--tenue)); transform: rotate(-6deg); flex: none; }
+nav.indice .marca { display: flex; align-items: center; gap: 10px; margin: 6px 10px 18px; font-weight: 700; color: var(--testo); text-decoration: none; }
+nav.indice .marca .cornice { width: 24px; height: 24px; border-width: 2.5px; border-radius: 3px; }
+nav.indice .marca .cornice svg { width: 12px; height: 12px; color: var(--arancio); }
+
+/* sezioni: superfici piatte separate da una riga, non schede annidate */
+.scheda { padding: 22px 0 18px; border-top: 1px solid var(--bordo); scroll-margin-top: 16px; }
+main > .scheda:first-of-type, header + .scheda { border-top: 0; padding-top: 0; }
+.scheda > h2 { display: flex; align-items: center; gap: 10px; }
+.scheda > h2 .cornice, summary h2 .cornice { width: 22px; height: 22px; border-width: 2.5px; border-radius: 3px; }
+.scheda > h2 .cornice svg, summary h2 .cornice svg { width: 11px; height: 11px; }
+
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
 dt { color: var(--tenue); }
 dd { margin: 0; font-variant-numeric: tabular-nums; }
 #risultati:not(:empty) { margin-top: 14px; }
-.azioni { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-button { padding: 8px 14px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--sfondo); color: var(--testo); font: inherit; cursor: pointer; }
-button:disabled { opacity: 0.45; cursor: default; }
-button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-button:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
-progress { width: 100%; accent-color: var(--accento); }
-.verdetto { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--bordo); font-weight: 600; }
+.azioni { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 6px; }
+.verdetto { margin: 14px 0 0; padding: 10px 12px; border-radius: var(--raggio); background: var(--superficie); font-weight: 600; }
 .verdetto.ok { color: var(--ok); }
 .verdetto.attenzione { color: var(--attenzione); }
 .verdetto.male { color: var(--male); }
 
 summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
 summary::-webkit-details-marker { display: none; }
-summary::before { content: '▸'; color: var(--tenue); }
-details[open] summary::before { content: '▾'; }
-summary h2 { margin: 0; }
-details[open] summary { margin-bottom: 12px; }
-a { color: var(--accento); }
-kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 4px; border: 1px solid var(--bordo); border-radius: 4px; }
+summary::before { content: ''; width: 7px; height: 7px; border-right: 2px solid var(--tenue); border-bottom: 2px solid var(--tenue); transform: rotate(-45deg); transition: transform 0.2s var(--uscita); flex: none; }
+details[open] > summary::before { transform: rotate(45deg); }
+summary h2 { margin: 0; display: flex; align-items: center; gap: 10px; }
+details[open] > summary { margin-bottom: 14px; }
 
 .diz { width: 100%; border-collapse: collapse; margin: 8px 0; }
 .diz th { text-align: left; font-weight: 600; color: var(--tenue); font-size: 13px; padding: 4px 6px; }
-.diz td { padding: 4px 6px; border-top: 1px solid var(--bordo); }
+.diz td { padding: 5px 6px; border-top: 1px solid var(--bordo); }
 .diz td.az { white-space: nowrap; text-align: right; }
-.diz input, #dizTesto { width: 100%; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 6px; background: var(--sfondo); color: var(--testo); font: inherit; }
-#dizTesto { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
-.diz button { padding: 5px 10px; }
-.nota { color: var(--tenue); font-size: 13px; }
+.diz input, #dizTesto { width: 100%; }
+#dizTesto { font-family: var(--mono); font-size: 13px; }
+.diz button { min-height: 28px; padding: 3px 10px; }
+.nota { color: var(--tenue); font-size: 13.5px; }
 .scelteVoce { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 6px 0 4px; }
 .sceltaVoce { display: flex; align-items: center; gap: 10px; }
-.sceltaVoce label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
-.sceltaVoce input { accent-color: var(--accento); width: 16px; height: 16px; }
-.sceltaVoce button { padding: 5px 10px; }
-#dizionario details summary { margin: 6px 0; color: var(--accento); }
-.scelta { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; cursor: pointer; margin: 10px 0 2px; }
-.scelta input { accent-color: var(--accento); width: 16px; height: 16px; margin-top: 2px; flex: none; }
-.scelta + .nota { margin: 0 0 6px 24px; }
+.sceltaVoce label { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; cursor: pointer; }
+.sceltaVoce input { width: 16px; height: 16px; }
+.sceltaVoce button { min-height: 28px; padding: 3px 10px; }
+#dizionario details summary { margin: 6px 0; color: var(--blu); }
+.scelta { display: flex; gap: 9px; align-items: flex-start; font-weight: 600; cursor: pointer; margin: 12px 0 2px; }
+.scelta input { width: 16px; height: 16px; margin-top: 3px; flex: none; }
+.scelta + .nota { margin: 0 0 6px 25px; }
+.scelta + .nota select { margin-left: 4px; max-width: 100%; }
 
 .tasti { border-collapse: collapse; margin: 4px 0 8px; }
-.tasti td { padding: 5px 16px 5px 0; }
+.tasti td { padding: 6px 20px 6px 0; border-top: 1px solid var(--bordo); }
+.tasti tr:first-child td { border-top: 0; }
 kbd.manca { color: var(--male); border-color: var(--male); }
-h3 { font-size: 14px; margin: 16px 0 4px; }
-.scelta + .nota select { margin-left: 4px; max-width: 100%; }
+code { font: 13px var(--mono); background: var(--superficie); padding: 1px 5px; border-radius: 4px; }

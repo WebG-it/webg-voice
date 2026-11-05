@@ -7,7 +7,7 @@
 // si scaricano, la riserva e' l'encoder originale di Hugging Face, che funziona ma lavora sempre
 // su 30 secondi (piu' lento). L'impronta SHA-256 si controlla sempre.
 //
-// Misure sul PC di sviluppo (Ryzen 7 7735U, 8 fili, frase di 3-5 secondi, dalla fine del parlato
+// Misure sul PC di sviluppo (un portatile di fascia media, 8 fili, frase di 3-5 secondi, dalla fine del parlato
 // al testo): base 0,6-0,85 s, small 0,9-1,35 s su processore; large-v3-turbo 0,85-1,15 s su
 // WebGPU, troppo lento su processore (oltre 4 s). Vedi test/dettatura/banco.mjs.
 

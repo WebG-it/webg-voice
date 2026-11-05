@@ -503,3 +503,26 @@ chrome.storage.local.get(['evidenzia', 'tienePronta']).then(({ evidenzia, tieneP
 });
 $('optEvidenzia').addEventListener('change', (e) => chrome.storage.local.set({ evidenzia: e.target.checked }));
 $('optPronta').addEventListener('change', (e) => chrome.storage.local.set({ tienePronta: e.target.checked }));
+
+// ---- indice laterale: la sezione in vista e' quella evidenziata ----
+(() => {
+  const voci = [...document.querySelectorAll('nav.indice ol a')];
+  if (!voci.length || typeof IntersectionObserver !== 'function') return;
+  const segna = (id) => voci.forEach((a) => a.setAttribute('aria-current', String(a.getAttribute('href') === `#${id}`)));
+  const oss = new IntersectionObserver(
+    (voci) => {
+      const vista = voci.filter((v) => v.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (vista) segna(vista.target.id);
+    },
+    { rootMargin: '0px 0px -60% 0px' }
+  );
+  for (const a of voci) {
+    const s = document.querySelector(a.getAttribute('href'));
+    if (s) oss.observe(s);
+  }
+  // il riquadro della risoluzione problemi si apre se ci si arriva dall'indice
+  voci.find((a) => a.getAttribute('href') === '#problemi')?.addEventListener('click', () => {
+    const d = document.getElementById('problemi');
+    if (d) d.open = true;
+  });
+})();

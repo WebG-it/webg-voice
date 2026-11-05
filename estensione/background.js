@@ -14,6 +14,9 @@ const VEL_DEFAULT = 1;
 
 chrome.runtime.onInstalled.addListener((info) => {
   if (info.reason === 'install' || info.reason === 'update') avviaDownloadSeServe();
+  // pagina di benvenuto solo alla prima installazione (non negli aggiornamenti, non nelle prove automatiche)
+  if (info.reason === 'install' && !chrome.i18n.getMessage('nomeEstensione').includes('(TEST)'))
+    chrome.tabs.create({ url: chrome.runtime.getURL('benvenuto.html') }).catch(() => {});
   chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: 'leggi-selezione',
@@ -287,6 +290,16 @@ async function iniettaBarra(tabId) {
 
 const IN_CORSO = ['lettura', 'pausa', 'preparazione'];
 
+// "Di nuovo" nel pannello: l'ultimo testo letto resta solo in memoria (chrome.storage.session),
+// finche' Chrome resta aperto; non va su disco e non si sincronizza.
+const MAX_ULTIMO = 1_000_000;
+async function ricordaUltimo(testo, titolo) {
+  try {
+    if (typeof testo === 'string' && testo.trim() && testo.length <= MAX_ULTIMO)
+      await chrome.storage.session.set({ ultimoTesto: { testo, titolo: titolo || null, quando: Date.now() } });
+  } catch {}
+}
+
 /**
  * La scorciatoia mette in pausa o riprende la lettura in corso invece di leggere? Una lettura che
  * suona si mette sempre in pausa; una in pausa si riprende solo da questa pagina, o se non e' legata
@@ -359,6 +372,7 @@ async function leggiDaScheda(tab, testoDiRiserva, daPopup = false, frameId = und
   const conBarra = await iniettaBarra(tab.id);
   // una lettura normale toglie i colori delle ripetizioni lasciati da "Rileggi la bozza"
   if (conBarra) chrome.tabs.sendMessage(tab.id, { da: 'background', tipo: 'ripetizioni', parole: [] }).catch(() => {});
+  await ricordaUltimo(testo, scelto.titolo);
   await aOffscreen({ tipo: 'leggi', testo, titolo: scelto.titolo, ...(await impostazioni()), tabId: conBarra ? tab.id : null, t0 });
   return true;
 }
@@ -461,7 +475,7 @@ const daOffscreen = (m) => typeof m.url === 'string' && m.url === chrome.runtime
 const daPaginaEstensione = (m) => typeof m.url === 'string' && m.url.startsWith(BASE_ESTENSIONE);
 // la barretta (content script) puo' solo comandare la lettura in corso
 const COMANDI_BARRETTA = new Set(['pausa', 'riprendi', 'stop', 'velocita', 'consenti', 'rifiuta', 'voceNaturale', 'riallinea', 'dettaturaFerma', 'dettaturaRilascio', 'chiamataFerma']);
-const OCCUPA_CON_CHIAMATA = new Set(['leggiSelezioneAttiva', 'rileggi', 'dettaturaAvviaQui', 'dettaturaScarica', 'dettaturaMisuraPC', 'prerisc', 'preparaMotore']);
+const OCCUPA_CON_CHIAMATA = new Set(['leggiSelezioneAttiva', 'rileggi', 'rileggiUltimo', 'dettaturaAvviaQui', 'dettaturaScarica', 'dettaturaMisuraPC', 'prerisc', 'preparaMotore']);
 const numeroIn = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 const MAX_TESTO = 2_000_000;
 
@@ -529,7 +543,15 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
       case 'leggiTesto':
         if (await chiamata.attiva()) return { errore: 'Sto trascrivendo una call: la lettura aspetta che finisca.' };
         await fermaDettatura();
+        await ricordaUltimo(msg.testo, null);
         return aOffscreen({ tipo: 'leggi', testo: msg.testo, ...(await impostazioni()), tabId: null, t0: Date.now() });
+      case 'rileggiUltimo': {
+        // dall'inizio, senza barretta: la pagina di allora puo' essere cambiata o chiusa
+        const { ultimoTesto: u } = await chrome.storage.session.get('ultimoTesto');
+        if (!u || typeof u.testo !== 'string' || !u.testo.trim()) return { errore: "Non c'è ancora un testo da rileggere." };
+        await fermaDettatura();
+        return aOffscreen({ tipo: 'leggi', testo: u.testo, titolo: u.titolo, ...(await impostazioni()), tabId: null, t0: Date.now() });
+      }
       case 'voce':
         // scelta dal popup o dalle opzioni: si ricorda e, se serve, la voce si scarica subito
         await chrome.storage.local.set({ voce: msg.valore });

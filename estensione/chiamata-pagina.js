@@ -31,19 +31,19 @@
     radice.innerHTML = `
 <style>
   :host{all:initial}
-  .b{font:13px/1.35 system-ui,sans-serif;color:#fff;background:#8f2a1f;border-radius:10px;box-shadow:0 2px 10px #0006;padding:7px 12px;display:flex;flex-direction:column;gap:6px;max-width:min(92vw,640px)}
-  .r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .b{font:13px/1.35 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:oklch(0.99 0.004 27);background:oklch(0.45 0.16 27);border:1px solid oklch(0.38 0.14 27);border-radius:14px;box-shadow:0 1px 2px oklch(0 0 0/.15),0 10px 30px oklch(0.25 0.08 27/.35);padding:8px 12px;display:flex;flex-direction:column;gap:6px;max-width:min(94vw,780px)}
+  .r{display:flex;align-items:center;gap:10px}.r strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.r>*:not(strong){flex:none}
   .pt{width:10px;height:10px;border-radius:50%;background:#fff;animation:l 1.4s infinite}
   @keyframes l{50%{opacity:.25}}
   .liv{display:inline-flex;align-items:center;gap:4px;font-size:11px;opacity:.95}
   .liv i{display:inline-block;width:34px;height:6px;background:#fff3;border-radius:3px;overflow:hidden}
   .liv i b{display:block;height:100%;width:0;background:#fff;transition:width .2s}
-  button{font:inherit;cursor:pointer;border:0;border-radius:6px;padding:3px 9px;background:#fff;color:#8f2a1f}
-  button.n{background:#fff3;color:#fff}
-  .p{background:#0003;border-radius:6px;padding:6px 8px}
+  button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:8px;padding:4px 10px;background:oklch(0.99 0.004 27);color:oklch(0.42 0.16 27)}button:focus-visible{outline:2px solid oklch(0.99 0.004 27);outline-offset:2px}
+  button.n{background:oklch(1 0 0/.18);color:oklch(0.99 0.004 27)}
+  .p{background:oklch(0 0 0/.18);border-radius:9px;padding:7px 9px}
   .p p{margin:0 0 5px}
   [hidden]{display:none!important}
-  .mini{width:14px;height:14px;border-radius:50%;background:#c0392b;border:2px solid #fff;box-shadow:0 1px 6px #0007;cursor:pointer;animation:l 1.4s infinite}
+  .mini{width:14px;height:14px;border-radius:50%;background:oklch(0.52 0.175 27);border:2px solid #fff;box-shadow:0 1px 6px #0007;cursor:pointer;animation:l 1.4s infinite}
 </style>
 <div class="mini" hidden title="WebG Voice sta trascrivendo la call: clic per riaprire"></div>
 <div class="b">

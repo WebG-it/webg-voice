@@ -223,6 +223,10 @@ export function creaChiamata(c) {
     const ultima = { nomeFile: m.nomeFile, righe: m.righe, lacune: m.lacune, quando: Date.now(), motivo: m.motivo || null };
     // prima si tiene il testo (finche' il file non e' davvero scritto), poi si scarica
     await chrome.storage.local.set({ chiamataUltima: { ...ultima, salvata: false, inCorso: true }, chiamataDaSalvare: { nomeFile: m.nomeFile, testo: m.testo, quando: Date.now() } });
+    // copia per "Esporta come" nel pannello (TXT, SRT, Word): solo in memoria, finche' Chrome resta aperto
+    try {
+      await chrome.storage.session.set({ chiamataEsporta: { nomeFile: m.nomeFile, testo: m.testo, quando: Date.now() } });
+    } catch {}
     try {
       if (!(await chrome.permissions.contains({ permissions: ['downloads'] }))) throw new Error('permesso downloads revocato');
       ascoltaDownload();

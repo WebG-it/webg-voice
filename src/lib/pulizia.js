@@ -14,7 +14,7 @@ const parola = (s) => new RegExp(`${prima}(?:${s})${dopo}`, 'giu');
 // segni che Whisper mette da solo attorno a un comando detto a voce: si assorbono
 const ATTORNO = '[\\s,.;:!?…]*';
 // per a capo, parentesi e virgolette: prima si tiene la punteggiatura di Whisper (resta la virgola
-// di "Caro Marco,"), dopo parentesi e virgolette chiuse si tiene il punto finale
+// di "Caro Luca,"), dopo parentesi e virgolette chiuse si tiene il punto finale
 const SOLO_SPAZI = '\\s*';
 const SPAZI_VIRGOLE = '[\\s,]*';
 
@@ -269,7 +269,13 @@ function componi(t) {
 const ORDINALI = ['primo', 'secondo', 'terzo', 'quarto', 'quinto', 'sesto', 'settimo', 'ottavo', 'nono', 'decimo'];
 const ORDINALI_F = ['prima', 'seconda', 'terza', 'quarta', 'quinta', 'sesta', 'settima', 'ottava', 'nona', 'decima'];
 // "secondo me", "secondo il cliente": non e' un elenco
-const NON_ORDINALE_DOPO = /^(me|te|lui|lei|noi|voi|loro|il|lo|la|i|gli|le|un|una|uno|quanto|cui|quello|quella|questo|questa|mio|mia|tuo|tua|suo|sua|marco|aldo|kian)\b/i;
+const NON_ORDINALE_DOPO = /^(me|te|lui|lei|noi|voi|loro|il|lo|la|i|gli|le|un|una|uno|quanto|cui|quello|quella|questo|questa|mio|mia|tuo|tua|suo|sua)\b/i;
+// "Prima, Luca ha detto...": "prima" vuol dire "prima di adesso". Un elenco non si apre se dopo
+// l'ordinale c'e' un nome proprio (parola con la maiuscola che non e' una parola comune), qualunque nome sia
+const nomeProprioDopo = (resto) => {
+  const m = /^\s*["«(]?(\p{Lu}\p{Ll}+)\b/u.exec(resto);
+  return !!m && !COMUNI.has(m[1].toLowerCase());
+};
 
 /** Maiuscola alla prima lettera. */
 const maiuscola = (s) => s.replace(/^(\s*["(«]?)(\p{Ll})/u, (_, a, b) => a + b.toLocaleUpperCase('it'));
@@ -374,7 +380,7 @@ export function creaSessione(o = {}) {
       let k = ORDINALI.indexOf(w);
       if (k < 0) k = ORDINALI_F.indexOf(w);
       const resto = m ? m[2] : '';
-      const ordinale = k >= 0 && resto && !NON_ORDINALE_DOPO.test(resto) && (k === 0 || (st.elenco && st.elenco.tipo === 'numerato'));
+      const ordinale = k >= 0 && resto && !NON_ORDINALE_DOPO.test(resto) && (k === 0 ? !nomeProprioDopo(resto) : st.elenco && st.elenco.tipo === 'numerato');
       if (ordinale) {
         if (!st.elenco || st.elenco.tipo !== 'numerato') st.elenco = { tipo: 'numerato', n: 0 };
         st.elenco.n = k + 1;

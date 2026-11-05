@@ -1,138 +1,126 @@
-:root {
-  --sfondo: #ffffff;
-  --superficie: #f5f5f7;
-  --testo: #1d1d1f;
-  --tenue: #6e6e73;
-  --bordo: rgba(0, 0, 0, 0.12);
-  --accento: #23417b;
-  --accento-testo: #ffffff;
-  --errore: #b3261e;
-  --rosso: #c0392b;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sfondo: #1c1c1e;
-    --superficie: #2a2a2d;
-    --testo: #f2f2f4;
-    --tenue: #a1a1a6;
-    --bordo: rgba(255, 255, 255, 0.14);
-    --accento: #8fb0ea;
-    --accento-testo: #0f1d38;
-    --errore: #f2b8b5;
-    --rosso: #e0675a;
-  }
-}
-* { box-sizing: border-box; }
+/* Pannello di WebG Voice. Fondamenta in tema.css. */
 body {
-  width: 340px;
-  margin: 0;
-  padding: 12px 14px 12px;
-  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--testo);
+  width: 360px;
+  padding: 12px 12px 10px;
+  font-size: 13px;
+  line-height: 1.4;
   background: var(--sfondo);
 }
-[hidden] { display: none !important; }
 
-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-h1 { font-size: 15px; font-weight: 600; margin: 0; flex: 1; }
-.versione { color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
-
-button {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid var(--bordo);
-  border-radius: 8px;
-  background: var(--superficie);
-  color: var(--testo);
-  font: inherit;
-  cursor: pointer;
-}
-button:hover:not(:disabled) { filter: brightness(0.96); }
-button:disabled { opacity: 0.5; cursor: default; }
-button:focus-visible, summary:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
-button svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
-button.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; justify-content: center; }
-button.icona { padding: 5px; border-color: transparent; background: none; color: var(--tenue); }
+/* ---- testata ---- */
+.testa { display: flex; align-items: center; gap: 8px; margin: 0 2px 12px; }
+.marchio .cornice { width: 24px; height: 24px; border-width: 2.5px; border-radius: 3px; }
+.marchio .cornice svg { width: 12px; height: 12px; color: var(--arancio); }
+h1 { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; margin: 0; flex: 1; }
+.versione { color: var(--tenue); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+button.icona { min-height: 0; width: 30px; height: 30px; padding: 0; }
 button.icona svg { width: 16px; height: 16px; }
-button.icona:hover { color: var(--testo); background: var(--superficie); filter: none; }
 
-/* le due azioni di tutti i giorni */
-.grandi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.azione { min-width: 0; }
+/* ---- le tre funzioni, una riga ciascuna ---- */
+.funzioni { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.funzione { border-radius: var(--raggio); }
 .coppia { display: flex; gap: 6px; }
-button.grande {
-  flex: 1; width: 100%; height: 72px; flex-direction: column; justify-content: center; gap: 1px;
-  font-size: 15px; font-weight: 600; border-radius: 12px; padding: 8px 6px;
+button.voce-funzione {
+  --c: var(--blu); --tinta: var(--blu-tinta);
+  flex: 1; width: 100%; min-height: 54px; padding: 8px 12px 8px 10px;
+  justify-content: flex-start; gap: 12px; text-align: left;
+  border-radius: var(--raggio); background: var(--carta); border-color: var(--bordo);
 }
-button.grande svg { width: 18px; height: 18px; }
-button.grande .sotto { font-size: 11px; line-height: 1.35; font-weight: 500; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-button.grande .sotto:empty { display: none; }
-#detta { background: var(--superficie); }
-#detta.attiva { background: var(--rosso); color: #fff; border-color: transparent; }
-button.ferma { flex: none; width: 44px; height: 72px; justify-content: center; border-radius: 12px; padding: 0; }
+button.voce-funzione:hover:not(:disabled) { background: var(--tinta); border-color: color-mix(in oklch, var(--c), transparent 55%); }
+.detta button.voce-funzione { --c: var(--verde); --tinta: var(--verde-tinta); }
+.trascrivi button.voce-funzione { --c: var(--rosso); --tinta: var(--rosso-tinta); }
+.parole { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.voce-funzione .etichetta { font-size: 14.5px; font-weight: 650; }
+.voce-funzione .sotto { font-size: 12px; color: var(--tenue); font-weight: 450; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voce-funzione .sotto:empty { display: none; }
+.voce-funzione .freccia { width: 14px; height: 14px; fill: var(--tenue); transition: transform 0.2s var(--uscita); }
+.voce-funzione[aria-expanded="true"] .freccia { transform: rotate(90deg); }
+.voce-funzione[aria-expanded="true"] { border-color: color-mix(in oklch, var(--c), transparent 50%); }
+
+/* stato attivo: la funzione in corso si riempie del suo colore */
+.leggi.attiva button.voce-funzione,
+button.voce-funzione.attiva { background: var(--c); border-color: transparent; color: var(--su-colore); }
+.leggi.attiva button.voce-funzione .sotto,
+button.voce-funzione.attiva .sotto { color: color-mix(in oklch, var(--su-colore), transparent 18%); }
+.leggi.attiva .voce-funzione .cornice,
+.voce-funzione.attiva .cornice { --c: var(--su-colore); background: transparent; }
+.leggi.attiva button.voce-funzione:hover,
+button.voce-funzione.attiva:hover { background: color-mix(in oklch, var(--c), var(--testo) 12%); }
+button.ferma { flex: none; width: 54px; min-height: 54px; padding: 0; border-radius: var(--raggio); }
 button.ferma svg { width: 16px; height: 16px; }
-.tasti { margin: 5px 0 0; padding-bottom: 2px; text-align: center; color: var(--tenue); font-size: 11px; line-height: 1.7; }
+
+.tasti { margin: 3px 0 2px 54px; color: var(--tenue); font-size: 11.5px; line-height: 1.8; }
 .tasti > span { white-space: nowrap; }
-.tasti .sep { margin: 0 2px; }
-.tasti a, .avviso a { color: var(--accento); }
-.tasti .manca { color: var(--errore); }
-kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border: 1px solid var(--bordo); border-bottom-width: 2px; border-radius: 4px; background: var(--superficie); color: var(--testo); }
+.tasti .sep { margin: 0 3px; }
+.tasti a, .avviso a { color: var(--blu); }
+.tasti .manca { color: var(--male); }
 
-/* voce e velocita' in una riga */
-.riga { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; }
-.voci { display: flex; align-items: center; flex: none; }
-.voci .etichetta { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.voci button { border-radius: 0; padding: 4px 10px; font-size: 12px; justify-content: center; }
-.voci button:first-of-type { border-radius: 7px 0 0 7px; }
-.voci button:last-of-type { border-radius: 0 7px 7px 0; border-left: 0; }
-.voci button[aria-checked="true"] { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-.velocita { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-.velocita input { flex: 1; min-width: 0; accent-color: var(--accento); }
-.velocita output { min-width: 38px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--tenue); }
+/* riquadro che si apre sotto una funzione (trascrizione) */
+.riquadro { margin: 6px 0 2px; padding: 10px 12px; border-radius: var(--raggio); background: var(--superficie); font-size: 12.5px; }
+.riquadro p { margin: 0 0 6px; }
+.riquadro p:last-child { margin-bottom: 0; }
+.riquadro .avviso { border: 0; padding: 0; color: var(--attenzione); }
+.riquadro.opzioni { margin-top: 4px; }
+.trascrivi .riquadro { --accento: var(--rosso); --accento-testo: var(--su-colore); }
+.riquadro .azioniStato { margin: 8px 0 10px; }
+.riquadro .azioniStato:last-child { margin-bottom: 0; }
 
-/* una riga di stato */
-.stato { margin-top: 10px; padding: 7px 10px; border-radius: 8px; background: var(--superficie); font-size: 12px; }
+/* ---- voce e velocita' ---- */
+.regola { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; padding: 8px 4px 0; border-top: 1px solid var(--bordo); }
+.voci { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--superficie-2); flex: none; }
+.voci button { min-height: 26px; padding: 2px 11px; border: 0; border-radius: 6px; background: transparent; font-size: 12.5px; color: var(--tenue); }
+.voci button:hover:not(:disabled) { background: transparent; color: var(--testo); border: 0; }
+.voci button[aria-checked="true"] { background: var(--carta); color: var(--testo); font-weight: 650; box-shadow: 0 1px 2px oklch(0.2 0.02 262 / 0.15); }
+.velocita { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.velocita input { flex: 1; min-width: 0; margin: 0 2px; }
+button.passo { min-height: 0; width: 24px; height: 24px; padding: 0; border-radius: 6px; font-size: 15px; font-weight: 600; line-height: 1; background: transparent; border-color: transparent; color: var(--tenue); }
+button.passo:hover:not(:disabled) { color: var(--testo); }
+.velocita output { min-width: 40px; text-align: right; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- stato: una riga, con la spia del colore della funzione ---- */
+.stato { display: flex; gap: 9px; align-items: flex-start; margin-top: 10px; padding: 8px 10px; border-radius: var(--raggio); background: var(--superficie); font-size: 12.5px; }
+.statoCorpo { flex: 1; min-width: 0; }
 .stato p { margin: 0; }
-.stato.errore p { color: var(--errore); }
-progress { width: 100%; height: 6px; margin-top: 6px; accent-color: var(--accento); }
-.mb { margin: 4px 0 0; color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
-.azioniStato { display: flex; gap: 8px; margin-top: 8px; }
+.spia { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--bordo-forte); flex: none; }
+.stato.pronto .spia { background: var(--ok); }
+.stato.attivo .spia { background: var(--arancio); animation: respiro 1.6s var(--uscita) infinite; }
+.stato.errore .spia { background: var(--male); }
+.stato.errore p { color: var(--male); }
+@keyframes respiro { 50% { opacity: 0.35; } }
+.mb { margin: 4px 0 0; color: var(--tenue); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+progress { margin-top: 6px; }
+.azioniStato { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .azioniStato:not(:has(button:not([hidden]), a:not([hidden]))) { display: none; }
-#scarica { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
-.avviso { margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--bordo); font-size: 12px; }
+.avviso { margin: 8px 0 0; padding: 7px 10px; border-radius: var(--raggio); border: 1px solid var(--bordo-forte); font-size: 12.5px; }
 .riga-avviso { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* testo incollato, richiudibile */
-details { margin-top: 10px; border-top: 1px solid var(--bordo); padding-top: 8px; }
-summary { cursor: pointer; color: var(--tenue); font-size: 12px; list-style: none; display: flex; align-items: center; gap: 6px; }
+/* ---- testo incollato, richiudibile ---- */
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--tenue); font-size: 12.5px; list-style: none; display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 6px; width: fit-content; }
+summary:hover { color: var(--testo); }
 summary::-webkit-details-marker { display: none; }
-summary::before { content: '▸'; font-size: 10px; }
-details[open] summary::before { content: '▾'; }
+summary::before { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform 0.2s var(--uscita); }
+details[open] summary::before { transform: rotate(45deg); }
 details[open] summary { margin-bottom: 6px; }
-textarea {
-  width: 100%; resize: vertical; min-height: 72px; padding: 7px 9px;
-  border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie); color: var(--testo); font: inherit;
-}
-textarea:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
+textarea { width: 100%; resize: vertical; min-height: 76px; }
 .azioniIncolla { display: flex; margin-top: 6px; }
 .azioniIncolla button { flex: 1; }
 
-/* strumenti secondari */
-.strumenti { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--bordo); }
-button.piccolo { flex: 1; justify-content: center; padding: 5px 8px; font-size: 12px; color: var(--tenue); background: none; }
-#chiamata { flex-basis: 100%; }
-.consenso { display: block; margin-top: 8px; font-size: 12px; }
-.campo { display: block; font-size: 12px; }
-.campo input[type=text] { display: block; width: 100%; box-sizing: border-box; margin-top: 3px; padding: 5px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie); color: var(--testo); font: inherit; }
-#chiamataOpz .mb { margin: 4px 0 0; }
-.consenso input { vertical-align: middle; margin-right: 4px; }
-button.piccolo:hover:not(:disabled) { color: var(--testo); background: var(--superficie); filter: none; }
+/* ---- strumenti secondari ---- */
+.strumenti { display: flex; gap: 2px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--bordo); }
+.strumenti button { flex: 1 1 auto; min-height: 30px; padding: 4px 6px; font-size: 12px; gap: 5px; white-space: nowrap; }
+.strumenti button svg { width: 13px; height: 13px; }
 
-a.bottone {
-  display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 8px;
-  border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); text-decoration: none;
-}
-a.bottone.primario { background: var(--accento); color: var(--accento-testo); border-color: transparent; font-weight: 600; }
+/* ---- trascrizione: campi e consenso ---- */
+.consenso { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; font-size: 12.5px; }
+.consenso input { margin: 2px 0 0; flex: none; }
+.campo { display: block; font-size: 12px; color: var(--tenue); }
+.campo input[type=text] { display: block; width: 100%; margin-top: 3px; padding: 5px 8px; color: var(--testo); }
+.esporta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+.esporta span { color: var(--tenue); margin-right: 2px; }
+.esporta button { min-height: 26px; padding: 2px 9px; font-size: 12px; }
+
+a.bottone { min-height: 32px; }
 .ripetizioni { margin: 6px 0 0; padding: 0 0 0 18px; max-height: 120px; overflow: auto; }
 .ripetizioni li { margin: 2px 0; }
 .ripetizioni .volte { color: var(--tenue); font-variant-numeric: tabular-nums; }

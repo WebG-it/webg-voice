@@ -252,22 +252,23 @@
   const CSS = `
     :host { all: initial; }
     .pillola { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex; align-items: center; gap: 10px;
-      font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1d2433; background: #fff; border: 2px solid #c0392b;
+      font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1d2433; background: #fff; border: 2px solid oklch(0.50 0.13 145);
       border-radius: 999px; padding: 8px 10px 8px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.22); max-width: min(560px, calc(100vw - 32px)); }
     .preparazione.pillola, .trascrivo.pillola { border-color: #23417b; }
     .errore.pillola { border-color: #d86f22; }
-    .pallino { width: 12px; height: 12px; border-radius: 50%; background: #c0392b; flex: none; }
+    .pallino { width: 12px; height: 12px; border-radius: 50%; background: oklch(0.50 0.13 145); flex: none; }
     .livello { display: inline-flex; align-items: flex-end; gap: 2px; height: 18px; flex: none; }
-    .livello i { width: 4px; height: 3px; border-radius: 2px; background: #c0392b; transition: height .08s linear; }
+    .livello i { width: 4px; height: 3px; border-radius: 2px; background: oklch(0.50 0.13 145); transition: height .08s linear; }
     .preparazione .livello, .errore .livello, .inattiva .livello { display: none; }
     .ascolto .pallino { animation: respiro 1.6s ease-in-out infinite; }
-    .parlato .pallino { background: #e74c3c; transform: scale(1.25); box-shadow: 0 0 0 4px rgba(231,76,60,.22); }
-    .trascrivo .pallino, .preparazione .pallino { background: #23417b; animation: respiro .8s ease-in-out infinite; }
+    .parlato .pallino { background: oklch(0.58 0.15 145); transform: scale(1.25); box-shadow: 0 0 0 4px oklch(0.58 0.15 145 / .22); }
+    .trascrivo .pallino, .preparazione .pallino { background: oklch(0.43 0.125 262); animation: respiro .8s ease-in-out infinite; }
     .errore .pallino { background: #d86f22; animation: none; }
     @keyframes respiro { 50% { opacity: .35; } }
     .testo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     button { font: inherit; border: 1px solid #c9cfda; background: #f4f6f9; color: inherit; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
     button:hover { background: #e9edf3; }
+    button:focus-visible { outline: 2px solid oklch(0.55 0.16 262); outline-offset: 2px; }
     .casella { position: fixed; right: 16px; top: 70px; z-index: 2147483647; width: min(420px, calc(100vw - 32px)); background: #fff; color: #1d2433;
       border: 1px solid #d5dae3; border-radius: 12px; box-shadow: 0 6px 22px rgba(0,0,0,.16); padding: 10px; font: 13px/1.4 system-ui, sans-serif; }
     .casella textarea { width: 100%; box-sizing: border-box; min-height: 90px; font: 14px/1.45 system-ui, sans-serif; border: 1px solid #d5dae3; border-radius: 8px; padding: 6px 8px; resize: vertical; color: inherit; background: #fff; }
@@ -275,6 +276,7 @@
     .casella p { margin: 0 0 6px; color: #4a5468; }
     @media (prefers-color-scheme: dark) {
       .pillola, .casella { background: #1f2430; color: #e7eaf0; border-color: #3a4152; }
+      .pillola.ascolto, .pillola.parlato { border-color: oklch(0.70 0.13 145); }
       .casella textarea { background: #161a22; border-color: #3a4152; }
       button { background: #2a3040; border-color: #3f475a; }
       button:hover { background: #343b4e; }

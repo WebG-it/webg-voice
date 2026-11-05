@@ -152,7 +152,7 @@ let seqSessione = 0;
 
 /** Prompt per Whisper: termini del dizionario e coda del testo gia' dettato (contesto). */
 // Solo i termini: il testo gia' dettato nel prompt faceva ripetere a Whisper frasi intere sul
-// silenzio ("Siamo in un'altra situazione" quattro volte, prima prova di Marco).
+// silenzio ("Siamo in un'altra situazione" quattro volte, prima prova a mano).
 function prompt(S) {
   const termini = S.termini.length ? S.termini.join(', ') + '.' : '';
   return { prompt: termini, base: termini };

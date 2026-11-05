@@ -46,14 +46,17 @@ const ICONE = {
   play: '<path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/>',
 };
 
+const CORNICE_PLAY = (icona) => `<span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16">${icona}</svg></span>`;
 function etichettaPlay(f) {
   const [icona, label, sotto] = {
     lettura: [ICONE.pausa, 'Pausa', 'in lettura'],
-    preparazione: [ICONE.pausa, 'Pausa', 'preparo…'],
+    preparazione: [ICONE.pausa, 'Pausa', 'preparo la voce…'],
     pausa: [ICONE.play, 'Riprendi', 'in pausa'],
-  }[f] || [ICONE.play, 'Leggi', 'selezione o pagina'];
-  play.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true">${icona}</svg><span class="etichetta">${label}</span><span class="sotto">${sotto}</span>`;
-  play.title = f === 'lettura' || f === 'pausa' || f === 'preparazione' ? label : "Legge la selezione, o l'articolo della pagina se non c'è selezione";
+  }[f] || [ICONE.play, 'Leggi', 'selezione o articolo'];
+  play.innerHTML = `${CORNICE_PLAY(icona)}<span class="parole"><span class="etichetta">${label}</span><span class="sotto">${sotto}</span></span>`;
+  const inCorso = f === 'lettura' || f === 'pausa' || f === 'preparazione';
+  play.title = inCorso ? label : "Legge la selezione, o l'articolo della pagina se non c'è selezione";
+  play.closest('.funzione').classList.toggle('attiva', inCorso);
 }
 
 function barra(d) {
@@ -95,7 +98,8 @@ function mostra(s) {
   etichettaPlay(fase);
   // Ferma accanto a Leggi solo quando c'e' qualcosa da fermare
   stop.hidden = !(s && ['lettura', 'pausa', 'preparazione'].includes(s.fase));
-  statoBox.classList.remove('errore');
+  statoBox.classList.remove('errore', 'pronto', 'attivo');
+  if (s && ['lettura', 'preparazione'].includes(s.fase)) statoBox.classList.add('attivo');
   barraDl.hidden = mb.hidden = true;
   scarica.hidden = rifiuta.hidden = true;
   // voce del sistema scelta in automatico (computer lento): lo si dice sempre, con la via d'uscita
@@ -128,6 +132,7 @@ function mostra(s) {
       : d.riprovo
         ? `Connessione instabile, riprovo (tentativo ${d.riprovo})…`
         : 'Primo avvio: scarico la voce, una volta sola.';
+    statoBox.classList.add('attivo');
     barra(d);
   } else if (dv && dv.totale) {
     statoTesto.textContent = `Scarico la voce ${VOCI[voceValida(dv.voce)].nome}, una volta sola…`;
@@ -150,6 +155,7 @@ function mostra(s) {
   } else if (conSistema) {
     statoTesto.textContent = "L'ultima lettura era con la voce del sistema, più metallica: il computer era lento. Voce naturale torna a Sara o Nicola; per non farlo più, Qualità massima nelle opzioni.";
   } else if (inCache || (s && s.motorePronto)) {
+    statoBox.classList.add('pronto');
     statoTesto.textContent = 'Voce pronta, anche offline.';
   } else {
     statoTesto.textContent = `La voce (${MB(BYTE_TOTALI)}) non è ancora sul computer: si scarica una volta sola.`;
@@ -329,11 +335,19 @@ voceNaturale.addEventListener('click', () => {
 });
 
 let invio = null;
-vel.addEventListener('input', () => {
-  velVal.textContent = fmt(vel.value);
+function mostraVelocita(v) {
+  vel.value = v;
+  velVal.textContent = fmt(v);
+  vel.setAttribute('aria-valuetext', `${fmt(v).replace('×', '')} volte`);
+}
+function cambiaVelocita(v) {
+  mostraVelocita(Math.round(Math.min(1.5, Math.max(0.7, Number(v))) * 100) / 100);
   clearTimeout(invio);
   invio = setTimeout(() => comando('velocita', { valore: Number(vel.value) }), 250);
-});
+}
+vel.addEventListener('input', () => cambiaVelocita(vel.value));
+$('velMeno').addEventListener('click', () => cambiaVelocita(Number(vel.value) - 0.1));
+$('velPiu').addEventListener('click', () => cambiaVelocita(Number(vel.value) + 0.1));
 
 // Bozza del testo incollato, cosi' non si perde chiudendo il popup
 testo.addEventListener('input', () => chrome.storage.local.set({ bozza: testo.value }));
@@ -343,6 +357,27 @@ const apriScorciatoie = (e) => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); // solo su clic dell'utente
 };
 $('tastiAvviso').addEventListener('click', apriScorciatoie);
+$('guida').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('guida.html') });
+  window.close();
+});
+// ---- Di nuovo: l'ultimo testo letto, dall'inizio (tenuto solo in memoria finche' Chrome resta aperto) ----
+const rileggiUltimo = $('rileggiUltimo');
+async function mostraUltimo() {
+  try {
+    const { ultimoTesto } = await chrome.storage.session.get('ultimoTesto');
+    rileggiUltimo.disabled = !(ultimoTesto && ultimoTesto.testo);
+    if (ultimoTesto && ultimoTesto.titolo) rileggiUltimo.title = `Legge di nuovo «${ultimoTesto.titolo}», dall'inizio`;
+  } catch {
+    rileggiUltimo.disabled = true;
+  }
+}
+rileggiUltimo.addEventListener('click', async () => {
+  avvisoPagina('');
+  const r = await comando('rileggiUltimo');
+  if (r && r.errore) avvisoPagina(r.errore);
+});
+mostraUltimo();
 $('impostazioni').addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
   window.close();
@@ -358,6 +393,7 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
   if (msg && msg.da === 'offscreen' && msg.tipo === 'stato') {
     if (msg.stato.motorePronto) inCache = true;
     mostra(msg.stato);
+    if (msg.stato.fase === 'preparazione') mostraUltimo();
   }
 });
 
@@ -376,10 +412,7 @@ chrome.runtime.onMessage.addListener((msg, mittente) => {
   const r = await comando('stato');
   // il motore si prepara mentre l'utente sceglie cosa leggere
   if (inCache && !(r && r.stato && r.stato.motorePronto)) comando('prerisc');
-  if (r && typeof r.velocita === 'number') {
-    vel.value = r.velocita;
-    velVal.textContent = fmt(r.velocita);
-  }
+  if (r && typeof r.velocita === 'number') mostraVelocita(r.velocita);
   mostra(r && r.stato);
   // riscontro di una scorciatoia o di un menu andati a vuoto poco fa su questa scheda
   try {
@@ -454,9 +487,9 @@ async function mostraDettatura(s) {
     t = 'errore';
     titolo = s.errore || 'Errore nella dettatura';
     avvisoPagina(titolo);
-  } else if (dettPronta) t = 'pronta';
+  } else if (dettPronta) t = 'pronta, nel campo dove scrivi';
   else if (dettPronta === false) {
-    t = 'si prepara al primo uso';
+    t = 'nel campo dove scrivi';
     titolo = 'Il modello si scarica da solo alla prima dettatura, una volta sola';
   }
   if (t !== undefined) $('dettaStato').textContent = t;

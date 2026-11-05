@@ -3,7 +3,7 @@
   "name": "__MSG_nomeEstensione__",
   "short_name": "__MSG_nomeEstensione__",
   "default_locale": "it",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "description": "__MSG_descrizione__",
   "homepage_url": "https://github.com/WebG-it/webg-voice",
   "minimum_chrome_version": "116",
@@ -42,6 +42,6 @@
   "cross_origin_embedder_policy": { "value": "require-corp" },
   "cross_origin_opener_policy": { "value": "same-origin" },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' blob: https://github.com https://release-assets.githubusercontent.com https://huggingface.co https://*.hf.co"
   }
 }

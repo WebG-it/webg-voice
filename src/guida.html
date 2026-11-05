@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Guida di WebG Voice</title>
+<link rel="stylesheet" href="tema.css">
+<link rel="stylesheet" href="diagnostica.css">
+<link rel="stylesheet" href="pagine.css">
+</head>
+<body>
+<div class="pagina con-indice">
+<nav class="indice" aria-label="Sezioni della guida">
+  <a class="marca" href="#"><span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="5" cy="9.5" r="2"/><path d="M8.6 6.2a4.6 4.6 0 0 1 0 6.6l-1-1a3.2 3.2 0 0 0 0-4.6zM10.9 3.9a7.9 7.9 0 0 1 0 11.2l-1-1a6.5 6.5 0 0 0 0-9.2z"/></svg></span>Guida</a>
+  <ol>
+    <li><a href="#leggere" style="--c: var(--blu)"><span class="seg" aria-hidden="true"></span>Leggere</a></li>
+    <li><a href="#dettare" style="--c: var(--verde)"><span class="seg" aria-hidden="true"></span>Dettare</a></li>
+    <li><a href="#trascrivere" style="--c: var(--rosso)"><span class="seg" aria-hidden="true"></span>Trascrivere una call</a></li>
+    <li><a href="#scorciatoie"><span class="seg" aria-hidden="true"></span>Scorciatoie</a></li>
+    <li><a href="#pesi"><span class="seg" aria-hidden="true"></span>Download e spazio</a></li>
+    <li><a href="#domande"><span class="seg" aria-hidden="true"></span>Domande frequenti</a></li>
+    <li><a href="#privacy"><span class="seg" aria-hidden="true"></span>Privacy</a></li>
+  </ol>
+</nav>
+<main class="guida">
+  <header class="testa">
+    <span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="5" cy="9.5" r="2"/><path d="M8.6 6.2a4.6 4.6 0 0 1 0 6.6l-1-1a3.2 3.2 0 0 0 0-4.6zM10.9 3.9a7.9 7.9 0 0 1 0 11.2l-1-1a6.5 6.5 0 0 0 0-9.2z"/></svg></span>
+    <div>
+      <h1>Guida di WebG Voice</h1>
+      <p class="sotto">Versione <span data-versione></span>. Tutto quello che fa, passo per passo.</p>
+    </div>
+  </header>
+
+  <section class="scheda" id="leggere">
+    <h2><span class="cornice" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6c0 .6.6.9 1.1.6l7.4-4.8c.5-.3.5-.9 0-1.2L6.1 2.6C5.6 2.3 5 2.6 5 3.2z"/></svg></span>Leggere ad alta voce</h2>
+    <ol class="passi">
+      <li>Seleziona un testo nella pagina e premi <kbd data-comando="leggi-selezione">Alt+Q</kbd>, oppure tasto destro e <em>Leggi ad alta voce</em>.</li>
+      <li>Senza selezione, lo stesso tasto legge tutto l'articolo della pagina: titolo e testo, senza menu, pubblicità, commenti e banner dei cookie. Dal tasto destro sulla pagina c'è anche <em>Leggi tutto l'articolo</em>.</li>
+      <li>Di nuovo <kbd data-comando="leggi-selezione">Alt+Q</kbd> mette in pausa e riprende; <kbd data-comando="ferma-lettura">Alt+W</kbd> ferma.</li>
+    </ol>
+    <ul class="punti">
+      <li><strong>Barretta</strong>: in basso a destra nella pagina, con pausa, ferma e velocità. Le onde arancioni si muovono mentre la voce suona.</li>
+      <li><strong>Frase evidenziata</strong>: la frase che senti si colora di giallo e la pagina scorre per tenerla in vista. Se scorri tu, per qualche secondo non la sposta. Si spegne nelle impostazioni.</li>
+      <li><strong>Pannello</strong>: il pulsante di WebG Voice legge la selezione o l'articolo, sceglie la voce (Sara o Nicola) e la velocità, da 0,7 a 1,5. Sotto <em>Leggi un testo incollato</em> leggi qualunque testo.</li>
+      <li><strong>Di nuovo</strong>: rilegge dall'inizio l'ultimo testo, anche se hai chiuso la pagina. Lo ricorda finché Chrome resta aperto.</li>
+      <li><strong>Crea MP3</strong>: salva la lettura in un file MP3 nella cartella dei download, creato sul computer. Puoi chiudere il pannello mentre lavora.</li>
+      <li><strong>Rileggi la bozza</strong>: per chi scrive. Legge un po' più lenta, una frase alla volta, ed elenca le parole ripetute a poche frasi di distanza.</li>
+      <li><strong>Dizionario di pronuncia</strong>: nelle impostazioni insegni come leggere una parola (per esempio <em>VHelper</em> si legge <em>vi helper</em>). Sigle e parole inglesi comuni sono già a posto.</li>
+      <li><strong>Computer lenti</strong>: la lettura si adatta da sola. Se il computer non regge, usa per un po' la voce del sistema, più metallica, e lo dice nella barretta con il pulsante <em>Voce naturale</em> per tornare indietro.</li>
+    </ul>
+  </section>
+
+  <section class="scheda" id="dettare">
+    <h2><span class="cornice verde" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/></svg></span>Dettare</h2>
+    <ol class="passi">
+      <li>Clicca nel campo dove vuoi scrivere: una mail, una chat, un modulo, l'editor del tuo sito.</li>
+      <li>Tieni premuto <kbd data-comando="dettatura">Ctrl+Spazio</kbd> mentre parli: al rilascio il testo si scrive. Con un tocco breve resta in ascolto a mani libere, finché non premi di nuovo o dici «fine dettatura».</li>
+      <li>In alto nella pagina compare un indicatore verde con il livello del microfono e il pulsante Ferma.</li>
+    </ol>
+    <ul class="punti">
+      <li><strong>La prima volta</strong> Chrome chiede il permesso del microfono e si scarica il modello adatto al computer, con l'avanzamento nell'indicatore.</li>
+      <li><strong>Cosa puoi dire</strong>: «virgola», «punto», «a capo», «nuovo paragrafo», «elenco puntato» … «fine elenco», «cancella l'ultima frase», «annulla». Le correzioni a voce («martedì, no anzi, mercoledì») tengono solo la parte giusta; esitazioni e ripetizioni spariscono.</li>
+      <li><strong>Dove non si può scrivere</strong> (Google Docs, nessun campo scelto) il testo arriva in una casella con <em>Copia</em> e <em>Inserisci nel campo</em>.</li>
+      <li><strong>Modelli</strong>: Leggero, Normale (predefinito) e Qualità, nella <a href="#" data-azione="dettatura">pagina della dettatura</a>, insieme al dizionario dei nomi che usi spesso.</li>
+    </ul>
+  </section>
+
+  <section class="scheda" id="trascrivere">
+    <h2><span class="cornice rosso" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 2.5h10a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H8l-3 2.5V11H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg></span>Trascrivere una call</h2>
+    <ol class="passi">
+      <li>Apri la call in una scheda di Chrome: Google Meet, Microsoft Teams, Zoom o un'altra nel browser.</li>
+      <li>Clicca sul pulsante di WebG Voice, poi su <strong>Trascrivi la call</strong>. La prima volta Chrome chiede due permessi facoltativi (catturare l'audio della scheda e salvare il file) e si scarica il modello.</li>
+      <li>Spunta che avviserai i partecipanti e premi <strong>Inizia</strong>. Nella scheda compare una barretta rossa con il tempo, i livelli di <em>Call</em> e <em>Io</em> e un messaggio pronto da incollare nella chat.</li>
+      <li>A fine call premi <strong>Ferma e salva</strong>: il file Markdown con gli orari va nella cartella <em>WebG Voice</em> dei download, o dove scegli tu.</li>
+      <li>Dal pannello lo <strong>esporti</strong> anche in TXT, Word (DOCX), sottotitoli (SRT) o di nuovo in Markdown.</li>
+    </ol>
+    <ul class="punti">
+      <li><em>Io</em> è il tuo microfono, <em>Call</em> è l'audio della scheda: gli altri partecipanti non sono distinti fra loro.</li>
+      <li>L'audio non viene mai salvato né inviato: si trascrive a blocchi e si butta. Una copia del solo testo protegge la trascrizione se Chrome si chiude a metà.</li>
+      <li>Mentre una call si trascrive, lettura e dettatura aspettano che finisca.</li>
+    </ul>
+  </section>
+
+  <section class="scheda" id="scorciatoie">
+    <h2>Scorciatoie</h2>
+    <table class="tasti">
+      <tbody>
+        <tr><td>Leggi, pausa e riprendi</td><td><kbd data-comando="leggi-selezione">…</kbd></td></tr>
+        <tr><td>Ferma la lettura</td><td><kbd data-comando="ferma-lettura">…</kbd></td></tr>
+        <tr><td>Detta</td><td><kbd data-comando="dettatura">…</kbd></td></tr>
+      </tbody>
+    </table>
+    <p>Su Mac i tasti predefiniti sono Control+Q, Control+W e Control+Maiusc+X. Si cambiano dalla pagina delle scorciatoie di Chrome; chi aggiorna da una versione precedente conserva quelle di prima.</p>
+    <div class="azioni"><button data-azione="scorciatoie">Cambia le scorciatoie</button></div>
+  </section>
+
+  <section class="scheda" id="pesi">
+    <h2>Download e spazio</h2>
+    <table class="pesi">
+      <thead><tr><th scope="col">Cosa</th><th scope="col">Quando</th><th scope="col" class="num">Peso</th></tr></thead>
+      <tbody>
+        <tr><td>Voce Sara</td><td>All'installazione, in sottofondo</td><td class="num" data-peso="voce">326 MB</td></tr>
+        <tr><td>Voce Nicola</td><td>La prima volta che la scegli</td><td class="num" data-peso="nicola">0,5 MB</td></tr>
+        <tr><td>Voce bilanciata</td><td>Solo se il computer è lento</td><td class="num" data-peso="bilanciata">177 MB</td></tr>
+        <tr><td>Dettatura Leggero</td><td rowspan="3">Alla prima dettatura, quello scelto</td><td class="num" data-peso="dettLeggero">77 MB</td></tr>
+        <tr><td>Dettatura Normale</td><td class="num" data-peso="dettNormale">250 MB</td></tr>
+        <tr><td>Dettatura Qualità</td><td class="num" data-peso="dettQualita">565 MB</td></tr>
+        <tr><td>Trascrizione delle call</td><td>La prima volta che trascrivi</td><td class="num" data-peso="chiamata">670 MB</td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Tutto resta nel profilo di Chrome. Per liberare spazio: nella pagina della dettatura <em>Elimina dal computer</em>, nel pannello della trascrizione <em>Elimina il modello</em>; togliendo l'estensione si cancella tutto.</p>
+  </section>
+
+  <section class="scheda domande" id="domande">
+    <h2>Domande frequenti</h2>
+    <details><summary>Su questa pagina non legge: compare un punto esclamativo.</summary>
+      <p>Chrome non lascia entrare le estensioni nelle sue pagine interne, nel Chrome Web Store e nel visualizzatore PDF. Copia il testo e usa <em>Leggi un testo incollato</em> nel pannello. Il punto esclamativo compare anche se premi la scorciatoia senza selezione su una pagina senza un articolo.</p></details>
+    <details><summary>La voce è diventata metallica.</summary>
+      <p>Il computer era troppo occupato e WebG Voice è passata alla voce del sistema. Premi <em>Voce naturale</em> nella barretta o nel pannello; per non farlo più, nelle impostazioni scegli <em>Qualità massima</em>.</p></details>
+    <details><summary>La scorciatoia non funziona o risulta «non impostata».</summary>
+      <p>Un'altra estensione usa già gli stessi tasti e Chrome non li dà a due estensioni. Apri <em>Cambia le scorciatoie</em> e scegline altri.</p></details>
+    <details><summary>Ctrl+Spazio non fa più l'autocompletamento in un editor di codice o in Google Fogli.</summary>
+      <p>Finché l'estensione è attiva quel tasto serve alla dettatura. Se ti serve, assegna alla dettatura un altro tasto.</p></details>
+    <details><summary>Funziona senza connessione?</summary>
+      <p>Sì, dopo il primo download di ciascuna funzione. La lettura degli articoli ha bisogno solo della pagina già aperta.</p></details>
+    <details><summary>Sento delle pause durante la lettura.</summary>
+      <p>Succede sui computer lenti o molto occupati. Nelle impostazioni, <em>Risoluzione problemi</em>, una prova misura la velocità e dà un risultato da mandarci.</p></details>
+    <details><summary>Legge anche in inglese?</summary>
+      <p>La lettura e la dettatura sono in italiano; le parole inglesi più comuni dentro il testo italiano si pronunciano all'inglese. La trascrizione delle call riconosce anche l'inglese.</p></details>
+    <details><summary>Nella trascrizione si distinguono le persone?</summary>
+      <p>No: <em>Io</em> è il tuo microfono e <em>Call</em> sono tutti gli altri insieme.</p></details>
+  </section>
+
+  <section class="scheda" id="privacy">
+    <h2>Privacy</h2>
+    <p>Testi, voce dettata e audio delle call si elaborano solo sul computer. L'estensione si collega a internet solo per scaricare voci e modelli (dalla pagina GitHub di WebG Voice o da Hugging Face, con l'impronta controllata). WebG non riceve niente: niente statistiche, niente account, niente pubblicità.
+      Due eccezioni, facoltative e spente di serie: nella pagina della dettatura si può scegliere il riconoscimento di Chrome, che può mandare l'audio a Google; nelle opzioni della lettura si può scegliere a mano una voce del sistema indicata come «in rete», che manda il testo da leggere al servizio di quella voce.</p>
+    <p><a href="https://github.com/WebG-it/webg-voice/blob/main/docs/PRIVACY.md" target="_blank" rel="noopener">Informativa completa</a> · <a href="https://github.com/WebG-it/webg-voice/issues" target="_blank" rel="noopener">Segnala un problema</a> · <a href="benvenuto.html">Giro di benvenuto</a> · <a href="#" data-azione="opzioni">Impostazioni</a></p>
+  </section>
+</main>
+</div>
+<script type="module" src="pagine.js"></script>
+</body>
+</html>

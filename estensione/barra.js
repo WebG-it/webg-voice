@@ -13,58 +13,71 @@
   root.innerHTML = `
 <style>
   :host { all: initial; }
-  .barra {
-    --sfondo: #ffffff; --testo: #1d1d1f; --tenue: #6e6e73; --bordo: rgba(0,0,0,.12);
-    --tasto: #f2f2f4; --tasto-su: #e6e6ea; --accento: #d86f22;
-    display: flex; align-items: center; gap: 6px;
-    font: 13px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  .barra, .riquadro {
+    --h: 262;
+    --sfondo: oklch(0.99 0.003 var(--h)); --testo: oklch(0.23 0.018 var(--h)); --tenue: oklch(0.49 0.016 var(--h));
+    --bordo: oklch(0.88 0.009 var(--h)); --tasto: oklch(0.955 0.007 var(--h)); --tasto-su: oklch(0.92 0.01 var(--h));
+    --blu: oklch(0.43 0.125 262); --arancio: oklch(0.66 0.17 50); --anello: oklch(0.55 0.16 262);
+    --accento: var(--blu); --accento-testo: oklch(0.99 0.003 var(--h));
+    --ombra: 0 1px 2px oklch(0.2 0.02 262 / 0.08), 0 10px 30px oklch(0.2 0.02 262 / 0.18);
+    font: 13px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     color: var(--testo); background: var(--sfondo);
-    border: 1px solid var(--bordo); border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(0,0,0,.16);
-    padding: 6px 8px; user-select: none;
-    opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s;
+    border: 1px solid var(--bordo); border-radius: 14px; box-shadow: var(--ombra);
+  }
+  @media (prefers-color-scheme: dark) {
+    .barra, .riquadro {
+      --sfondo: oklch(0.235 0.014 var(--h)); --testo: oklch(0.95 0.006 var(--h)); --tenue: oklch(0.74 0.014 var(--h));
+      --bordo: oklch(0.36 0.016 var(--h)); --tasto: oklch(0.29 0.016 var(--h)); --tasto-su: oklch(0.34 0.018 var(--h));
+      --blu: oklch(0.76 0.10 262); --arancio: oklch(0.76 0.14 55); --anello: oklch(0.78 0.11 262);
+      --accento-testo: oklch(0.18 0.02 var(--h));
+      --ombra: 0 1px 2px oklch(0 0 0 / 0.3), 0 10px 30px oklch(0 0 0 / 0.45);
+    }
+  }
+  .barra {
+    display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 8px; user-select: none;
+    opacity: 0; transform: translateY(8px); transition: opacity .2s cubic-bezier(.22,1,.36,1), transform .2s cubic-bezier(.22,1,.36,1);
   }
   .barra.visibile { opacity: 1; transform: none; }
-  @media (prefers-color-scheme: dark) {
-    .barra { --sfondo: #242426; --testo: #f2f2f4; --tenue: #a1a1a6; --bordo: rgba(255,255,255,.14);
-             --tasto: #333336; --tasto-su: #3d3d41; --accento: #f0954f; }
-  }
   button {
     all: unset; box-sizing: border-box; cursor: pointer;
-    width: 30px; height: 30px; border-radius: 8px;
+    width: 30px; height: 30px; border-radius: 9px;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--tasto); color: var(--testo);
+    transition: background-color .15s;
   }
   button:hover { background: var(--tasto-su); }
-  button:focus-visible { outline: 2px solid var(--accento); outline-offset: 1px; }
+  button:focus-visible { outline: 2px solid var(--anello); outline-offset: 2px; }
   button:disabled { opacity: .4; cursor: default; }
-  svg { width: 16px; height: 16px; fill: currentColor; }
-  .vel { display: inline-flex; align-items: center; gap: 2px; }
-  .vel button { width: 24px; height: 24px; font-size: 15px; font-weight: 600; }
-  .vel output { min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
-  .stato { color: var(--tenue); max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
-  .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--accento); flex: none; margin-left: 2px; }
-  .punto.fermo { background: var(--tenue); }
+  button.pp { background: var(--accento); color: var(--accento-testo); }
+  button.pp:hover { background: color-mix(in oklch, var(--accento), var(--testo) 14%); }
+  svg { width: 15px; height: 15px; fill: currentColor; }
+  .vel { display: inline-flex; align-items: center; gap: 1px; margin-left: 2px; padding-left: 6px; border-left: 1px solid var(--bordo); }
+  .vel button { width: 24px; height: 26px; font-size: 15px; font-weight: 600; background: transparent; color: var(--tenue); }
+  .vel button:hover { color: var(--testo); background: var(--tasto); }
+  .vel output { min-width: 40px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stato { color: var(--tenue); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px 0 2px; }
+  /* cornice del marchio con le onde dell'audio: si muovono solo mentre la voce suona */
+  .punto { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+           width: 24px; height: 24px; border: 2.5px solid var(--blu); border-radius: 3px; transform: rotate(-6deg); margin-right: 4px; }
+  .punto i { display: block; width: 2.5px; height: 10px; border-radius: 2px; background: var(--arancio); transform-origin: center; animation: onda 1s ease-in-out infinite; }
+  .punto i:nth-child(2) { animation-delay: -.33s; height: 13px; }
+  .punto i:nth-child(3) { animation-delay: -.66s; }
+  .punto.fermo i { animation: none; transform: scaleY(.45); background: var(--tenue); }
+  @keyframes onda { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+  @media (prefers-reduced-motion: reduce) { .punto i { animation: none; } }
   .riquadro {
-    --sfondo: #ffffff; --testo: #1d1d1f; --tenue: #6e6e73; --bordo: rgba(0,0,0,.12);
-    --tasto: #f2f2f4; --tasto-su: #e6e6ea; --accento: #23417b; --accento-testo: #ffffff;
-    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    color: var(--testo); background: var(--sfondo);
-    border: 1px solid var(--bordo); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.16);
-    padding: 10px 12px; margin-bottom: 8px; width: 300px; box-sizing: border-box;
-  }
-  @media (prefers-color-scheme: dark) {
-    .riquadro { --sfondo: #242426; --testo: #f2f2f4; --tenue: #a1a1a6; --bordo: rgba(255,255,255,.14);
-                --tasto: #333336; --tasto-su: #3d3d41; --accento: #8fb0ea; --accento-testo: #0f1d38; }
+    --accento: var(--blu);
+    font-size: 13px; line-height: 1.45;
+    padding: 12px 14px; margin-bottom: 8px; width: 310px; box-sizing: border-box;
   }
   .riquadro[hidden], .riquadro [hidden], button[hidden] { display: none !important; }
-  .riquadro p { margin: 0 0 8px; }
+  .riquadro p { margin: 0 0 10px; }
   .riquadro .azioni { display: flex; gap: 8px; justify-content: flex-end; }
-  .riquadro .azioni button { width: auto; height: 28px; padding: 0 12px; font: 600 12.5px system-ui, sans-serif; }
+  .riquadro .azioni button { width: auto; height: 30px; padding: 0 12px; font: 600 12.5px system-ui, sans-serif; }
   .riquadro .azioni button.primario { background: var(--accento); color: var(--accento-testo); }
   .avanz { height: 6px; border-radius: 3px; background: var(--tasto); overflow: hidden; margin: 2px 0 6px; }
   .avanz > i { display: block; height: 100%; width: 0; background: var(--accento); transition: width .2s; }
-  .mb { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .mb { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; margin-bottom: 8px; }
 </style>
 <div class="riquadro" hidden>
   <p class="msg"></p>
@@ -75,8 +88,8 @@
     <button class="si primario">Scarica</button>
   </div>
 </div>
-<div class="barra" role="toolbar" aria-label="Lettura ad alta voce">
-  <span class="punto" aria-hidden="true"></span>
+<div class="barra" role="toolbar" aria-label="WebG Voice, lettura ad alta voce">
+  <span class="punto" aria-hidden="true"><i></i><i></i><i></i></span>
   <span class="stato" aria-live="polite">Preparo la voce…</span>
   <button class="pp" title="Pausa" aria-label="Pausa"></button>
   <button class="stop" title="Ferma" aria-label="Ferma">

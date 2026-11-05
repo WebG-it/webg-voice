@@ -46,7 +46,7 @@ export const FILE_VOCI = {
 
 // Kokoro "Bilanciata" (uint8): stessa voce, circa il 13% piu' veloce sui computer con pochi core
 // (vedi lib/motore-lettura.js). Si scarica solo se serve: scelta nelle opzioni o computer lento.
-// Fonte: la stessa revisione fissata di Hugging Face (la copia nella release GitHub, se Marco lo
+// Fonte: la stessa revisione fissata di Hugging Face (la copia nella release GitHub, se si
 // decide, va messa prima nell'elenco).
 export const FILE_VARIANTI = {
   modelloU8: {

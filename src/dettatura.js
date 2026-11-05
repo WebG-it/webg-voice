@@ -104,7 +104,7 @@ async function misuraComputer() {
   const qRadio = radio().find((r) => r.value === 'qualita');
   qRadio.disabled = !gpu;
   if (!gpu) qRadio.closest('label').title = 'Questo computer non ha la scheda video adatta per Qualità';
-  // Normale salvo processori davvero lenti (il Corridoio misura circa 70 a riposo e 30 sotto carico,
+  // Normale salvo processori davvero lenti (un PC di prova misura circa 70 a riposo e 30 sotto carico,
   // e con Normale trascrive una frase in circa un secondo)
   const proposta = cpu && cpu < SOGLIA_CPU ? 'leggero' : 'normale';
   const { dettModello } = await chrome.storage.local.get('dettModello');

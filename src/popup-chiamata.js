@@ -3,6 +3,7 @@
 
 import { creaTrascrizione, markdown, nomeFileChiamata, cartellaValida } from './lib/chiamata-testo.js';
 import { PERMESSI_CHIAMATA } from './chiamata-permessi.js';
+import { esporta, FORMATI } from './lib/esporta.js';
 
 const $ = (id) => document.getElementById(id);
 const comando = (tipo, extra = {}) => chrome.runtime.sendMessage({ a: 'background', tipo, ...extra });
@@ -15,7 +16,7 @@ const durata = (ms) => {
 };
 
 const bottone = $('chiamata');
-const box = $('chiamataBox');
+const riquadro = $('chiamataBox');
 let aperto = false;
 let timer = null;
 let messaggio = ''; // esito dell'ultima azione, mostrato finche' non cambia lo stato
@@ -39,8 +40,8 @@ function azioni(...bottoni) {
   d.append(...bottoni);
   return d;
 }
-function salvaConAncora(nomeFile, testo) {
-  const url = URL.createObjectURL(new Blob([testo], { type: 'text/markdown;charset=utf-8' }));
+function salvaConAncora(nomeFile, testo, tipo = 'text/markdown;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([testo], { type: tipo }));
   const a = document.createElement('a');
   a.href = url;
   a.download = nomeFile;
@@ -136,10 +137,35 @@ async function inizia() {
   return avvia();
 }
 
-async function disegna(s, ultima, bozza, daSalvare) {
-  box.replaceChildren();
+/** "Esporta come": l'ultima trascrizione in un altro formato, salvata con un link (nessun permesso). */
+function rigaEsporta(e) {
+  const d = document.createElement('div');
+  d.className = 'esporta';
+  const l = document.createElement('span');
+  l.textContent = 'Esporta come';
+  d.append(l);
+  for (const f of ['txt', 'docx', 'srt', 'md']) {
+    const b = pulsante(f.toUpperCase(), () => {
+      const x = esporta(e.testo, f, e.nomeFile);
+      salvaConAncora(x.nome, x.dati, x.tipo);
+      messaggio = `Salvato ${x.nome} nella cartella dei download.`;
+      aggiorna();
+    });
+    b.title = `${FORMATI[f].nome} (.${FORMATI[f].estensione})`;
+    d.append(b);
+  }
+  return d;
+}
+
+async function disegna(s, ultima, bozza, daSalvare, perEsporta) {
+  // si costruisce a parte e si sostituisce solo se cambia: ridisegnare ogni secondo farebbe perdere
+  // il fuoco della tastiera a chi sta su un pulsante
+  const box = document.createElement('section');
   const st = s.stato;
   const attiva = s.attiva;
+  bottone.classList.toggle('attiva', !!attiva);
+  const sotto = $('chiamataSotto');
+  if (sotto) sotto.textContent = attiva && st ? `in corso · ${st.inizio ? durata(Date.now() - st.inizio) : ''}` : 'Meet, Teams, Zoom nel browser';
   const inPrep = st && st.fase === 'preparazione' && !attiva;
   if (attiva && st) {
     const t = st.inizio ? durata(Date.now() - st.inizio) : '';
@@ -184,6 +210,7 @@ async function disegna(s, ultima, bozza, daSalvare) {
       box.append(riga(`Salvato: ${ultima.nomeFile} (${ultima.righe} frasi)`));
       if (ultima.downloadId !== undefined)
         box.append(azioni(pulsante('Mostra nella cartella', () => chrome.downloads && chrome.downloads.show(ultima.downloadId))));
+      if (perEsporta && perEsporta.nomeFile === ultima.nomeFile) box.append(rigaEsporta(perEsporta));
     } else if (daSalvare) {
       box.append(riga('Non sono riuscito a salvare il file da solo.', 'avviso'));
       box.append(
@@ -219,6 +246,11 @@ async function disegna(s, ultima, bozza, daSalvare) {
       )
     );
   }
+  if (box.innerHTML === riquadro.innerHTML) return;
+  // il tempo della call cambia ogni secondo: chi era su un pulsante ci resta
+  const fuoco = riquadro.contains(document.activeElement) ? document.activeElement.textContent : null;
+  riquadro.replaceChildren(...box.childNodes);
+  if (fuoco) [...riquadro.querySelectorAll('button, input')].find((e) => e.textContent === fuoco)?.focus();
 }
 
 async function aggiorna() {
@@ -234,7 +266,11 @@ async function aggiorna() {
   if (chiamataConsenso === true) consensoDato = true;
   // il nome dell'ultimo file contiene il titolo della call: dopo un giorno si dimentica
   if (chiamataUltima && Date.now() - (chiamataUltima.quando || 0) > 86400000) await chrome.storage.local.remove('chiamataUltima');
-  await disegna(s, chiamataUltima, chiamataBozza, chiamataDaSalvare);
+  let perEsporta = null;
+  try {
+    ({ chiamataEsporta: perEsporta } = await chrome.storage.session.get('chiamataEsporta'));
+  } catch {}
+  await disegna(s, chiamataUltima, chiamataBozza, chiamataDaSalvare, perEsporta);
 }
 
 // scelta della cartella: sta fuori dal riquadro che si ridisegna ogni secondo, per non perdere quello che si scrive
@@ -260,8 +296,9 @@ campoChiedi.addEventListener('change', async () => {
 
 bottone.addEventListener('click', () => {
   aperto = !aperto;
-  box.hidden = !aperto;
+  riquadro.hidden = !aperto;
   opz.hidden = !aperto;
+  bottone.setAttribute('aria-expanded', String(aperto));
   clearInterval(timer);
   if (aperto) {
     messaggio = '';

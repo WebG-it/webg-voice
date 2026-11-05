@@ -3,7 +3,7 @@
 // del sistema (speechSynthesis: istantanea e senza carico, ma meno naturale) come ripiego quando
 // il computer non regge nemmeno la Bilanciata.
 //
-// Misure sul PC di sviluppo (Ryzen 7 7735U), paragrafo di 27 s, rapporto sintesi/tempo reale:
+// Misure sul PC di sviluppo (un portatile di fascia media), paragrafo di 27 s, rapporto sintesi/tempo reale:
 //            libero  carico 2 fili  carico 4 fili  3 fili (PC da 4 core)
 //   fp32     0,72    0,83           0,99           1,06
 //   uint8    0,64-0,79 0,81         0,99           0,92

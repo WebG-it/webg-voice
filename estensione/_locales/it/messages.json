@@ -4,10 +4,10 @@
     "description": "Nome dell'estensione: marchio, non tradurre"
   },
   "descrizione": {
-    "message": "Legge ad alta voce in italiano e scrive sotto dettatura, con modelli che girano sul tuo computer. Anche MP3. Gratis."
+    "message": "Legge ad alta voce in italiano, scrive sotto dettatura e trascrive le call, tutto sul tuo computer. Anche MP3. Gratis."
   },
   "titoloAzione": {
-    "message": "WebG Voice, leggi ad alta voce"
+    "message": "WebG Voice: leggi, detta, trascrivi"
   },
   "menuLeggi": {
     "message": "Leggi ad alta voce"

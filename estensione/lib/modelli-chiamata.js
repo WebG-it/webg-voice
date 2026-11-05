@@ -3,7 +3,7 @@
 // funzione, a pezzi e con ripresa come gli altri modelli, e resta nell'archivio locale.
 //
 // Fonte: Hugging Face alla revisione fissata; l'impronta SHA-256 si controlla sempre.
-// Misure sul PC di sviluppo (Ryzen 7 7735U, 8 fili): rapporto col tempo reale 0,21 contro 0,37 di
+// Misure sul PC di sviluppo (un portatile di fascia media, 8 fili): rapporto col tempo reale 0,21 contro 0,37 di
 // Whisper small, errori sulle 20 frasi di prova 24,5% contro 30,7%. Vedi test/call/.
 
 const HF = 'https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/';
