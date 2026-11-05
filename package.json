@@ -19,7 +19,7 @@
     "test:esporta": "node test/call/esporta.mjs"
   },
   "dependencies": {
-    "onnxruntime-web": "1.30.0"
+    "onnxruntime-web": "1.31.1"
   },
   "repository": {
     "type": "git",
