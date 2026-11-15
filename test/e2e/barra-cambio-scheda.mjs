@@ -1,0 +1,202 @@
+// Barretta ed evidenziazione dopo un cambio di scheda (issue #3, 1.7.1), SOLO HEADLESS.
+// Lettura in A, si passa a B per qualche secondo, si torna in A: la barretta deve esserci
+// e l'evidenziazione deve seguire la voce. Misura anche quanto spesso c'e' una frase evidenziata.
+// Caso segnalato il 18-10 sulla 1.5.1: lettura di un articolo in A, si passa a B e si preme la
+// scorciatoia due volte: la prima mette in pausa, la seconda fa partire una lettura, e quella
+// lettura non ha piu' nessuna frase evidenziata. Controlla CSS.highlights nella scheda che legge.
+// Varianti: B con un articolo (seconda pressione = lettura di B), B senza articolo (si torna in A
+// e si riprende), pressioni ravvicinate.
+// Uso: CHROME=<Chrome for Testing> PROFILO=<profilo nuovo> node test/e2e/evidenzia-cambio-scheda.mjs
+import puppeteer from 'puppeteer';
+import http from 'node:http';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const QUI = dirname(fileURLToPath(import.meta.url));
+const EXT = process.env.EXT || join(QUI, '..', '..', 'estensione-test');
+const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
+let ko = 0;
+const ok = (n, c, d) => {
+  if (!c) ko++;
+  log(c ? 'OK  ' : 'NO  ', n, d !== undefined ? JSON.stringify(d).slice(0, 300) : '');
+};
+
+const paragrafi = readFileSync(join(QUI, '..', 'testo-lungo.txt'), 'utf8').split('\n').filter((r) => r.trim());
+const articolo = (titolo, quanti = paragrafi.length) => `<!doctype html><html lang="it"><head><meta charset="utf-8"><title>${titolo}</title></head>
+<body style="font:18px/1.6 Georgia,serif;max-width:720px;margin:40px auto"><article><h1>${titolo}</h1>
+${paragrafi.slice(0, quanti).map((p) => `<p>${p}</p>`).join('\n')}</article></body></html>`;
+const vuota = '<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Posta</title></head><body><nav>Posta in arrivo</nav><button>Scrivi</button></body></html>';
+const server = http.createServer((q, r) => {
+  r.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+  if (q.url.startsWith('/vuota')) return r.end(vuota);
+  if (q.url.startsWith('/b')) return r.end(articolo('Un secondo articolo da leggere'));
+  if (q.url.startsWith('/c')) return r.end(articolo('Un terzo articolo breve', 2));
+  r.end(articolo('Un orto sul balcone'));
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${server.address().port}`;
+
+const b = await puppeteer.launch({
+  headless: true,
+  pipe: true,
+  protocolTimeout: 900000,
+  enableExtensions: [EXT],
+  executablePath: process.env.CHROME,
+  userDataDir: process.env.PROFILO,
+  args: ['--no-first-run', '--no-default-browser-check', '--autoplay-policy=no-user-gesture-required'],
+});
+if (!/--headless(=new)?\b/.test(b.process().spawnargs.join(' '))) {
+  b.process().kill();
+  throw new Error('istanza NON headless, interrotta');
+}
+try {
+  const swT = await b.waitForTarget((t) => t.type() === 'service_worker', { timeout: 20000 });
+  const extId = new URL(swT.url()).host;
+  const sw = await swT.worker();
+  if (!process.env.MOTORE_AUTO) await sw.evaluate(() => chrome.storage.local.set({ motoreLettura: 'massima' }));
+  const ext = (await b.extensions()).get(extId);
+  const stato = async () => {
+    const r = await sw.evaluate(() => chrome.runtime.sendMessage({ a: 'offscreen', tipo: 'stato' }).catch(() => null));
+    return r && r.stato;
+  };
+  let giri = 0;
+  const attendi = async (c, ms = 120000) => {
+    const t0 = Date.now();
+    for (;;) {
+      const s = await stato();
+      if (s && c(s)) return s;
+      if (Date.now() - t0 > ms) throw new Error('timeout ' + JSON.stringify(s && { fase: s.fase, tabId: s.tabId }));
+      if (++giri % 100 === 0) log('  aspetto…', JSON.stringify(s && { fase: s.fase, download: s.download, errore: s.errore }));
+      await dorme(200);
+    }
+  };
+  const tabIdDi = (page) => page.evaluate(() => 0).then(() => sw.evaluate(async () => (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0].id));
+  async function attivaTab(page) {
+    await page.bringToFront();
+    await page.triggerExtensionAction(ext);
+    const pt = await b.waitForTarget((t) => t.url().endsWith('/popup.html'), { timeout: 10000 });
+    await (await pt.asPage()).close();
+    await page.bringToFront();
+  }
+  // la scorciatoia come la riceve il service worker (activeTab concesso aprendo e chiudendo il pannello)
+  async function scorciatoia(page, attiva = true) {
+    if (attiva) await attivaTab(page);
+    return sw.evaluate(() => globalThis.__testScorciatoia());
+  }
+  const nascosta = (page) => page.evaluate(() => document.hidden);
+  const evidenziato = (page) =>
+    page.evaluate(() => {
+      const h = CSS.highlights.get('webg-voice-lettura');
+      return h ? [...h].map((x) => x.toString().slice(0, 50)) : null;
+    });
+  async function attendiEvidenziato(page, ms = 30000) {
+    const t0 = Date.now();
+    for (;;) {
+      const e = await evidenziato(page);
+      if (e && e.length) return e;
+      if (Date.now() - t0 > ms) return null;
+      await dorme(250);
+    }
+  }
+  // la frase evidenziata cambia mentre la lettura va avanti (l'evidenziazione segue la voce)
+  async function segue(page, ms = 40000) {
+    const prima = await attendiEvidenziato(page, ms);
+    if (!prima) return false;
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      await dorme(500);
+      const ora = await evidenziato(page);
+      if (ora && ora[0] !== prima[0]) return true;
+    }
+    return false;
+  }
+  async function apri(url) {
+    const page = await b.newPage();
+    page.on('pageerror', (e) => log('[pagina]', e.message));
+    await page.setViewport({ width: 1280, height: 800 });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    return page;
+  }
+  const ferma = async () => {
+    await sw.evaluate(() => chrome.runtime.sendMessage({ a: 'offscreen', tipo: 'stop' }).catch(() => null));
+    await dorme(800);
+  };
+
+
+  const barra = (page) =>
+    page.evaluate(() => {
+      const h = document.querySelector('[data-leggi-ad-alta-voce]');
+      return { c: !!h, vis: document.documentElement.dataset.webgBarra || null, w: h ? h.getBoundingClientRect().width : 0 };
+    });
+  async function copertura(page, ms) {
+    let si = 0, n = 0;
+    const t0 = Date.now();
+    const buchi = [];
+    while (Date.now() - t0 < ms) {
+      const e = await evidenziato(page);
+      n++;
+      if (e && e.length) si++;
+      else buchi.push(Math.round((Date.now() - t0) / 1000));
+      await dorme(500);
+    }
+    return { quota: si / n, buchi: buchi.slice(0, 20) };
+  }
+  const A = await apri(`${BASE}/a`);
+  const idA = await tabIdDi(A);
+  await scorciatoia(A);
+  let s = await attendi((s) => s.fase === 'lettura', 900000);
+  ok('A: lettura con evidenziazione', await attendiEvidenziato(A));
+  ok('A: barretta presente', (await barra(A)).c, await barra(A));
+  const c0 = await copertura(A, 15000);
+  ok('A: frase evidenziata quasi sempre (>= 90%)', c0.quota >= 0.9, c0);
+  const P = await apri(`${BASE}/vuota`);
+  for (const sec of (process.env.SOSTE || '3,12,25').split(',').map(Number)) {
+    await P.bringToFront();
+    ok(`${sec}s: A nascosta`, await nascosta(A));
+    await dorme(sec * 1000);
+    await A.bringToFront();
+    await dorme(1500);
+    s = await stato();
+    ok(`${sec}s: lettura ancora in corso in A`, s.fase === 'lettura' && s.tabId === idA, { fase: s.fase, tabId: s.tabId });
+    const br = await barra(A);
+    ok(`${sec}s: barretta presente e visibile al ritorno`, br.c && br.w > 0 && br.vis !== 'nascosta', br);
+    const c = await copertura(A, 10000);
+    const s2 = await stato();
+    ok(`${sec}s: evidenziazione al ritorno (>= 90%)`, c.quota >= 0.9, { ...c, fase: s2.fase, blocco: s2.blocco, totale: s2.totale });
+  }
+
+  // ---- scheda scartata da Chrome (Risparmio memoria) mentre legge ----
+  if (!process.env.SENZA_SCARTO) {
+    await ferma();
+    await A.bringToFront();
+    await scorciatoia(A);
+    await attendi((s) => s.fase === 'lettura' && s.tabId === idA, 60000);
+    await P.bringToFront();
+    await dorme(2000);
+    const auto = (id) => sw.evaluate(async (id) => (await chrome.tabs.get(id)).autoDiscardable, id);
+    ok('scarto: la scheda che legge non si scarta da sola durante la lettura', (await auto(idA)) === false, await auto(idA));
+    ok('scarto: le altre schede restano scartabili', (await auto(await tabIdDi(P))) === true);
+    // chrome.tabs.discard scarta anche le schede protette: serve a vedere il recupero
+    const r = await sw.evaluate(async (id) => { try { const t = await chrome.tabs.discard(id); return { ok: true, id: t && t.id }; } catch (e) { return { ok: false, e: e.message }; } }, idA);
+    log('  scarto forzato', JSON.stringify(r));
+    await dorme(2000);
+    await A.bringToFront();
+    await A.waitForFunction(() => document.readyState === 'complete', { timeout: 20000 }).catch(() => {});
+    await dorme(3000);
+    const br = await barra(A).catch((e) => ({ errore: e.message }));
+    const c = await copertura(A, 8000).catch((e) => ({ quota: 0, e: e.message }));
+    // senza permesso sul sito Chrome non lascia rimettere la barretta dopo il ricaricamento: solo informativo
+    log('  dopo lo scarto forzato (informativo): barretta', JSON.stringify(br), 'evidenziazione', JSON.stringify(c));
+    await ferma();
+    await dorme(1500);
+    ok('scarto: a fine lettura la scheda torna scartabile', (await auto(idA)) === true, await auto(idA));
+  }
+  await ferma();
+} finally {
+  await b.close();
+  server.close();
+}
+log(ko ? `${ko} KO` : 'tutto OK');
+process.exit(ko ? 1 : 0);
