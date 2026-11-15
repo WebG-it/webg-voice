@@ -12,7 +12,7 @@ browser in three ways, in Italian and entirely on your computer:
 No account, no subscription, no text or audio sent to external services, except for two optional choices, off by default: Google speech recognition for dictation and an "online" system voice picked by hand for reading. After the first
 download it also works offline. The interface is in Italian.
 
-Version 1.7.0, released 2026-11-05 (changes in the [CHANGELOG](CHANGELOG.md), in Italian).
+Version 1.7.1, released 2026-11-15 (changes in the [CHANGELOG](CHANGELOG.md), in Italian).
 
 *Versione italiana: [README.md](README.md).*
 
