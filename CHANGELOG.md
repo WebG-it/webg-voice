@@ -4,6 +4,11 @@ Ogni modifica all'estensione, anche minima, fa avanzare la versione: patch per l
 minor per le funzioni nuove. La versione vive solo in `src/manifest.json`; ogni versione ha qui
 la sua voce e un tag git `vX.Y.Z`.
 
+## [1.7.1] - 2026-11-15
+
+- Correzione: la barretta in basso a destra e l'evidenziazione della frase sparivano tornando sulla scheda che legge (issue #3). La voce esce dall'estensione e non dalla pagina, quindi per Chrome la scheda era una qualunque in secondo piano: il Risparmio memoria la scartava e al ritorno la ricaricava senza barretta né evidenziazione, mentre la lettura continuava. Ora, finché la lettura è in corso, la scheda che legge non viene scartata da Chrome (autoDiscardable, nessun permesso in più) e torna normale a fine lettura; se la pagina si ricarica lo stesso, barretta ed evidenziazione si rimettono da sole; se un sito toglie la barretta mentre la scheda è nascosta, ricompare al ritorno.
+- Prove: test/e2e/barra-cambio-scheda.mjs (soste di 3, 12 e 25 secondi su un'altra scheda, scheda protetta durante la lettura e di nuovo scartabile dopo, scarto forzato con barretta ed evidenziazione che tornano), test/e2e/evidenzia-siti.mjs (frase evidenziata il 98-100% del tempo su quattro siti veri), evidenzia-cambio-scheda tutto OK. Prima della correzione lo scarto riproduceva il difetto: niente barretta e zero evidenziazione al ritorno.
+
 ## [1.7.0] - 2026-11-05
 
 Versione per il Chrome Web Store, dove c'è la 1.2.2: esce tutto, lettura, dettatura e trascrizione delle call.

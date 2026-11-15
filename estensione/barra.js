@@ -389,6 +389,8 @@
     }
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) return;
+      // la pagina ha tolto la barretta mentre la scheda era nascosta (siti che ridisegnano il body)
+      if (!host.isConnected && (fase === 'lettura' || fase === 'pausa' || fase === 'preparazione')) mostra();
       if (sospesa) {
         const s = sospesa;
         sospesa = null;

@@ -290,6 +290,42 @@ async function iniettaBarra(tabId) {
 
 const IN_CORSO = ['lettura', 'pausa', 'preparazione'];
 
+// La scheda che legge non suona audio (la voce esce dall'offscreen), quindi per Chrome e' una
+// scheda qualunque in secondo piano: il Risparmio memoria la puo' scartare e al ritorno la
+// ricarica, senza barretta ne' evidenziazione, mentre la voce continua (issue #3). Finche' la
+// lettura e' in corso la scheda non si scarta da sola; a fine lettura torna come prima.
+// Gli stati arrivano a raffica (fine di una lettura e inizio della nuova nello stesso istante):
+// si applicano uno alla volta, in ordine, se no il rilascio della vecchia annulla la protezione.
+let codaProtezione = Promise.resolve();
+function proteggiScheda(s) {
+  codaProtezione = codaProtezione.then(() => applicaProtezione(s));
+  return codaProtezione;
+}
+async function applicaProtezione(s) {
+  try {
+    const { schedaProtetta: prima } = await chrome.storage.session.get('schedaProtetta');
+    const ora = s && IN_CORSO.includes(s.fase) && Number.isInteger(s.tabId) ? s.tabId : null;
+    if (prima === ora) return;
+    await chrome.storage.session.set({ schedaProtetta: ora });
+    if (Number.isInteger(prima)) await chrome.tabs.update(prima, { autoDiscardable: true }).catch(() => {});
+    if (ora !== null) await chrome.tabs.update(ora, { autoDiscardable: false }).catch(() => {});
+  } catch {}
+}
+
+// La pagina che legge si e' ricaricata lo stesso (a mano, o scartata prima della protezione):
+// si rimette la barretta, se Chrome lo permette ancora, e si riallinea l'evidenziazione.
+async function ripristinaBarra(tabId) {
+  try {
+    const { schedaProtetta } = await chrome.storage.session.get('schedaProtetta');
+    if (schedaProtetta !== tabId) return; // le altre pagine caricate non c'entrano
+    const s = await statoAttuale();
+    if (!s || s.tabId !== tabId || !IN_CORSO.includes(s.fase)) return;
+    if (!(await iniettaBarra(tabId))) return;
+    chrome.tabs.sendMessage(tabId, { da: 'offscreen', tipo: 'stato', stato: { ...s, mp3: null } }).catch(() => {});
+    await aOffscreen({ tipo: 'riallinea', tabId });
+  } catch {}
+}
+
 // "Di nuovo" nel pannello: l'ultimo testo letto resta solo in memoria (chrome.storage.session),
 // finche' Chrome resta aperto; non va su disco e non si sincronizza.
 const MAX_ULTIMO = 1_000_000;
@@ -406,7 +442,10 @@ async function attivitaChrome() {
 }
 chrome.tabs.onActivated.addListener(attivitaChrome);
 chrome.tabs.onUpdated.addListener((id, info) => {
-  if (info.status === 'complete') attivitaChrome();
+  if (info.status === 'complete') {
+    attivitaChrome();
+    ripristinaBarra(id);
+  }
 });
 chrome.windows.onFocusChanged.addListener((w) => {
   if (w !== chrome.windows.WINDOW_ID_NONE) attivitaChrome();
@@ -486,6 +525,7 @@ chrome.runtime.onMessage.addListener((msg, mittente, rispondi) => {
   // Stato dall'offscreen: lo giro alla scheda che ha la barretta
   if (msg.da === 'offscreen' && msg.tipo === 'stato') {
     aggiornaBadge(msg.stato);
+    proteggiScheda(msg.stato);
     const tabId = msg.stato && msg.stato.tabId;
     // alla barretta nella pagina va lo stato della lettura, non quello dell'MP3
     if (tabId !== null && tabId !== undefined) chrome.tabs.sendMessage(tabId, { ...msg, stato: { ...msg.stato, mp3: null } }).catch(() => {});

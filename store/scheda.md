@@ -1,4 +1,4 @@
-# Scheda Chrome Web Store, WebG Voice 1.7.0 del 05-11-2026
+# Scheda Chrome Web Store, WebG Voice 1.7.1 del 15-11-2026
 
 Testi pronti da incollare nel modulo della scheda, in italiano (lingua principale) e in inglese.
 Generato da `store/template/scheda.md` con `npm run store`: non modificare questo file a mano.

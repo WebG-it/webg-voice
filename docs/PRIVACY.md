@@ -1,6 +1,6 @@
 # Informativa sulla privacy di WebG Voice
 
-Ultimo aggiornamento: 5 novembre 2026, versione 1.7.0.
+Ultimo aggiornamento: 15 novembre 2026, versione 1.7.1.
 
 WebG Voice è un'estensione per Chrome realizzata da WebG (https://www.webg.it) che legge ad alta
 voce il testo scelto dall'utente, scrive nei campi delle pagine sotto dettatura e, su richiesta,
@@ -136,7 +136,7 @@ https://github.com/WebG-it/webg-voice/issues
 
 ## English summary
 
-Last updated: November 5, 2026, version 1.7.0.
+Last updated: November 15, 2026, version 1.7.1.
 
 WebG Voice collects no data. Text (including the article of the page, when you ask to hear
 it) is turned into speech locally in your browser and never leaves your computer; MP3 files are

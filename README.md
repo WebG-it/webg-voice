@@ -12,7 +12,7 @@ browser in tre modi, in italiano e tutto sul tuo computer:
 Niente account, niente abbonamento, nessun testo e nessun audio mandato a servizi esterni, salvo due scelte facoltative e spente di serie: il riconoscimento vocale di Google per la dettatura e una voce del sistema «in rete» scelta a mano per la lettura.
 Dopo il primo download funziona anche senza connessione.
 
-Versione 1.7.0 del 05-11-2026 (novità nel [CHANGELOG](CHANGELOG.md)).
+Versione 1.7.1 del 15-11-2026 (novità nel [CHANGELOG](CHANGELOG.md)).
 
 *English version: [README.en.md](README.en.md).*
 
